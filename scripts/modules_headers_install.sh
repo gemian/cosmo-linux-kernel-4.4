@@ -15,6 +15,8 @@ if [ -n "$INSTALL_MODULES_HDR_PATH" ]; then
 	DEST_DIR="$INSTALL_MODULES_HDR_PATH"
 fi
 
+echo sources: $INSTALL_MODULES_HDR_PATH
+
 #fresh start
 rm -f $HDR_SRC_FILES
 rm -f $HDR_OBJ_FILES
@@ -24,6 +26,13 @@ rm -f $HDR_OBJ_FILES
 	> "$HDR_SRC_FILES"
 (cd $srctree; find arch/$SRCARCH/include include scripts -type f) \
 	>> "$HDR_SRC_FILES"
+#special case for arm64 headers referencing arm headers
+if [ "$SRCARCH" = "arm64" ]; then
+(cd $srctree; find arch/arm/include -name 'opcodes.h') \
+        >> "$HDR_SRC_FILES"
+(cd $srctree; find arch/arm/include -name xen -type d) \
+        >> "$HDR_SRC_FILES"
+fi
 (cd $srctree; find arch/$SRCARCH -name module.lds -o -name Kbuild.platforms \
 	-o -name Platform) >> "$HDR_SRC_FILES"
 (cd $srctree; find $(find arch/$SRCARCH -name include -o -name scripts \
