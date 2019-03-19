@@ -1101,6 +1101,7 @@ firmware_install:
 
 #Default location for installed headers
 export INSTALL_HDR_PATH = $(objtree)/usr
+export INSTALL_MODULES_HDR_PATH = $(objtree)/usr/src
 
 # If we do an all arch process set dst to asm-$(hdr-arch)
 hdr-dst = $(if $(KBUILD_HEADERS), dst=include/asm-$(hdr-arch), dst=include/asm)
@@ -1134,6 +1135,10 @@ PHONY += headers_check
 headers_check: headers_install
 	$(Q)$(MAKE) $(hdr-inst)=include/uapi HDRCHECK=1
 	$(Q)$(MAKE) $(hdr-inst)=arch/$(hdr-arch)/include/uapi/asm $(hdr-dst) HDRCHECK=1
+
+PHONY += modules_headers_install
+modules_headers_install:
+	$(Q)$(CONFIG_SHELL) $(srctree)/scripts/modules_headers_install.sh
 
 # ---------------------------------------------------------------------------
 # Kernel selftest
@@ -1338,7 +1343,10 @@ help:
 	@echo  '  kernelversion	  - Output the version stored in Makefile (use with make -s)'
 	@echo  '  image_name	  - Output the image name (use with make -s)'
 	@echo  '  headers_install - Install sanitised kernel headers to INSTALL_HDR_PATH'; \
-	 echo  '                    (default: $(INSTALL_HDR_PATH))'; \
+	 echo  '                    (default: $(INSTALL_HDR_PATH))';
+	@echo  '  modules_headers_install - Install kernel headers to INSTALL_MODULES_HDR_PATH'; \
+	 echo  '                            to be used for out of tree modules build'; \
+	 echo  '                            (default: $(INSTALL_MODULES_HDR_PATH))'; \
 	 echo  ''
 	@echo  'Static analysers'
 	@echo  '  checkstack      - Generate a list of stack hogs'
