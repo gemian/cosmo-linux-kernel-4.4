@@ -1,0 +1,336 @@
+&sii9022_hdmi {
+	pinctrl-names = "sil9022_rst_high","sil9022_rst_low","sil9022_eint_high","sil9022_eint_low","sil9022_eint_as_int",
+			"sil9022_1v2_en_high","sil9022_1v2_en_low","sil9022_dpi_gpio","sil9022_dpi_func1","sil9022_i2s_gpio","sil9022_i2s_func1";		
+	pinctrl-0 = <&gpio_sil9022_rst_high>;
+	pinctrl-1 = <&gpio_sil9022_rst_low>;
+	pinctrl-2 = <&gpio_sil9022_eint_high>;
+	pinctrl-3 = <&gpio_sil9022_eint_low>;
+	pinctrl-4 = <&gpio_sil9022_eint_as_int>;
+	pinctrl-5 = <&gpio_sil9022_1v2_en_high>;
+	pinctrl-6 = <&gpio_sil9022_1v2_en_low>;
+	pinctrl-7 = <&gpio_sil9022_dpi_gpio>;
+	pinctrl-8 = <&gpio_sil9022_dpi_func1>;
+	pinctrl-9 = <&gpio_sil9022_i2s_gpio>;
+	pinctrl-10 = <&gpio_sil9022_i2s_func1>;	
+	status = "okay";
+};
+
+&pio {
+
+	gpio_sil9022_rst_high:sil9022_rst_high@gpio57 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO159__FUNC_GPIO159>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	gpio_sil9022_rst_low:sil9022_rst_low@gpio57 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO159__FUNC_GPIO159>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	
+	gpio_sil9022_eint_high:sil9022_eint_high@gpio62 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO78__FUNC_GPIO78>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+
+	gpio_sil9022_eint_low:sil9022_eint_low@gpio62 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO78__FUNC_GPIO78>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	
+	gpio_sil9022_eint_as_int:sil9022_eint_as_int@0 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO78__FUNC_GPIO78>;
+			slew-rate = <0>;
+			bias-disable;
+		};
+	};	
+
+	gpio_sil9022_1v2_en_high:sil9022_1v2_en_high@gpio247 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO160__FUNC_GPIO160>;
+			slew-rate = <1>;
+			output-high;
+		};
+	};
+	
+	gpio_sil9022_1v2_en_low:sil9022_1v2_en_low@gpio247 {
+		pins_cmd_dat {
+			pins = <PINMUX_GPIO160__FUNC_GPIO160>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};	
+
+	gpio_sil9022_dpi_gpio: sil9022_dpi_gpio@0 {
+		pins_cmd0_dat {
+			pins = <PINMUX_GPIO13__FUNC_GPIO13>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO14__FUNC_GPIO14>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO15__FUNC_GPIO15>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd3_dat {
+			pins = <PINMUX_GPIO16__FUNC_GPIO16>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd4_dat {
+			pins = <PINMUX_GPIO17__FUNC_GPIO17>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd5_dat {
+			pins = <PINMUX_GPIO18__FUNC_GPIO18>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd6_dat {
+			pins = <PINMUX_GPIO19__FUNC_GPIO19>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd7_dat {
+			pins = <PINMUX_GPIO20__FUNC_GPIO20>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd8_dat {
+			pins = <PINMUX_GPIO21__FUNC_GPIO21>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd9_dat {
+			pins = <PINMUX_GPIO22__FUNC_GPIO22>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd10_dat {
+			pins = <PINMUX_GPIO23__FUNC_GPIO23>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd11_dat {
+			pins = <PINMUX_GPIO24__FUNC_GPIO24>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd12_dat {
+			pins = <PINMUX_GPIO25__FUNC_GPIO25>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd13_dat {
+			pins = <PINMUX_GPIO26__FUNC_GPIO26>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd14_dat {
+			pins = <PINMUX_GPIO27__FUNC_GPIO27>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd15_dat {
+			pins = <PINMUX_GPIO28__FUNC_GPIO28>;
+			slew-rate = <1>;
+			output-low;
+			bias-disable;
+			drive-strength= <7>;
+		};
+	};
+	
+	gpio_sil9022_dpi_func1: sil9022_dpi_func1@0 {
+		pins_cmd0_dat {
+			pins = <PINMUX_GPIO13__FUNC_DBPI_D0>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO14__FUNC_DBPI_D1>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO15__FUNC_DBPI_D2>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd3_dat {
+			pins = <PINMUX_GPIO16__FUNC_DBPI_D3>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd4_dat {
+			pins = <PINMUX_GPIO17__FUNC_DBPI_D4>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd5_dat {
+			pins = <PINMUX_GPIO18__FUNC_DBPI_D5>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd6_dat {
+			pins = <PINMUX_GPIO19__FUNC_DBPI_D6>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd7_dat {
+			pins = <PINMUX_GPIO20__FUNC_DBPI_D7>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd8_dat {
+			pins = <PINMUX_GPIO21__FUNC_DBPI_D8>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd9_dat {
+			pins = <PINMUX_GPIO22__FUNC_DBPI_D9>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd10_dat {
+			pins = <PINMUX_GPIO23__FUNC_DBPI_D10>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd11_dat {
+			pins = <PINMUX_GPIO24__FUNC_DBPI_D11>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd12_dat {
+			pins = <PINMUX_GPIO27__FUNC_DBPI_DE>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd13_dat {
+			pins = <PINMUX_GPIO28__FUNC_DBPI_CK>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd14_dat {
+			pins = <PINMUX_GPIO25__FUNC_DBPI_HSYNC>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+		pins_cmd15_dat {
+			pins = <PINMUX_GPIO26__FUNC_DBPI_VSYNC>;
+			bias-disable;
+			drive-strength= <7>;
+		};
+	};
+
+	gpio_sil9022_i2s_gpio: sil9022_i2s_gpio@0 {
+		pins_cmd0_dat {
+			pins = <PINMUX_GPIO170__FUNC_GPIO170>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO169__FUNC_GPIO169>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO165__FUNC_GPIO165>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd3_dat {
+			pins = <PINMUX_GPIO171__FUNC_GPIO171>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd4_dat {
+			pins = <PINMUX_GPIO172__FUNC_GPIO172>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd5_dat {
+			pins = <PINMUX_GPIO173__FUNC_GPIO173>;
+			slew-rate = <1>;
+			output-low;
+		};
+		pins_cmd6_dat {
+			pins = <PINMUX_GPIO174__FUNC_GPIO174>;
+			slew-rate = <1>;
+			output-low;
+		};
+	};
+	
+	gpio_sil9022_i2s_func1: sil9022_i2s_func1@0 {
+		pins_cmd0_dat {
+			pins = <PINMUX_GPIO170__FUNC_I2S3_BCK>;
+		};
+		pins_cmd1_dat {
+			pins = <PINMUX_GPIO169__FUNC_CMMCLK3>;
+		};
+		pins_cmd2_dat {
+			pins = <PINMUX_GPIO165__FUNC_CMMCLK2>;
+		};
+		pins_cmd3_dat {
+			pins = <PINMUX_GPIO171__FUNC_I2S3_LRCK>;
+		};
+		pins_cmd4_dat {
+			pins = <PINMUX_GPIO172__FUNC_I2S3_DO>;
+		};
+		pins_cmd5_dat {
+			pins = <PINMUX_GPIO173__FUNC_I2S3_MCK>;
+		};
+		pins_cmd6_dat {
+			pins = <PINMUX_GPIO174__FUNC_I2S0_DI>;
+		};
+	};
+	
+};

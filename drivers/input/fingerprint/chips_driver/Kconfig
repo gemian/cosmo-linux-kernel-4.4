@@ -1,0 +1,7 @@
+config MTK_FINGERPRINT_CHIPSAILING_CS358
+	bool "(chipsailing cs358 fingerprint sensor)  for chisailing"
+	default n
+	help
+	It support different type sensor
+	in this platform. If this option
+	is set, it will support fingerprint cs358 sensor .
