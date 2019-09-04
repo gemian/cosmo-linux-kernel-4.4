@@ -1,0 +1,3 @@
+cosmo-linux-kernel source: source-is-missing scripts/mkimage
+cosmo-linux-kernel source: source-is-missing scripts/dtc/dtc_overlay
+cosmo-linux-kernel source: source-is-missing scripts/dtc/ufdt_apply_overlay

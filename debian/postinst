@@ -1,0 +1,13 @@
+#!/bin/bash -e
+echo running depmod
+depmod ||:
+
+action="$1"
+oldversion="$2"
+
+if [ "$action" != configure ]; then
+    exit 0
+fi
+
+update-gemian-boot-image
+

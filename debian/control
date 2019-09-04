@@ -1,0 +1,35 @@
+Source: cosmo-linux-kernel
+Section: kernel
+Priority: extra
+Maintainer: Adam Boardman <adamboardman@gmail.com>
+Build-Depends:
+ python,
+ git,
+ ca-certificates,
+ bc,
+ curl,
+ libssl-dev,
+Standards-Version: 3.9.8
+Vcs-Git: https://github.com/gemian/cosmo-linux-kernel-4.4.git
+Homepage: https://www.kernel.org/
+
+Package: cosmo-linux-kernel
+Architecture: any
+Multi-Arch: same
+Depends:
+ mkbootimg,
+ initramfs-tools-halium,
+Recommends:
+Description: Gemian Kernel with Modules for Cosmo PDA
+ .
+
+Package: cosmo-linux-kernel-headers
+Architecture: all
+Multi-Arch: foreign
+Depends:
+ cosmo-linux-kernel,
+Conflicts:
+Replaces:
+Recommends:
+Description: Headers for Gemian Kernel with Modules for Cosmo PDA
+ .

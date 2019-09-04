@@ -1,0 +1,57 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+# keep lintian happy:
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep:
+
+build-stamp:
+	(cd ..; mkdir -p KERNEL_OUT)
+	@echo configuring
+	make O=../KERNEL_OUT ARCH=arm64 k71v1_64_bsp_defconfig
+	@echo building kernel
+	make O=../KERNEL_OUT ARCH=arm64 
+	@echo building modules
+	make O=../KERNEL_OUT ARCH=arm64 modules
+	@echo done
+
+clean: checkdir
+	(cd ..; rm -rf KERNEL_OUT)
+
+binary-arch:
+	-rm -rf debian/tmp
+	install -p -d -o root -g root -m 755 debian/tmp
+	install -p -d -o root -g root -m 755 debian/tmp/DEBIAN
+	install -p -d -o root -g root -m 755 debian/tmp/usr/share/kernel
+	install -p    -o root -g root -m 644 ../KERNEL_OUT/arch/arm64/boot/Image.gz-dtb debian/tmp/usr/share/kernel/Image.gz-dtb
+	install -p    -o root -g root -m 755 debian/postinst debian/tmp/DEBIAN/
+	make O=../KERNEL_OUT INSTALL_MOD_PATH=$(CURDIR)/debian/tmp ARCH=arm64 modules_install
+	unlink debian/tmp/lib/modules/4.4.146*/source
+	unlink debian/tmp/lib/modules/4.4.146*/build
+	ln -s /usr/src/linux-headers-4.4 debian/tmp/lib/modules/build
+	mv debian/tmp/lib/modules/build debian/tmp/lib/modules/4.4.146*/
+	dpkg-gencontrol -DArchitecture=arm64 -pcosmo-linux-kernel
+	dpkg --build debian/tmp ..
+
+binary-indep:
+	-rm -rf debian/tmp
+	install -p -d -o root -g root -m 755 debian/tmp
+	install -p -d -o root -g root -m 755 debian/tmp/DEBIAN
+	install -p -d -o root -g root -m 755 debian/tmp/usr/src/linux-headers-4.4
+	make O=../KERNEL_OUT INSTALL_MODULES_HDR_PATH=$(CURDIR)/debian/tmp/usr/src/linux-headers-4.4 ARCH=arm64 modules_headers_install
+	dpkg-gencontrol -pcosmo-linux-kernel-headers
+	dpkg --build debian/tmp ..
+
+binary:         binary-arch binary-indep
+
+checkdir:
+	@test -f debian/rules
+
+checkroot: checkdir
+	@test 0 = `id -u` || { echo "Error: not super-user"; exit 1; }
+
+.PHONY: binary binary-arch binary-indep clean checkroot checkdir build build-arch build-indep
