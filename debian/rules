@@ -10,6 +10,7 @@ build-arch: build-stamp
 build-indep:
 
 build-stamp:
+	./debian/remove-werror.sh
 	(cd ..; mkdir -p KERNEL_OUT)
 	@echo configuring
 	make O=../KERNEL_OUT ARCH=arm64 k71v1_64_bsp_defconfig
