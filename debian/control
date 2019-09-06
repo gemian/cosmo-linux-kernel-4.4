@@ -9,6 +9,7 @@ Build-Depends:
  bc,
  curl,
  libssl-dev,
+ gcc-aarch64-linux-gnu,
 Standards-Version: 3.9.8
 Vcs-Git: https://github.com/gemian/cosmo-linux-kernel-4.4.git
 Homepage: https://www.kernel.org/

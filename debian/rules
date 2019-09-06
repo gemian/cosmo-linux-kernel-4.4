@@ -15,9 +15,9 @@ build-stamp:
 	@echo configuring
 	make O=../KERNEL_OUT ARCH=arm64 k71v1_64_bsp_defconfig
 	@echo building kernel
-	make O=../KERNEL_OUT ARCH=arm64 
+	make O=../KERNEL_OUT ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
 	@echo building modules
-	make O=../KERNEL_OUT ARCH=arm64 modules
+	make O=../KERNEL_OUT ARCH=arm64 modules CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
 	@echo done
 
 clean: checkdir
