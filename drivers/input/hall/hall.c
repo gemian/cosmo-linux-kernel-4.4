@@ -22,7 +22,7 @@
 #include <linux/clk.h>
 #include <linux/switch.h>
 #include <linux/workqueue.h>
-//#include <linux/irqchip/mt-eic.h>
+#include <soc/mediatek/hall.h>
 #include <linux/of_gpio.h>
 #define HALL_NAME	"mtk-hall"
 #define MTK_KP_WAKESOURCE	/* this is for auto set wake up source */
@@ -30,7 +30,6 @@
 static unsigned int hall_irqnr;
 unsigned int hallgpiopin, halldebounce;
 unsigned int hall_eint_type;
-//struct input_dev *hall_input_dev;
 static bool hall_suspend;
 static char call_status;
 struct wake_lock hall_suspend_lock;	/* For suspend usage */
@@ -43,51 +42,19 @@ static int hall_pdrv_resume(struct platform_device *pdev);
 #endif
 extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
 
-//static void hall_fcover_eint_handler(void);
-
-/*zhaolong add for GPIO request*/
-
 struct platform_device *fcoverPltFmDev;
 struct pinctrl *fcoverctrl = NULL;
 struct pinctrl_state *hall_pins_default;
 struct pinctrl_state *hall_pins_cfg;
 
-#if 0
-int fcover_gpio_init(void)
-{
-	int ret = 0;
-	printk("zhaolong:======%s======.\n" , __func__);
-	fcoverctrl = devm_pinctrl_get(&fcoverPltFmDev->dev);
-	if (IS_ERR(fcoverctrl)) {
-		ret = PTR_ERR(fcoverctrl);
-		printk("Cannot find fcover pinctrl!\n");
-	}
-	hall_pins_default = pinctrl_lookup_state(fcoverctrl, "pin_default");
-	if (IS_ERR(hall_pins_default)) {
-		ret = PTR_ERR(hall_pins_default);
-		printk("Cannot find fcover pinctrl default!\n");
-	}
-
-	hall_pins_cfg = pinctrl_lookup_state(fcoverctrl, "pin_cfg");
-	if (IS_ERR(hall_pins_cfg)) {
-		ret = PTR_ERR(hall_pins_cfg);
-		printk("Cannot find fcover pinctrl pin_cfg!\n");
-	}
-	pinctrl_select_state(fcoverctrl, hall_pins_cfg);
-	return ret;	
-}
-#endif
-
-#define FCOVER_OPEN        (1)
-#define FCOVER_CLOSE       (0)
-
 static struct switch_dev fcover_data;
 static struct work_struct fcover_work;
 static struct workqueue_struct *fcover_workqueue = NULL;
 static DEFINE_SPINLOCK(fcover_lock);
-int new_fcover = FCOVER_OPEN;
-static int fcover_close_flag = FCOVER_OPEN;
+int new_fcover = HALL_FCOVER_OPEN;
+static int fcover_close_flag = HALL_FCOVER_OPEN;
 extern struct input_dev *kpd_accdet_dev;
+bool hall_fcover_lid_closed = false;
 static int initVal = 0;
 extern void enable_aw9523(int enable);
 
@@ -97,39 +64,65 @@ int is_hall_state(void)
 }
 EXPORT_SYMBOL(is_hall_state);
 
-static void fcover_key_handler(struct work_struct *work)
+static BLOCKING_NOTIFIER_HEAD(hall_notifier_list);
+
+/**
+ *      hall_register_client - register a client notifier
+ *      @nb: notifier block to callback on events
+ */
+int hall_register_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&hall_notifier_list, nb);
+}
+EXPORT_SYMBOL(hall_register_client);
+
+/**
+ *      hall_unregister_client - unregister a client notifier
+ *      @nb: notifier block to callback on events
+ */
+int hall_unregister_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&hall_notifier_list, nb);
+}
+EXPORT_SYMBOL(hall_unregister_client);
+
+/**
+ * hall_notifier_call_chain - notify clients of lid switch events
+ *
+ */
+int hall_notifier_call_chain(unsigned long val, void *v)
+{
+	return blocking_notifier_call_chain(&hall_notifier_list, val, v);
+}
+EXPORT_SYMBOL_GPL(hall_notifier_call_chain);
+
+
+static void hall_work_handler(struct work_struct *work)
 {
 	new_fcover = gpio_get_value(hallgpiopin);
-	printk("fcover_key_handler new_fcover=%d , fcover_close_flag=%d\n",new_fcover, fcover_close_flag);
+	HALL_LOG("hall_work_handler new_fcover=%d , fcover_close_flag=%d",new_fcover, fcover_close_flag);
 
 	if (initVal < 5)
 	     initVal++;
-	printk("fcover init %d", initVal);
+	HALL_LOG("hall_work_handler init %d", initVal);
 	if((fcover_close_flag != new_fcover) || initVal < 5)
 	{
 		spin_lock(&fcover_lock);
 		fcover_close_flag = new_fcover;
+		hall_fcover_lid_closed = (fcover_close_flag == HALL_FCOVER_CLOSE);
 		spin_unlock(&fcover_lock);
-		
-		if(fcover_close_flag == FCOVER_CLOSE)
+
+		hall_notifier_call_chain(fcover_close_flag, NULL);
+
+		input_report_switch(kpd_accdet_dev, SW_LID, (fcover_close_flag == HALL_FCOVER_CLOSE));
+		input_sync(kpd_accdet_dev);
+		if (fcover_close_flag == HALL_FCOVER_CLOSE)
 		{
-			//enable_aw9523(0);
-			input_report_key(kpd_accdet_dev, KEY_F11, 1);
-			input_sync(kpd_accdet_dev);
-			mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F11, 0);
-      input_sync(kpd_accdet_dev);
-     	printk("zhaolong=======F11====\n");
+			HALL_LOG("=======HALL_FCOVER_CLOSE==== %d\n", (int)kpd_accdet_dev->swbit[SW_LID]);
 		}
-		else  // open
+		else
 		{
-			//enable_aw9523(1);
-			input_report_key(kpd_accdet_dev, KEY_F12, 1);
-      input_sync(kpd_accdet_dev);
-      mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F12, 0);
-      input_sync(kpd_accdet_dev);
-      printk("zhaolong=======F12====\n");
+			HALL_LOG("=======HALL_FCOVER_OPEN==== %d\n", (int)kpd_accdet_dev->swbit[SW_LID]);
 		}
 		switch_set_state((struct switch_dev *)&fcover_data, fcover_close_flag);
 	}
@@ -137,21 +130,11 @@ static void fcover_key_handler(struct work_struct *work)
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_LOW);
 	else
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_HIGH);
-		
-	gpio_set_debounce(hallgpiopin, halldebounce);	
+
+	gpio_set_debounce(hallgpiopin, halldebounce);
 	enable_irq(hall_irqnr);
 }
 
-#if 0
-static void hall_fcover_eint_handler(void)
-{
-	printk("hall_fcover_eint_handler ..\n");
-	disable_irq_nosync(hall_irqnr);
-	
-	queue_work(fcover_workqueue, &fcover_work);	
-	//schedule_work(&obj->eint_work);
-}
-#else
 static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 {
 	/* use _nosync to avoid deadlock */
@@ -160,7 +143,6 @@ static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 	
 	return IRQ_HANDLED;
 }
-#endif
 
 static const struct of_device_id hall_of_match[] = {
 	{.compatible = "mediatek, hall-eint"},
@@ -218,7 +200,7 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	u32 ints1[2] = { 0, 0 };
 	struct device_node *node = NULL;
 
-	printk("%s,hall probe start!!!\n",__func__);
+	HALL_LOG("hall probe start!!!");
 	
 	fcoverPltFmDev = pdev;
 
@@ -229,9 +211,8 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 //		return -ENOMEM;
 //	}
 
-	__set_bit(EV_KEY, kpd_accdet_dev->evbit);
-	__set_bit(KEY_F11, kpd_accdet_dev->keybit);
-	__set_bit(KEY_F12, kpd_accdet_dev->keybit);		
+	__set_bit(EV_SW, kpd_accdet_dev->evbit);
+	__set_bit(SW_LID, kpd_accdet_dev->swbit);
 
 //	hall_input_dev->id.bustype = BUS_HOST;
 //	hall_input_dev->name = HALL_NAME;
@@ -259,12 +240,11 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	wake_lock_init(&hall_suspend_lock, WAKE_LOCK_SUSPEND, "hall wakelock");
 
 	fcover_workqueue = create_singlethread_workqueue("fcover");
-	INIT_WORK(&fcover_work, fcover_key_handler);
+	INIT_WORK(&fcover_work, hall_work_handler);
 
 	fcover_close_flag = gpio_get_value(hallgpiopin);
 
 	node = of_find_matching_node(node, hall_of_match);
-	printk("%s():find node->name = %s\n",__func__,node->name);
 	if (node) {
 		of_property_read_u32_array(node, "debounce", ints, ARRAY_SIZE(ints));
 		of_property_read_u32_array(node, "interrupts", ints1, ARRAY_SIZE(ints1));
@@ -272,24 +252,20 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 		hallgpiopin = of_get_named_gpio(node, "deb-gpios", 0);//ints[0];
 		halldebounce = ints[1];
 		hall_eint_type = ints1[1];
-		
-                printk("%s():hallgpiopin =%d, halldebounce=%d, hall_eint_type = %d\n",__func__,
-                        hallgpiopin,halldebounce,hall_eint_type);
-
 		gpio_set_debounce(hallgpiopin, halldebounce);
 		hall_irqnr = irq_of_parse_and_map(node, 0);
 		ret = request_irq(hall_irqnr, (irq_handler_t)hall_fcover_eint_handler, IRQF_TRIGGER_NONE, "hall-eint", NULL);
 		if (ret != 0) {
-			printk("[hall]EINT IRQ LINE NOT AVAILABLE\n");
+			HALL_LOG("EINT IRQ LINE NOT AVAILABLE");
 		} else {
-			printk("[hall]hall set EINT finished, hall_irqnr=%d, hallgpiopin=%d, halldebounce=%d, hall_eint_type=%d\n",
+			HALL_LOG("hall set EINT finished, hall_irqnr=%d, hallgpiopin=%d, halldebounce=%d, hall_eint_type=%d",
 				     hall_irqnr, hallgpiopin, halldebounce, hall_eint_type);
 		}
 	} else {
-		printk("[hall]%s can't find compatible node\n", __func__);
+		HALL_LOG("%s can't find compatible node", __func__);
 	}
 
-	printk("hall_fcover_eint_handler done..\n");
+	HALL_LOG("hall_fcover_eint_handler done..");
 	
 	fcover_data.name = "hall";
 	fcover_data.index = 0;
@@ -298,14 +274,14 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	err = switch_dev_register(&fcover_data);
 	if(err)
 	{
-		printk("[Accdet]switch_dev_register returned:%d!\n", err);
+		printk(KERN_ERR HALL_TAG "switch_dev_register returned:%d", err);
 //		return 1;
 	}
 
 	switch_set_state((struct switch_dev *)&fcover_data, fcover_close_flag);
 	enable_irq_wake(hall_irqnr);
 	enable_irq(hall_irqnr);
-	printk("====%s success=====.\n" , __func__);
+	HALL_LOG("====%s success=====." , __func__);
 	return 0;
 }
 
@@ -321,13 +297,13 @@ static int hall_pdrv_suspend(struct platform_device *pdev, pm_message_t state)
 	hall_suspend = true;
 #ifdef MTK_KP_WAKESOURCE
 	if (call_status == 2) {
-		printk("hall_early_suspend wake up source enable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_pdrv_suspend wake up source enable!! (%d, %d)", hall_suspend, call_status);
 	} else {
 		kpd_wakeup_src_setting(0);
-		printk("hall_early_suspend wake up source disable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_pdrv_suspend wake up source disable!! (%d, %d)", hall_suspend, call_status);
 	}
 #endif
-	printk("suspend!! (%d)\n", hall_suspend);
+	HALL_LOG("suspend!! (%d)", hall_suspend);
 	return 0;
 }
 
@@ -336,18 +312,18 @@ static int hall_pdrv_resume(struct platform_device *pdev)
 	hall_suspend = false;
 #ifdef MTK_KP_WAKESOURCE
 	if (call_status == 2) {
-		printk("hall_early_suspend wake up source enable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_pdrv_resume wake up source enable!! (%d, %d)", hall_suspend, call_status);
 	} else {
-		printk("hall_early_suspend wake up source resume!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_pdrv_resume wake up source resume!! (%d, %d)", hall_suspend, call_status);
 		kpd_wakeup_src_setting(1);
 	}
 #endif
-	printk("resume!! (%d)\n", hall_suspend);
+	HALL_LOG("resume!! (%d)", hall_suspend);
 	return 0;
 }
 #else
-#define hall_pdrv_suspend	NULL
-#define hall_pdrv_resume		NULL
+#define hall_pdrv_suspend NULL
+#define hall_pdrv_resume NULL
 #endif
 
 #ifdef USE_EARLY_SUSPEND
@@ -356,13 +332,13 @@ static void hall_early_suspend(struct early_suspend *h)
 	hall_suspend = true;
 #ifdef MTK_KP_WAKESOURCE
 	if (call_status == 2) {
-		printk("hall_early_suspend wake up source enable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_early_suspend wake up source enable!! (%d, %d)", hall_suspend, call_status);
 	} else {
 		/* hall_wakeup_src_setting(0); */
-		printk("hall_early_suspend wake up source disable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_early_suspend wake up source disable!! (%d), %d", hall_suspend, call_status);
 	}
 #endif
-	printk("early suspend!! (%d)\n", hall_suspend);
+	HALL_LOG("early suspend!! (%d)", hall_suspend);
 }
 
 static void hall_early_resume(struct early_suspend *h)
@@ -370,13 +346,13 @@ static void hall_early_resume(struct early_suspend *h)
 	hall_suspend = false;
 #ifdef MTK_KP_WAKESOURCE
 	if (call_status == 2) {
-		printk("hall_early_resume wake up source resume!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_early_resume wake up source resume!! (%d, %d)", hall_suspend, call_status);
 	} else {
-		printk("hall_early_resume wake up source enable!! (%d)\n", hall_suspend);
+		HALL_LOG("hall_early_resume wake up source enable!! (%d, %d)", hall_suspend, call_status);
 		/* hall_wakeup_src_setting(1); */
 	}
 #endif
-	printk("early resume!! (%d)\n", hall_suspend);
+	HALL_LOG("early resume!! (%d)", hall_suspend);
 }
 
 static struct early_suspend hall_early_suspend_desc = {
@@ -386,33 +362,17 @@ static struct early_suspend hall_early_suspend_desc = {
 };
 #endif
 
-#ifdef CONFIG_MTK_SMARTBOOK_SUPPORT
-#ifdef CONFIG_HAS_SBSUSPEND
-static struct sb_handler hall_sb_handler_desc = {
-	//.level = SB_LEVEL_DISABLE_KEYPAD,
-	.plug_in = sb_hall_enable,
-	.plug_out = sb_hall_disable,
-};
-#endif
-#endif
-
 static int __init hall_mod_init(void)
 {
 	int r;
 
 	r = platform_driver_register(&hall_pdrv);
 	if (r) {
-		printk("register driver failed (%d)\n", r);
+		printk(KERN_ERR HALL_TAG "register driver failed (%d)", r);
 		return r;
 	}
 #ifdef USE_EARLY_SUSPEND
 	register_early_suspend(&hall_early_suspend_desc);
-#endif
-
-#ifdef CONFIG_MTK_SMARTBOOK_SUPPORT
-#ifdef CONFIG_HAS_SBSUSPEND
-	register_sb_handler(&hall_sb_handler_desc);
-#endif
 #endif
 
 	return 0;
