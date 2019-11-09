@@ -751,8 +751,6 @@ pr_err("Lomen 1\n");
 	if (touch_type == 1) {
 
 		set_bit(ABS_MT_TRACKING_ID, tpd->dev->absbit);
-		set_bit(ABS_MT_TOUCH_MAJOR, tpd->dev->absbit);
-		set_bit(ABS_MT_TOUCH_MINOR, tpd->dev->absbit);
 		set_bit(ABS_MT_POSITION_X, tpd->dev->absbit);
 		set_bit(ABS_MT_POSITION_Y, tpd->dev->absbit);
 		input_set_abs_params(tpd->dev, ABS_MT_POSITION_X, 0, TPD_RES_X, 0, 0);
@@ -761,11 +759,12 @@ pr_err("Lomen 1\n");
 	|| defined(CONFIG_MTK_S3320_50) || defined(CONFIG_MTK_MIT200) \
 	|| defined(CONFIG_TOUCHSCREEN_SYNAPTICS_S3528) || defined(CONFIG_MTK_S7020) \
 	|| defined(CONFIG_TOUCHSCREEN_MTK_SYNAPTICS_3320_50) || defined(CONFIG_TOUCHSCREEN_MTK_SSL_SSD20XX)
+		set_bit(ABS_MT_PRESSURE, tpd->dev->absbit);
 		input_set_abs_params(tpd->dev, ABS_MT_PRESSURE, 0, 255, 0, 0);
-		input_set_abs_params(tpd->dev, ABS_MT_WIDTH_MAJOR, 0, 15, 0, 0);
-		input_set_abs_params(tpd->dev, ABS_MT_WIDTH_MINOR, 0, 15, 0, 0);
 		input_mt_init_slots(tpd->dev, 10, 0);
 #else
+		set_bit(ABS_MT_TOUCH_MAJOR, tpd->dev->absbit);
+		set_bit(ABS_MT_TOUCH_MINOR, tpd->dev->absbit);
 		input_set_abs_params(tpd->dev, ABS_MT_TOUCH_MAJOR, 0, 100, 0, 0);
 		input_set_abs_params(tpd->dev, ABS_MT_TOUCH_MINOR, 0, 100, 0, 0);
 #endif /* CONFIG_MTK_S3320 */

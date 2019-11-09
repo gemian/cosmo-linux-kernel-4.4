@@ -3064,7 +3064,7 @@ static int solomon_touch_down_up(int id, int xpos, int ypos,
 	int width, int isdown)
 {
 	SOLOMON_DEBUG("[%d] X=%d, Y=%d, W=%d", id, xpos, ypos, width);
-	printk("[%d] X=%d, Y=%d, W=%d", id, xpos, ypos, width);
+	//printk("[%d] X=%d, Y=%d, W=%d", id, xpos, ypos, width);
 	if (isdown) {
 #if defined(SUPPORT_MT_PROTOCOL_B)
 		input_mt_slot(tpd->dev, id);
@@ -3073,19 +3073,19 @@ static int solomon_touch_down_up(int id, int xpos, int ypos,
 		//input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
-		input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
-			width);
+		//input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
+		//	width);
 		input_report_abs(tpd->dev, ABS_MT_PRESSURE, width);
-		input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR,
-			width);
+		//input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR,
+		//	width);
 #else
-		input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR, 1);
+		//input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR, 1);
 		//input_report_abs(tpd->dev, ABS_MT_POSITION_X, xpos);
         //input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
 		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
-		input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
-			width);
+		//input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
+		//	width);
 		input_report_abs(tpd->dev, ABS_MT_PRESSURE, width);
 		input_report_key(tpd->dev, BTN_TOUCH, 1);
 		input_report_key(tpd->dev, BTN_TOOL_FINGER, 1);
