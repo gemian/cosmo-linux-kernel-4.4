@@ -413,10 +413,10 @@ static void kpd_stm32_key_work_handler(struct work_struct * work)
 
 	if(1){//(pressed){
 		printk("stm32_key report Linux pressed = %d\n", pressed);
-		input_report_key(kpd_input_dev, KEY_F13, 1);
+		input_report_key(kpd_input_dev, KEY_STM32_WAKE_MTK, 1);
 		input_sync(kpd_input_dev);	
 		mdelay(1);
-		input_report_key(kpd_input_dev, KEY_F13, 0);
+		input_report_key(kpd_input_dev, KEY_STM32_WAKE_MTK, 0);
 		input_sync(kpd_input_dev);		
 	}/*
 	else{
@@ -469,14 +469,15 @@ static void kpd_finger_key_work_handler(struct work_struct * work)
 	else{
 		printk("finger_key report Linux pressed = %d\n", pressed);		
 		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, 0);
-		input_sync(kpd_input_dev);	
+		input_sync(kpd_input_dev);
+		mdelay(1);
 	}		
 	
 	if(!old_state){
-		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_EDGE_FALLING);
+		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_LEVEL_LOW);
 	}
 	else{
-		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_EDGE_RISING);
+		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_LEVEL_HIGH);
 	}
 	//gpio_set_debounce(finger_keygpiopin,finger_keydebounce);	
 	enable_irq(finger_key_irqnr);
@@ -1200,7 +1201,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
 	__set_bit(kpd_dts_data.kpd_sw_pwrkey, kpd_input_dev->keybit);
 	kpd_keymap[8] = 0;
 #endif
-	__set_bit(KEY_F13, kpd_input_dev->keybit);
+	__set_bit(KEY_STM32_WAKE_MTK, kpd_input_dev->keybit);
 	__set_bit(KEY_F14, kpd_input_dev->keybit);
 	__set_bit(KEY_F15, kpd_input_dev->keybit);
 	__set_bit(KEY_F16, kpd_input_dev->keybit);
@@ -1310,7 +1311,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
                 finger_key_irqnr = irq_of_parse_and_map(node, 0);
 				printk(KERN_ALERT "[finger_key]ints gpio:xx debounce:%d irq:%d type:%d\n",finger_keydebounce,finger_key_irqnr,finger_key_eint_type);
                 ret =
-                    request_irq(finger_key_irqnr, (irq_handler_t) kpd_finger_key_eint_handler, IRQ_TYPE_EDGE_FALLING,
+                    request_irq(finger_key_irqnr, (irq_handler_t) kpd_finger_key_eint_handler, IRQ_TYPE_LEVEL_LOW,
                                 "FINGER_KEY-eint", NULL);
                 if (ret > 0)
                         printk(KERN_ALERT "[finger_key] EINT IRQ LINENNOT AVAILABLE\n");

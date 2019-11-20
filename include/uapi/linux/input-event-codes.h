@@ -341,6 +341,7 @@
 #define KEY_CUSTOM_COSMO_DPAD_UP 251
 #define KEY_CUSTOM_COSMO_DPAD_DOWN 252
 #define KEY_CUSTOM_COSMO_DPAD_CENTER 253
+#define KEY_STM32_WAKE_MTK 254
 /* Code 255 is reserved for special needs of AT keyboard driver */
 
 #define BTN_MISC		0x100

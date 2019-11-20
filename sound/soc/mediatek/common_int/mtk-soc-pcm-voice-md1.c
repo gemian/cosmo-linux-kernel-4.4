@@ -204,8 +204,9 @@ static int speech_property_set(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	int *sph_property;
-	if(aeon_speech_flag)
-		AudDrv_GPIO_headphone_en(1);
+	//printk("Ext_Speaker_Amp_Change ON+ aeon_speech_flag=%d\n",aeon_speech_flag);
+	//if(aeon_speech_flag)
+		//AudDrv_GPIO_headphone_en(1);
 	sph_property = (int *)get_sph_property_by_name(&voice_property,
 						       kcontrol->id.name);
 	if (!sph_property) {

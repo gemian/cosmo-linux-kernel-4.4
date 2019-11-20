@@ -116,7 +116,11 @@ static int internal_r = 47000; /* internal resistor(47k ohm),custom define by DT
 #endif
 static int g_cur_key;
 static unsigned int g_accdet_eint_type = IRQ_TYPE_LEVEL_LOW;
-static int g_cur_eint_state = EINT_PIN_PLUG_OUT;
+
+//zhaolong modify for l/r hp audio channel revert 2019.9.6
+int g_cur_eint_state = EINT_PIN_PLUG_OUT;
+EXPORT_SYMBOL(g_cur_eint_state);
+//end
 
 #ifdef CONFIG_ACCDET_SUPPORT_BI_EINT
 static int g_cur_eint0_state = EINT_PIN_PLUG_OUT;

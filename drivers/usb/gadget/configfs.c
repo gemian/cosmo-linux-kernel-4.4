@@ -1666,6 +1666,7 @@ static const struct usb_gadget_driver configfs_driver_template = {
 		.name		= "configfs-gadget",
 	},
 };
+extern test_right_usb(void);
 
 #ifdef CONFIG_USB_CONFIGFS_UEVENT
 
@@ -1686,7 +1687,7 @@ static void do_usb_state_monitor_work(struct work_struct *work)
 	else
 		usb_state = "DISCONNECTED";
 	spin_unlock_irqrestore(&cdev->lock, flags);
-
+	test_right_usb();
 	pr_info("usb_state<%s>\n", usb_state);
 	schedule_delayed_work(&usb_state_monitor_dw, msecs_to_jiffies(USB_STATE_MONITOR_DELAY));
 }

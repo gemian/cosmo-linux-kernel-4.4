@@ -826,7 +826,7 @@ static int cf_input_init(struct cf_device *cf_dev)
 	__set_bit(KEY_BACK, cf_dev->input->keybit);
 	__set_bit(KEY_F18, cf_dev->input->keybit);
 	//__set_bit(KEY_F19, cf_dev->input->keybit);
-	__set_bit(253, cf_dev->input->keybit);
+	//__set_bit(253, cf_dev->input->keybit);
 	__set_bit(KEY_F20, cf_dev->input->keybit);
 	__set_bit(KEY_F21, cf_dev->input->keybit);
 	__set_bit(KEY_ENTER, cf_dev->input->evbit );
@@ -895,9 +895,9 @@ static int cf_report_key_event(struct input_dev* input, cf_key_event_t* kevent)
 		case CF_KEY_MENU:	  key_code = KEY_MENU;   break;
 		case CF_KEY_BACK:	  key_code = KEY_BACK;   break;
 		case CF_KEY_DOWNUP:	key_code = KEY_F18;    break;
-		case CF_KEY_ONETAP: key_code = KEY_F19;    break;
+		//case CF_KEY_ONETAP: key_code = KEY_F19;    break;
 		case CF_KEY_DOUBLETAP: key_code = 253;    break;
-		case CF_KEY_LONGTOUCH: key_code = KEY_F21;    break;
+		//case CF_KEY_LONGTOUCH: key_code = KEY_F21;    break;
 		case CF_KEY_ENTER:	key_code = KEY_ENTER;  break;
 		//case CF_KEY_UP: 	  key_code = KEY_UP;	   break;
 		//case CF_KEY_LEFT:	  key_code = KEY_LEFT;   break;

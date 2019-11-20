@@ -122,6 +122,8 @@ static unsigned int mBlockSampleRate[AUDIO_ANALOG_DEVICE_INOUT_MAX] = { 48000, 4
 #define MAX_DL_SAMPLE_RATE (192000)
 #define MAX_UL_SAMPLE_RATE (192000)
 
+int enable_headphone_flag = -1;
+
 static DEFINE_MUTEX(Ana_Ctrl_Mutex);
 static DEFINE_MUTEX(Ana_buf_Ctrl_Mutex);
 static DEFINE_MUTEX(Ana_Clk_Mutex);
@@ -3613,10 +3615,11 @@ static void SetVoiceAmpVolume(void)
 static void Voice_Amp_Change(bool enable)
 {
 	if (enable) {
+		AudDrv_GPIO_headphone_en(1);
 		if (GetDLStatus() == false) {
 			TurnOnDacPower(AUDIO_ANALOG_DEVICE_OUT_EARPIECEL);
 			pr_debug("%s(), amp on\n", __func__);
-
+			
 			/* Reduce ESD resistance of AU_REFN */
 			Ana_Set_Reg(AUDDEC_ANA_CON2, 0x4000, 0xffff);
 
@@ -3680,6 +3683,7 @@ static void Voice_Amp_Change(bool enable)
 		}
 	} else {
 		pr_debug("%s(), amp off\n", __func__);
+		AudDrv_GPIO_headphone_en(0);
 		/* HS mux to open */
 		Ana_Set_Reg(AUDDEC_ANA_CON6, 0x0000, 0x3 << 2);
 
@@ -3891,6 +3895,8 @@ static void Ext_Speaker_Amp_Change(bool enable)
 	if (enable) {
 		pr_debug("Ext_Speaker_Amp_Change ON+\n");
 		AudDrv_GPIO_headphone_en(0);
+		enable_headphone_flag = 2;
+		//udelay(10); 
 		AudDrv_GPIO_EXTAMP_Select(false, 3);
 		AudDrv_GPIO_EXTAMP2_Select(false,3);
 		/*udelay(1000); */
@@ -3904,7 +3910,7 @@ static void Ext_Speaker_Amp_Change(bool enable)
 		pr_debug("Ext_Speaker_Amp_Change ON-\n");
 	} else {
 		pr_debug("Ext_Speaker_Amp_Change OFF+\n");
-
+		//AudDrv_GPIO_headphone_en(1);
 		AudDrv_GPIO_EXTAMP_Select(false, 3);
 		AudDrv_GPIO_EXTAMP2_Select(false,3);
 		udelay(500);
@@ -5210,7 +5216,7 @@ static bool TurnOnADcPowerDCC(int ADCType, bool enable, int ECMmode)
 		 ECMmode);
 
 	if (enable) {
-		aeon_speech_flag = 1;
+		aeon_speech_flag = 0;
 		//AudDrv_GPIO_headphone_en(1);
 		if (GetAdcStatus() == false) {
 			audckbufEnable(true);
@@ -5423,6 +5429,7 @@ static bool TurnOnADcPowerDCC(int ADCType, bool enable, int ECMmode)
 		}
 		aeon_speech_flag = 0;
 		AudDrv_GPIO_headphone_en(0);
+		enable_headphone_flag = 2;
 	}
 	return true;
 }
@@ -7320,6 +7327,52 @@ static struct snd_soc_codec_driver soc_mtk_codec = {
 	.num_dapm_routes = ARRAY_SIZE(mtk_audio_map),
 
 };
+
+
+static ssize_t headphone_cs_proc_read(struct file *filp, char __user *buffer, size_t size, loff_t *ppos)
+{
+    char *page = NULL;
+    char *ptr = NULL;
+    int err = -1;
+    size_t len = 0;
+
+    page = kmalloc(128, GFP_KERNEL);   
+    if (!page) 
+    {       
+        kfree(page);        
+        return -ENOMEM; 
+    }
+    ptr = page; 
+
+	if(enable_headphone_flag ==0)
+    ptr += sprintf(ptr, "0\n");
+	else if(enable_headphone_flag==1)
+	ptr += sprintf(ptr, "1\n");
+	else if(enable_headphone_flag==2)
+	ptr += sprintf(ptr, "2\n");
+	else if(enable_headphone_flag==3)
+	ptr += sprintf(ptr, "3\n");
+	else if(enable_headphone_flag==3)
+	ptr += sprintf(ptr, "4\n");
+	else if(enable_headphone_flag==-1)
+	ptr += sprintf(ptr, "-1\n");
+    len = ptr - page;               
+    if(*ppos >= len)
+    {     
+        kfree(page);      
+        return 0;     
+    } 
+    err = copy_to_user(buffer,(char *)page,len);          
+    *ppos += len;     
+    if(err) 
+    {     
+        kfree(page);        
+        return err;   
+    } 
+    kfree(page);  
+    return len;   
+}
+
 static ssize_t headphone_cs_proc_write(struct file *filp, const char __user *buff, size_t count, loff_t *ppos)
 {
 	char str_buf[16] = {0};
@@ -7333,12 +7386,15 @@ static ssize_t headphone_cs_proc_write(struct file *filp, const char __user *buf
   pr_warn("%s reg_val_cs=%d===start!\n", __func__,reg_val_cs);
 
   if(str_buf[0]== '1') {
+	enable_headphone_flag = 1;
   	AudDrv_GPIO_headphone_cs(1);
 	AudDrv_GPIO_headphone_en(1);
   }else if(str_buf[0]== '0') {
+	enable_headphone_flag = 0;
   	AudDrv_GPIO_headphone_cs(0);
 	AudDrv_GPIO_headphone_en(1);
   }else if(str_buf[0]== '2'){
+	enable_headphone_flag = 2;
   	AudDrv_GPIO_headphone_en(0);
   }
   
@@ -7347,7 +7403,8 @@ static ssize_t headphone_cs_proc_write(struct file *filp, const char __user *buf
   pr_warn("%s reg_val_cs=%d===end!\n", __func__,reg_val_cs);
   return count;
 }
-static const struct file_operations headphone_cs_proc_fops = { 
+static const struct file_operations headphone_cs_proc_fops = {
+	.read  = headphone_cs_proc_read,
 	.write = headphone_cs_proc_write,
 };
 static int mtk_mt6358_codec_dev_probe(struct platform_device *pdev)
