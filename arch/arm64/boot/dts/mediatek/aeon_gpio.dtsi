@@ -26,7 +26,8 @@
 			"fusb301a_sw_en_low","fusb301a_sw_en_high", "fusb301a_sw_sel_low","fusb301a_sw_sel_high",
 			"sil9022_hpd_int","sil9022_hdmi_pwren0","sil9022_hdmi_pwren1","sil9022_hdmi_det_stat","sil9022_hdmi_hplg0","sil9022_hdmi_hplg1",
 			"aeon_usb_lr_sw_low","aeon_usb_lr_sw_high",
-			"aeon_stm32_download_fw_low","aeon_stm32_download_fw_high","aeon_wake_stm32_low","aeon_wake_stm32_high","aeon_reset_stm32_low","aeon_reset_stm32_high";
+			"aeon_stm32_download_fw_low","aeon_stm32_download_fw_high","aeon_wake_stm32_low","aeon_wake_stm32_high","aeon_reset_stm32_low","aeon_reset_stm32_high",
+			"aeon_irq_stm32_high","aeon_irq_stm32_low","aeon_mtk_id_high","aeon_mtk_id_low";
 			
     pinctrl-0 = <&aeon_pins_default>;
 
@@ -122,7 +123,11 @@
 	pinctrl-79 = <&aeon_gpio_wake_stm32_low>;
 	pinctrl-80 = <&aeon_gpio_wake_stm32_high>;
 	pinctrl-81 = <&aeon_gpio_reset_stm32_low>;
-	pinctrl-82 = <&aeon_gpio_reset_stm32_high>;		
+	pinctrl-82 = <&aeon_gpio_reset_stm32_high>;	
+	pinctrl-83 = <&aeon_gpio_irq_stm32_high>;
+	pinctrl-84 = <&aeon_gpio_irq_stm32_low>;
+	pinctrl-85 = <&aeon_gpio_mtk_id_high>;
+	pinctrl-86 = <&aeon_gpio_mtk_id_low>;	
     status = "okay";
 };
 &pio {
@@ -709,5 +714,33 @@
 			slew-rate = <1>;
 			output-high;
         };
-    };  	
+    }; 
+    aeon_gpio_irq_stm32_high: aeon@83 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO52__FUNC_GPIO52>;
+			slew-rate = <1>;
+			output-high;
+        };
+    }; 
+	aeon_gpio_irq_stm32_low: aeon@84 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO52__FUNC_GPIO52>;
+			slew-rate = <1>;
+			output-low;
+		};
+    }; 
+    aeon_gpio_mtk_id_high: aeon@85 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO89__FUNC_GPIO89>;
+			slew-rate = <1>;
+			output-high;
+        };
+    }; 	
+    aeon_gpio_mtk_id_low: aeon@86 {
+		pins_cmd_dat {
+			pinmux = <PINMUX_GPIO89__FUNC_GPIO89>;
+			slew-rate = <1>;
+			output-low;
+        };
+    }; 	
 };

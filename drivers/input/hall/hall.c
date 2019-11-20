@@ -85,10 +85,17 @@ static struct switch_dev fcover_data;
 static struct work_struct fcover_work;
 static struct workqueue_struct *fcover_workqueue = NULL;
 static DEFINE_SPINLOCK(fcover_lock);
-static int new_fcover = FCOVER_OPEN;
+int new_fcover = FCOVER_OPEN;
 static int fcover_close_flag = FCOVER_OPEN;
 extern struct input_dev *kpd_accdet_dev;
 static int initVal = 0;
+extern void enable_aw9523(int enable);
+
+int is_hall_state(void)
+{
+	return gpio_get_value(hallgpiopin);
+}
+EXPORT_SYMBOL(is_hall_state);
 
 static void fcover_key_handler(struct work_struct *work)
 {
@@ -106,6 +113,7 @@ static void fcover_key_handler(struct work_struct *work)
 		
 		if(fcover_close_flag == FCOVER_CLOSE)
 		{
+			//enable_aw9523(0);
 			input_report_key(kpd_accdet_dev, KEY_F11, 1);
 			input_sync(kpd_accdet_dev);
 			mdelay(10);
@@ -115,6 +123,7 @@ static void fcover_key_handler(struct work_struct *work)
 		}
 		else  // open
 		{
+			//enable_aw9523(1);
 			input_report_key(kpd_accdet_dev, KEY_F12, 1);
       input_sync(kpd_accdet_dev);
       mdelay(10);

@@ -194,6 +194,7 @@ static ssize_t aw9523_get_reg(struct device* cd,struct device_attribute *attr, c
 static ssize_t aw9523_set_reg(struct device* cd, struct device_attribute *attr,const char* buf, size_t len);
 
 static DEVICE_ATTR(reg, 0660, aw9523_get_reg,  aw9523_set_reg);
+extern int is_hall_state(void);
 
 struct aw9523_key_data {
 	struct device       *dev;
@@ -546,13 +547,20 @@ static void aw9523_key_eint_work(struct work_struct *work)
 	
 }
 
-static enum hrtimer_restart aw9523_key_timer_func(struct hrtimer *timer)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// aw9523 init
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static void aw9523_init_keycfg(void)
 {
-	AW9523_LOG("HRTimer\n");
+	i2c_write_reg(SW_RSTN, 0x00);		// Software Reset
 
-	schedule_work(&aw9523_key->eint_work);
+	i2c_write_reg(P0_CONFIG, 0xFF);		// P0: Input Mode
+	i2c_write_reg(P1_CONFIG, 0x00);	// P1: Output Mode
+	i2c_write_reg(P1_OUTPUT, 0x00);	// P1: 0000 0000
 
-	return HRTIMER_NORESTART; 
+	i2c_write_reg(P0_INT, 0x00);		// P0: Enable Interrupt
+	i2c_write_reg(P1_INT, 0xFF);			// P1: Disable Interrupt
+	AW9523_LOG("%s[%d]\n", __func__,__LINE__);
 }
 
 /*********************************************************
@@ -568,6 +576,108 @@ static void aw9523_int_work(struct work_struct *work)
 	i2c_read_reg(P0_INPUT);						// clear P0 Input Interrupt
 
 	hrtimer_start(&aw9523_key->key_timer, ktime_set(0,(1000/(HRTIMER_FRAME*10))*1000000), HRTIMER_MODE_REL);
+}
+
+//extern int new_fcover;
+//static hall_state = 0;
+void enable_aw9523(int enable)
+{
+	if(enable){
+		//if(aw9523_key!=NULL)
+		//aw9523_key->is_screen_on = 1;
+	}
+	else
+	{	
+		//if(aw9523_key!=NULL)
+		//aw9523_key->is_screen_on = 0;
+	}
+	printk("[enable_aw9523]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
+}
+EXPORT_SYMBOL(enable_aw9523);
+
+ #define ENABLE_AW9523_PROC_NAME        "AEON_ENABLE_AW9523"
+static struct proc_dir_entry *enable_aw9523_entry;
+static ssize_t  ENABLE_AW9523_write(struct file *file, const char *buffer, size_t count,loff_t *data)
+ {
+         char Buf[4];
+         int stat,ret=0;
+         printk("ENABLE_AW9523_write\n");
+         if (copy_from_user(Buf, buffer, 4)){
+                  return -EFAULT;
+         }
+         ret = sscanf(Buf,"%d",&stat);
+         printk("ENABLE_AW9523_write stat=%d\n",stat);
+         if(stat == 1){
+                enable_aw9523(1);
+				//mdelay(1);
+         }
+         else if(stat == 0){
+                 enable_aw9523(0);
+				 //mdelay(1);
+         }
+         return count;
+ }
+ static const struct file_operations enable_aw9523_proc_fops = {
+         //.read  = ENABLE_AW9523_read,
+         .write = ENABLE_AW9523_write
+ };
+ 
+static enum hrtimer_restart aw9523_key_timer_func(struct hrtimer *timer)
+{
+#if 1
+	AW9523_LOG("HRTimer\n");
+	if(aw9523_key!=NULL){
+		if(is_hall_state()==1){
+		aw9523_key->is_screen_on = 1;
+		//i2c_write_reg(P0_INT, 0x00);
+		}
+		else{
+		//aw9523_key->is_screen_on = 0;
+		//i2c_write_reg(P0_INT, 0xff);
+		//return HRTIMER_NORESTART; 
+		}
+		
+		//printk("[aw9523_key_timer_func]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
+	}
+	schedule_work(&aw9523_key->eint_work);
+
+	return HRTIMER_NORESTART; 
+#else
+	AW9523_LOG("HRTimer\n");
+
+    if (new_fcover == 1) {
+        printk("fcover is open\n");
+        if (hall_state) {
+            printk("+++++1111++++++\n");
+            hall_state = 0;
+            
+            aw9523_hw_reset();
+            aw9523_init_keycfg();
+            INIT_DELAYED_WORK(&aw9523_key->work, aw9523_int_work);
+            INIT_WORK(&aw9523_key->eint_work, aw9523_key_eint_work);
+			enable_irq(aw9523_key->irq);
+        } else {
+            printk("+++++2222++++++\n");
+            schedule_work(&aw9523_key->eint_work); 
+        }    
+    } else {
+        printk("fcover is closed\n");
+        if (hall_state) {
+            printk("+++++3333++++++\n");
+        } else {
+            printk("+++++4444++++++\n");
+            hall_state = 1;
+           	
+            pinctrl_select_state(aw9523_pin, shdn_low);
+            cancel_delayed_work_sync(&aw9523_key->work);
+            cancel_work_sync(&aw9523_key->eint_work);
+			disable_irq_nosync(aw9523_key->irq);
+        }
+        
+    }
+
+	return HRTIMER_NORESTART; 
+#endif
 }
 
 static irqreturn_t aw9523_key_eint_func(int irq, void *desc)
@@ -679,23 +789,6 @@ static unsigned char i2c_read_reg(unsigned char addr)
 		pr_err("msg %s i2c read error: %d\n", __func__, ret);
 
     return rdbuf[0];
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// aw9523 init
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-static void aw9523_init_keycfg(void)
-{
-	i2c_write_reg(SW_RSTN, 0x00);		// Software Reset
-
-	i2c_write_reg(P0_CONFIG, 0xFF);		// P0: Input Mode
-	i2c_write_reg(P1_CONFIG, 0x00);	// P1: Output Mode
-	i2c_write_reg(P1_OUTPUT, 0x00);	// P1: 0000 0000
-
-	i2c_write_reg(P0_INT, 0x00);		// P0: Enable Interrupt
-	i2c_write_reg(P1_INT, 0xFF);			// P1: Disable Interrupt
-	AW9523_LOG("%s[%d]\n", __func__,__LINE__);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -889,11 +982,19 @@ static int aw9523_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 	
 	INIT_DELAYED_WORK(&aw9523_key->work, aw9523_int_work);
-	
+   enable_aw9523_entry = proc_create(ENABLE_AW9523_PROC_NAME, 0777, NULL, &enable_aw9523_proc_fops);
+  if (NULL == enable_aw9523_entry)
+  {
+          printk("proc_create %s failed\n", ENABLE_AW9523_PROC_NAME);
+  }		
 	aw9523_key->delay = 10;//50
 	aw9523_key->dev = &client->dev;
+	if(is_hall_state()==1)
 	aw9523_key->is_screen_on = 1;
-
+	else
+	aw9523_key->is_screen_on = 0;
+	
+	printk("[aw9523_i2c_probe]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
 	aw9523_input_register();
 	
 	aw9523_key->keymap_len = sizeof(key_map)/sizeof(KEY_STATE);
