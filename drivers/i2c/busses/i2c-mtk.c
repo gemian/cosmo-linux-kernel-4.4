@@ -523,7 +523,6 @@ static inline void mt_i2c_init_hw(struct mt_i2c *i2c)
 	/* clear interrupt status */
 	i2c_writew_shadow(0, i2c, OFFSET_INTR_MASK);
 	i2c->irq_stat = i2c_readw_shadow(i2c, OFFSET_INTR_STAT);
-	pr_info("mt_i2c_init_hw irq_stat = %d", i2c->irq_stat);
 	i2c_writew_shadow(i2c->irq_stat, i2c, OFFSET_INTR_STAT);
 
 	i2c_writew_shadow(I2C_SOFT_RST, i2c, OFFSET_SOFTRESET);
@@ -1176,14 +1175,12 @@ static int mt_i2c_do_transfer(struct mt_i2c *i2c)
 		    (!(i2c->irq_stat & I2C_MAS_ERR))) {
 			pr_info_ratelimited("addr: %x, trans done with err %x",
 					    i2c->addr, i2c->irq_stat);
-			pr_info("zengtao 1");			
 			return -EREMOTEIO;
 		}
 
 		mt_i2c_init_hw(i2c);
 		if (i2c->ch_offset)
 			i2c_writew_shadow(I2C_RESUME_ARBIT, i2c, OFFSET_START);
-		pr_info("zengtao 2");
 		return -EREMOTEIO;
 	}
 	if (i2c->op != I2C_MASTER_WR && isDMA == false) {
@@ -1624,7 +1621,6 @@ static irqreturn_t mt_i2c_irq(int irqno, void *dev_id)
 
 	i2c_writew(0, i2c, OFFSET_INTR_MASK);
 	i2c->irq_stat = i2c_readw(i2c, OFFSET_INTR_STAT);
-	pr_info("mt_i2c_irq irq_stat = %d", i2c->irq_stat);
 	if (i2c->dev_comp->ver == 0x2)
 		int_reg = I2C_INTR_ALL;
 	i2c_writew(int_reg, i2c, OFFSET_INTR_STAT);

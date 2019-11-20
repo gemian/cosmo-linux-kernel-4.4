@@ -628,7 +628,7 @@ static ssize_t ENABLE_SPEAKER_read(struct file *filp, char __user *buffer, size_
     ptr += sprintf(ptr, "0\n");
 	else if(enable_speaker_flag==1)
 	ptr += sprintf(ptr, "1\n");
-	else if(enable_speaker_flag==3)
+	else if(enable_speaker_flag==2)
 	ptr += sprintf(ptr, "2\n");
 	else if(enable_speaker_flag==3)
 	ptr += sprintf(ptr, "3\n");
@@ -665,7 +665,7 @@ static ssize_t  ENABLE_SPEAKER_write(struct file *file, const char *buffer, size
          if(stat == 1){
 			AudDrv_GPIO_EXTAMP_Select(true, 3);
          }else if(stat == 3){
-			AudDrv_GPIO_EXTAMP2_Select(false,3);
+			AudDrv_GPIO_EXTAMP2_Select(true,3);
          }
          else if(stat == 0){
 			AudDrv_GPIO_EXTAMP_Select(false, 3);
@@ -721,7 +721,7 @@ int AudDrv_GPIO_HPDEPOP_Select(int bEnable)
 int AudDrv_GPIO_headphone_en(int bEnable)
 {
 	int retval = 0;
-
+	//printk("Ext_Speaker_Amp_Change ON+ AudDrv_GPIO_headphone_en bEnable=%d\n",bEnable);
 	if (bEnable == 1){
 		AudDrv_GPIO_Select(GPIO_HEADOHONE_EN_HIGH);
 	}
@@ -741,7 +741,7 @@ int AudDrv_GPIO_headphone_cs(int bEnable)
 	}
 	else{
         AudDrv_GPIO_Select(GPIO_EXTAMP2_LOW);
-        udelay(10);		
+        //udelay(10);		
 		AudDrv_GPIO_Select(GPIO_HEADOHONE_CS_LOW);
 	}
 

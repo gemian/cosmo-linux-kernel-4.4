@@ -80,6 +80,10 @@
 #include <linux/mutex.h>
 #include <linux/uaccess.h>
 
+//zhaolong modify for l/r hp audio channel revert 2019.9.6
+extern int g_cur_eint_state;
+//end
+
 /* mutex lock */
 static DEFINE_MUTEX(afe_connection_mutex);
 
@@ -638,10 +642,21 @@ bool SetDl2ToI2s3(unsigned int ConnectionState)
 
 bool SetDl3ToI2s1Dac(unsigned int ConnectionState)
 {
-	SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I23,
-			   Soc_Aud_InterConnectionOutput_O03);
-	SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I24,
-			   Soc_Aud_InterConnectionOutput_O04);
+    //zhaolong modify for l/r hp audio channel revert 2019.9.6
+    if (g_cur_eint_state) {
+        printk("zhaolong++++acc is plug in, use headphone\n");
+        SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I23,
+                    Soc_Aud_InterConnectionOutput_O03);
+        SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I24,
+                    Soc_Aud_InterConnectionOutput_O04);
+    } else {
+        printk("zhaolong++++acc is plug out, use external dual speaker\n");
+        SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I23,
+                    Soc_Aud_InterConnectionOutput_O04);
+        SetConnectionState(ConnectionState, Soc_Aud_InterConnectionInput_I24,
+                    Soc_Aud_InterConnectionOutput_O03);
+    }
+    //end
 	return true;
 }
 

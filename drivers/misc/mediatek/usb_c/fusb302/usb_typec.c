@@ -106,7 +106,7 @@ void InitializeFUSB300(void)
 	FUSB300Read(regDeviceID, 1, &Registers.DeviceID.byte);	/* Read the device ID */
 	fusb_printk(K_DEBUG, "%s DeviceID: 0x%x\n", __func__, Registers.DeviceID.byte);
 	
-	Registers.Mode.byte = 0x01;
+	Registers.Mode.byte = 0x10;
 	FUSB300Write(regMode, 1, &Registers.Mode.byte);
 	
 //	FUSB300Read(regSlice, 1, &Registers.Slice.byte);	/* Read the slice */
@@ -278,9 +278,9 @@ static ssize_t  USB_CONTROL_write(struct file *file, const char *buffer, size_t 
          else if(stat == 1){
 			force_to_otg(TRUE);
          }else if(stat == 2){
-			aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+	//		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
          } else if(stat == 3){
-			aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
+	//		aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
          } else if(stat == 4){
 			mt6370_enable_UUG_ON(0);
          } else if(stat == 5){
@@ -320,9 +320,9 @@ void fusb300_eint_work(struct work_struct *data)
 	printk("wgx>>>>>>  %s[%d]:zhaolong gpio166 = %d \n", __func__,__LINE__,usb1_id_state);
 	if (!usb1_id_state){
 		printk("===%s USB1 is plug in===\n",__func__);
-
 		FUSB300Read(regStatus, 1, &CCXstate);	/* Read CC1 CC2 state*/
 		CCXstate &= 0x30;
+		//printk("===%s hdmi plug in===0x11 CCXstate=0x%x\n",__func__,CCXstate);
 		if ((CCXstate == 0x10) || (CCXstate == 0x20)){
 			
 			//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
@@ -406,6 +406,28 @@ void fusb300_eint_work(struct work_struct *data)
 	mutex_unlock(&typec_lock);
 }
 EXPORT_SYMBOL(hdmi_plug_in_flag);
+
+void test_right_usb(void){
+	unsigned char CCXstate = 0;
+	FUSB300Read(regType, 1, &CCXstate); /* Read CC1 CC2 state*/
+	CCXstate &= 0x18;
+	if(CCXstate == 0x8){
+		aeon_gpio_set("aeon_irq_stm32_high");
+		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+		mdelay(1);
+		printk("===%s hdmi plug in===0x12 WAKE_STM32 YES\n",__func__);
+	}
+	else{
+		aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
+		mdelay(10);
+		aeon_gpio_set("aeon_irq_stm32_low");
+		mdelay(1); 
+		printk("===%s hdmi plug in===0x12 WAKE_STM32 NO\n",__func__);
+	}
+	printk("===%s hdmi plug in===0x12 CCXstate=0x%x\n",__func__,CCXstate);
+}
+EXPORT_SYMBOL(test_right_usb);
+
 static irqreturn_t fusb300_eint_isr(int irqnum, void *data)
 {
 	int ret;
