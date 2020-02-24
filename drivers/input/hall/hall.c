@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2010 MediaTek, Inc.
  *
@@ -74,7 +75,7 @@ int fcover_gpio_init(void)
 		printk("Cannot find fcover pinctrl pin_cfg!\n");
 	}
 	pinctrl_select_state(fcoverctrl, hall_pins_cfg);
-	return ret;	
+	return ret;
 }
 #endif
 
@@ -110,26 +111,28 @@ static void fcover_key_handler(struct work_struct *work)
 		spin_lock(&fcover_lock);
 		fcover_close_flag = new_fcover;
 		spin_unlock(&fcover_lock);
-		
+
 		if(fcover_close_flag == FCOVER_CLOSE)
 		{
 			//enable_aw9523(0);
-			input_report_key(kpd_accdet_dev, KEY_F11, 1);
+			input_report_key(kpd_accdet_dev, KEY_F15, 1);
 			input_sync(kpd_accdet_dev);
 			mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F11, 0);
-      input_sync(kpd_accdet_dev);
-     	printk("zhaolong=======F11====\n");
+			input_report_key(kpd_accdet_dev, KEY_F15, 0);
+			input_sync(kpd_accdet_dev);
+
+     	printk("zhaolong=======FCOVER_CLOSE====\n");
 		}
 		else  // open
 		{
 			//enable_aw9523(1);
-			input_report_key(kpd_accdet_dev, KEY_F12, 1);
-      input_sync(kpd_accdet_dev);
-      mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F12, 0);
-      input_sync(kpd_accdet_dev);
-      printk("zhaolong=======F12====\n");
+			input_report_key(kpd_accdet_dev, KEY_F16, 1);
+			input_sync(kpd_accdet_dev);
+			mdelay(10);
+			input_report_key(kpd_accdet_dev, KEY_F16, 0);
+			input_sync(kpd_accdet_dev);
+
+			printk("zhaolong=======FCOVER_OPEN====\n");
 		}
 		switch_set_state((struct switch_dev *)&fcover_data, fcover_close_flag);
 	}
@@ -137,8 +140,8 @@ static void fcover_key_handler(struct work_struct *work)
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_LOW);
 	else
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_HIGH);
-		
-	gpio_set_debounce(hallgpiopin, halldebounce);	
+
+	gpio_set_debounce(hallgpiopin, halldebounce);
 	enable_irq(hall_irqnr);
 }
 
@@ -147,8 +150,8 @@ static void hall_fcover_eint_handler(void)
 {
 	printk("hall_fcover_eint_handler ..\n");
 	disable_irq_nosync(hall_irqnr);
-	
-	queue_work(fcover_workqueue, &fcover_work);	
+
+	queue_work(fcover_workqueue, &fcover_work);
 	//schedule_work(&obj->eint_work);
 }
 #else
@@ -156,8 +159,8 @@ static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 {
 	/* use _nosync to avoid deadlock */
 	disable_irq_nosync(hall_irqnr);
-	queue_work(fcover_workqueue, &fcover_work);	
-	
+	queue_work(fcover_workqueue, &fcover_work);
+
 	return IRQ_HANDLED;
 }
 #endif
@@ -219,7 +222,7 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	struct device_node *node = NULL;
 
 	printk("%s,hall probe start!!!\n",__func__);
-	
+
 	fcoverPltFmDev = pdev;
 
 	/* initialize and register input device (/dev/input/eventX) */
@@ -229,9 +232,8 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 //		return -ENOMEM;
 //	}
 
-	__set_bit(EV_KEY, kpd_accdet_dev->evbit);
-	__set_bit(KEY_F11, kpd_accdet_dev->keybit);
-	__set_bit(KEY_F12, kpd_accdet_dev->keybit);		
+  __set_bit(EV_SW, kpd_accdet_dev->evbit);
+  __set_bit(SW_LID, kpd_accdet_dev->swbit);
 
 //	hall_input_dev->id.bustype = BUS_HOST;
 //	hall_input_dev->name = HALL_NAME;
@@ -272,7 +274,7 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 		hallgpiopin = of_get_named_gpio(node, "deb-gpios", 0);//ints[0];
 		halldebounce = ints[1];
 		hall_eint_type = ints1[1];
-		
+
                 printk("%s():hallgpiopin =%d, halldebounce=%d, hall_eint_type = %d\n",__func__,
                         hallgpiopin,halldebounce,hall_eint_type);
 
@@ -290,11 +292,11 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	}
 
 	printk("hall_fcover_eint_handler done..\n");
-	
+
 	fcover_data.name = "hall";
 	fcover_data.index = 0;
 	fcover_data.state = fcover_close_flag;
-	
+
 	err = switch_dev_register(&fcover_data);
 	if(err)
 	{

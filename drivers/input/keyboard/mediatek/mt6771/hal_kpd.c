@@ -36,6 +36,8 @@ static u16 kpd_keymap_state[KPD_NUM_MEMS] = {
 };
 
 static bool kpd_sb_enable;
+extern int fnKeyPressed;
+int powerKeyPressed = 0;
 
 #ifdef CONFIG_MTK_SMARTBOOK_SUPPORT
 static void sb_kpd_release_keys(struct input_dev *dev)
@@ -358,7 +360,22 @@ void kpd_pmic_pwrkey_hal(unsigned long pressed)
 {
 #ifdef CONFIG_KPD_PWRKEY_USE_PMIC
 	if (!kpd_sb_enable) {
-		input_report_key(kpd_input_dev, kpd_dts_data.kpd_sw_pwrkey, pressed);
+		if (pressed) {
+		  if (fnKeyPressed == 1) {
+		    input_report_key(kpd_input_dev, kpd_dts_data.kpd_sw_pwrkey, pressed);
+		    powerKeyPressed = 1;
+		  }
+		  else
+		    input_report_key(kpd_input_dev, KEY_ESC, pressed);
+		}
+		else {
+		  if (powerKeyPressed) {
+		    input_report_key(kpd_input_dev, kpd_dts_data.kpd_sw_pwrkey, pressed);
+		    powerKeyPressed = 0;
+		  }
+		else
+		    input_report_key(kpd_input_dev, KEY_ESC, pressed);
+		}
 		input_sync(kpd_input_dev);
 		if (kpd_show_hw_keycode) {
 			kpd_print(KPD_SAY "(%s) HW keycode =%d using PMIC\n",
