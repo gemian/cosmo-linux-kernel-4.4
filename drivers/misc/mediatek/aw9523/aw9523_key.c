@@ -541,6 +541,15 @@ static void aw9523_init_keycfg(void) {
     i2c_write_reg(P1_INT, 0xFF);    // P1: Disable Interrupt
 }
 
+static enum hrtimer_restart aw9523_key_timer_func(struct hrtimer *timer)
+{
+	AW9523_LOG("HRTimer\n");
+
+	schedule_work(&aw9523_key->eint_work);
+
+	return HRTIMER_NORESTART;
+}
+
 /*********************************************************
  *
  * int work
