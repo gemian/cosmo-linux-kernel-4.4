@@ -65,6 +65,7 @@ bool global_negative_flag;
 static struct target_cap schedtune_target_cap[16];
 static int cpu_cluster_nr;
 #ifdef CONFIG_CPU_FREQ_GOV_SCHEDPLUS
+#ifdef CONFIG_CGROUP_SCHEDTUNE
 static char met_dvfs_info2[5][32] = {
 	"sched_dvfs_boostmin_cid0",
 	"sched_dvfs_boostmin_cid1",
@@ -80,6 +81,7 @@ static char met_dvfs_info3[5][32] = {
 	"NULL",
 	"NULL"
 };
+#endif
 #endif
 
 static int
@@ -145,6 +147,31 @@ __schedtune_accept_deltas(int nrg_delta, int cap_delta,
 
 	return payoff;
 }
+
+#ifndef CONFIG_CGROUP_SCHEDTUNE
+int prefer_idle_for_perf_idx(int idx, int prefer_idle)
+{
+	return 0;
+}
+
+int boost_write_for_perf_idx(int group_idx, int boost_value) {
+    return 0;
+}
+
+int linear_real_boost(int linear_boost)
+{
+	return 0;
+}
+
+int linear_real_boost_pid(int linear_boost, int pid)
+{
+	return 0;
+}
+
+int capacity_min_write_for_perf_idx(int idx, int capacity_min) {
+    return 0;
+}
+#endif
 
 #ifdef CONFIG_CGROUP_SCHEDTUNE
 /*
