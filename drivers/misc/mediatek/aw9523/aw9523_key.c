@@ -40,16 +40,22 @@
 #include <linux/workqueue.h>
 
 //#define CONFIG_AW9523_FB
-//#define AW9523_EARLAY_SUSPEND
+//#define AW9523_EARLY_SUSPEND
+#define CONFIG_AW9523_HALL
 /**
-*add by wangyongsheng20171227
-*�� : ������������ںиǱ�ѹסʱ����ȥ���ߺ�ż�����ְ���������Ӧ
-*���ø��豸������ʱ�ͽ������߲���ϵͳ����suspend�����ٽ���
+ * AW9523_EARLY_SUSPEND added by wangyongsheng 20171227
+*释 : 解决外扩按键在盒盖被压住时进不去休眠和偶尔出现按键不能相应	 * Notes:
+*及让该设备在灭屏时就进入休眠不等系统调用suspend方法再进入	 * Keys can be pressed whilst the screen is closed, early suspend provides a way disable the keyboard whilst the device
+*autmatic translation:	 * is closed, this can be triggered via FB or HALL callback.
 */
 
 #ifdef CONFIG_AW9523_FB
 #include <linux/notifier.h>
 #include <linux/fb.h>
+#endif
+#ifdef CONFIG_AW9523_HALL
+#include <linux/notifier.h>
+#include <soc/mediatek/hall.h>
 #endif
 
 #include "aw9523_key.h"
@@ -194,7 +200,6 @@ static ssize_t aw9523_get_reg(struct device* cd,struct device_attribute *attr, c
 static ssize_t aw9523_set_reg(struct device* cd, struct device_attribute *attr,const char* buf, size_t len);
 
 static DEVICE_ATTR(reg, 0660, aw9523_get_reg,  aw9523_set_reg);
-extern int is_hall_state(void);
 
 struct aw9523_key_data {
 	struct device       *dev;
@@ -208,10 +213,13 @@ struct aw9523_key_data {
 	KEY_STATE *keymap;
 	int keymap_len;
 #ifdef CONFIG_AW9523_FB
-		struct notifier_block	fb_notif;
+    struct notifier_block	fb_notif;
+	bool is_screen_on;
 #endif
-
-		bool is_screen_on;
+#ifdef CONFIG_AW9523_HALL
+	struct notifier_block hall_notif;
+	bool is_device_closed;
+#endif
 };
 
 struct aw9523_pinctrl {
@@ -228,14 +236,18 @@ struct pinctrl_state *int_pin;
 struct aw9523_key_data *aw9523_key;
 struct i2c_client *aw9523_i2c_client;
 
-
-
+#ifdef CONFIG_AW9523_HALL_EXTERN
+extern bool hall_fcover_lid_closed;
+#endif
 
 #ifdef CONFIG_AW9523_FB
 static int aw9523_fb_notifier_callback(struct notifier_block *self,
                      unsigned long event, void *data);
 #endif
-#ifdef AW9523_EARLAY_SUSPEND
+#ifdef CONFIG_AW9523_HALL
+static int aw9523_hall_notifier_callback(struct notifier_block *self, unsigned long event, void *data);
+#endif
+#ifdef AW9523_EARLY_SUSPEND
 static void aw9523_i2c_early_suspend(struct i2c_client *client);
 static void aw9523_i2c_early_resume(struct i2c_client *client);
 #endif
@@ -309,11 +321,14 @@ static void aw9523_key_eint_work(struct work_struct *work)
 	int t;
 	int keyIn;
 	int keyCodes[100];
-    int keyValues[100];
-    int discardKeyCheck;
+	int keyValues[100];
+	int discardKeyCheck;
+	bool setKeyValue;
+	bool forceAllKeyRelease;
 
 	AW9523_LOG("Handling Interrupt\n");
 
+#ifdef CONFIG_AW9523_FB
 	if(!aw9523_key->is_screen_on) {
         AW9523_LOG("Screen is off, reenable IRQ\n");
 
@@ -332,7 +347,29 @@ static void aw9523_key_eint_work(struct work_struct *work)
         enable_irq(aw9523_key->irq);
         return;
     }
+#endif
 
+#ifdef CONFIG_AW9523_HALL
+	if (aw9523_key->is_device_closed) {
+		AW9523_LOG("Screen is off\n");
+
+
+		val = i2c_read_reg(P1_CONFIG);
+		i2c_write_reg(P1_CONFIG, val & (~P1_KCOL_MASK));	//set p1 port output mode
+
+		val = i2c_read_reg(P1_OUTPUT);
+		i2c_write_reg(P1_OUTPUT, val & (~P1_KCOL_MASK));	//p1 port output 0
+
+		val = i2c_read_reg(P0_INPUT);	//clear p0 input irq
+
+		val = i2c_read_reg(P0_INT);
+		i2c_write_reg(P0_INT, 0x00);	//enable p0 port irq
+
+		AW9523_LOG("IRQ enable 4 - off branch\n");
+		enable_irq(aw9523_key->irq);
+		return;
+	}
+#endif
 
 	pdata = aw9523_key;
 
@@ -347,8 +384,17 @@ static void aw9523_key_eint_work(struct work_struct *work)
 			i2c_write_reg(P1_OUTPUT, (P1_KCOL_MASK | val) & (~(1<<i)));
 
 			val = i2c_read_reg(P0_INPUT);						// read p0 port status
-			if(aw9523_key->is_screen_on)
-			keyst_new[i] = (val & P0_KROW_MASK);
+
+			setKeyValue = true;
+#ifdef CONFIG_AW9523_FB
+			setKeyValue = aw9523_key->is_screen_on;
+#endif
+#ifdef CONFIG_AW9523_HALL
+			setKeyValue = !aw9523_key->is_device_closed;
+#endif
+			if (setKeyValue) {
+				keyst_new[i] = (val & P0_KROW_MASK);
+			}
 			//printk("0x%02x, ", keyst_new[i]);                //i=p1 keyst[i]=p0
 		}
 	}
@@ -516,11 +562,18 @@ static void aw9523_key_eint_work(struct work_struct *work)
 	//	keyCurrentCycle = 0;
 	//}
 
+	forceAllKeyRelease = false;
+#ifdef CONFIG_AW9523_FB
+	forceAllKeyRelease = !aw9523_key->is_screen_on;
+#endif
+#ifdef CONFIG_AW9523_HALL
+	forceAllKeyRelease = aw9523_key->is_device_closed;
+#endif
 
-	if(((!(memcmp(&keyst_new[0], &keyst_def[KEYST_NEW][0], P1_NUM_MAX))) && (skipCycles == 0))||(!aw9523_key->is_screen_on)) {			// all key release
+	if(((!(memcmp(&keyst_new[0], &keyst_def[KEYST_NEW][0], P1_NUM_MAX))) && (skipCycles == 0)) || forceAllKeyRelease) {			// all key release
 		//keyIn = 0;
 		//keyCurrentCycle = 0;
-		if (aw9523_key->is_screen_on) {
+		if (!forceAllKeyRelease) {
 		    AW9523_LOG("Clearing discarded keys\n");
             discardKeyIdx = 0;
         }
@@ -577,10 +630,34 @@ static void aw9523_init_keycfg(void)
  ********************************************************/
 static void aw9523_int_work(struct work_struct *work)
 {
+#ifdef CONFIG_AW9523_HALL_EXTERN
+	unsigned char val;
+#endif
 	AW9523_LOG("DelayedWork\n");
 
 	i2c_write_reg(P0_INT, 0xff);			//disable p0 port irq
 	i2c_read_reg(P0_INPUT);						// clear P0 Input Interrupt
+
+#ifdef CONFIG_AW9523_HALL_EXTERN
+	if (hall_fcover_lid_closed) {
+		AW9523_LOG("Lid closed - interrupt ignored\n");
+
+		val = i2c_read_reg(P1_CONFIG);
+		i2c_write_reg(P1_CONFIG, val & (~P1_KCOL_MASK));	//set p1 port output mode
+
+		val = i2c_read_reg(P1_OUTPUT);
+		i2c_write_reg(P1_OUTPUT, val & (~P1_KCOL_MASK));	//p1 port output 0
+
+		val = i2c_read_reg(P0_INPUT);	//clear p0 input irq
+
+		val = i2c_read_reg(P0_INT);
+		i2c_write_reg(P0_INT, 0x00);	//enable p0 port irq
+
+		AW9523_LOG("IRQ enable 6 - closed\n");
+		enable_irq(aw9523_key->irq);
+		return;
+	}
+#endif
 
 	hrtimer_start(&aw9523_key->key_timer, ktime_set(0,(1000/(HRTIMER_FRAME*10))*1000000), HRTIMER_MODE_REL);
 }
@@ -598,7 +675,7 @@ void enable_aw9523(int enable)
 		//if(aw9523_key!=NULL)
 		//aw9523_key->is_screen_on = 0;
 	}
-	printk("[enable_aw9523]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
+	/*printk("[enable_aw9523]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);*/
 }
 EXPORT_SYMBOL(enable_aw9523);
 
@@ -631,60 +708,10 @@ static ssize_t  ENABLE_AW9523_write(struct file *file, const char *buffer, size_
 
 static enum hrtimer_restart aw9523_key_timer_func(struct hrtimer *timer)
 {
-#if 1
 	AW9523_LOG("HRTimer\n");
-	if(aw9523_key!=NULL){
-		if(is_hall_state()==1){
-		aw9523_key->is_screen_on = 1;
-		//i2c_write_reg(P0_INT, 0x00);
-		}
-		else{
-		//aw9523_key->is_screen_on = 0;
-		//i2c_write_reg(P0_INT, 0xff);
-		//return HRTIMER_NORESTART;
-		}
-
-		//printk("[aw9523_key_timer_func]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
-	}
 	schedule_work(&aw9523_key->eint_work);
 
 	return HRTIMER_NORESTART;
-#else
-	AW9523_LOG("HRTimer\n");
-
-    if (new_fcover == 1) {
-        printk("fcover is open\n");
-        if (hall_state) {
-            printk("+++++1111++++++\n");
-            hall_state = 0;
-
-            aw9523_hw_reset();
-            aw9523_init_keycfg();
-            INIT_DELAYED_WORK(&aw9523_key->work, aw9523_int_work);
-            INIT_WORK(&aw9523_key->eint_work, aw9523_key_eint_work);
-			enable_irq(aw9523_key->irq);
-        } else {
-            printk("+++++2222++++++\n");
-            schedule_work(&aw9523_key->eint_work);
-        }
-    } else {
-        printk("fcover is closed\n");
-        if (hall_state) {
-            printk("+++++3333++++++\n");
-        } else {
-            printk("+++++4444++++++\n");
-            hall_state = 1;
-
-            pinctrl_select_state(aw9523_pin, shdn_low);
-            cancel_delayed_work_sync(&aw9523_key->work);
-            cancel_work_sync(&aw9523_key->eint_work);
-			disable_irq_nosync(aw9523_key->irq);
-        }
-
-    }
-
-	return HRTIMER_NORESTART;
-#endif
 }
 
 static irqreturn_t aw9523_key_eint_func(int irq, void *desc)
@@ -934,21 +961,46 @@ static int aw9523_fb_notifier_callback(struct notifier_block *self,
         blank = evdata->data;
         if (*blank == FB_BLANK_UNBLANK) {
             AW9523_LOG("%s: fbnotify screen on mode.\n", __func__);
+#ifdef AW9523_EARLY_SUSPEND
 			aw9523_i2c_early_resume(aw9523_i2c_client);
+#endif
 			aw9523->is_screen_on = true;
         } else if (*blank == FB_BLANK_POWERDOWN) {
 			AW9523_LOG("%s: fbnotify screen off mode.\n", __func__);
 			//���������˳���ܷ��ˣ���Ȼ����ֽ������ߵ�ͬʱ�������ͳ����ұ��㣬���°�����Ч���⡣
 			//��ִ�и�ֵ���������ִ�������all key release�Ƕδ�����ִ�н���suspend��
 			aw9523->is_screen_on = false;
+#ifdef AW9523_EARLY_SUSPEND
 			aw9523_i2c_early_suspend(aw9523_i2c_client);
-
-
+#endif
         }
     }
 
 	AW9523_LOG("%s: aw9523_key->is_screen_on=%d \n", __func__,aw9523_key->is_screen_on);
     return 0;
+}
+#endif
+
+#ifdef CONFIG_AW9523_HALL
+static int aw9523_hall_notifier_callback(struct notifier_block *self, unsigned long event, void *data)
+{
+	struct aw9523_key_data *aw9523 = container_of(self, struct aw9523_key_data, hall_notif);
+	// Must indicate device is closed before suspending, and resume before setting device opened.
+	// This is to avoid reporting random keys during suspend/resume
+	if (event == HALL_FCOVER_CLOSE) {
+		AW9523_LOG("%s: hall notify device closed.\n", __func__);
+		aw9523->is_device_closed = true;
+#ifdef AW9523_EARLY_SUSPEND
+		aw9523_i2c_early_suspend(aw9523_i2c_client);
+#endif
+	} else if (event == HALL_FCOVER_OPEN) {
+		AW9523_LOG("%s: hall notify device opened.\n", __func__);
+#ifdef AW9523_EARLY_SUSPEND
+		aw9523_i2c_early_resume(aw9523_i2c_client);
+#endif
+		aw9523->is_device_closed = false;
+	}
+	return 0;
 }
 #endif
 
@@ -989,19 +1041,14 @@ static int aw9523_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 
 	INIT_DELAYED_WORK(&aw9523_key->work, aw9523_int_work);
-   enable_aw9523_entry = proc_create(ENABLE_AW9523_PROC_NAME, 0777, NULL, &enable_aw9523_proc_fops);
-  if (NULL == enable_aw9523_entry)
-  {
-          printk("proc_create %s failed\n", ENABLE_AW9523_PROC_NAME);
-  }
+	enable_aw9523_entry = proc_create(ENABLE_AW9523_PROC_NAME, 0777, NULL, &enable_aw9523_proc_fops);
+	if (NULL == enable_aw9523_entry)
+	{
+		printk("proc_create %s failed\n", ENABLE_AW9523_PROC_NAME);
+	}
 	aw9523_key->delay = 10;//50
 	aw9523_key->dev = &client->dev;
-	if(is_hall_state()==1)
-	aw9523_key->is_screen_on = 1;
-	else
-	aw9523_key->is_screen_on = 0;
 
-	printk("[aw9523_i2c_probe]aw9523_key->is_screen_on = %d\n",aw9523_key->is_screen_on);
 	aw9523_input_register();
 
 	aw9523_key->keymap_len = sizeof(key_map)/sizeof(KEY_STATE);
@@ -1010,15 +1057,28 @@ static int aw9523_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	aw9523_init_keycfg();
 
 #ifdef CONFIG_AW9523_FB
+	aw9523_key->is_screen_on = true;
+	AW9523_LOG("[aw9523_i2c_probe]aw9523_key->is_screen_on = %d\n", aw9523_key->is_screen_on);
 	aw9523_key->fb_notif.notifier_call = aw9523_fb_notifier_callback;
     err = fb_register_client(&aw9523_key->fb_notif);
     if (err) {
 		pr_err("%s: Unable to register aw9523_key fb_notifier: %d\n", __func__, err);
 	}
 	else {
-		pr_info("%s: Success to register aw9523_key fb_notifier.\n", __func__);
+		AW9523_LOG("%s: Success to register aw9523_key fb_notifier.\n", __func__);
 	}
 #endif
+#ifdef CONFIG_AW9523_HALL
+	aw9523_key->is_device_closed = false;
+	aw9523_key->hall_notif.notifier_call = aw9523_hall_notifier_callback;
+	err = hall_register_client(&aw9523_key->hall_notif);
+	if (err) {
+		pr_err("%s: Unable to register aw9523_key fb_notifier: %d\n", __func__, err);
+	} else {
+		AW9523_LOG("%s: Success to register aw9523_key fb_notifier.\n", __func__);
+	}
+#endif
+
 	//Interrupt
 	aw9523_key_setup_eint();
 	INIT_WORK(&aw9523_key->eint_work, aw9523_key_eint_work);
@@ -1042,7 +1102,7 @@ exit_check_functionality_failed:
 }
 #define AW9523_I2C_SUSPEND
 
-#ifdef AW9523_EARLAY_SUSPEND
+#ifdef AW9523_EARLY_SUSPEND
 static void aw9523_i2c_early_suspend(struct i2c_client *client)
 {
 	struct aw9523_key_data *aw9523_key = i2c_get_clientdata(client);
@@ -1081,7 +1141,7 @@ static void aw9523_i2c_early_resume(struct i2c_client *client)
 #ifdef AW9523_I2C_SUSPEND
 static int aw9523_i2c_suspend(struct i2c_client *client, pm_message_t msg)
 {
-#ifndef AW9523_EARLAY_SUSPEND
+#ifndef AW9523_EARLY_SUSPEND
 	struct aw9523_key_data *aw9523_key = i2c_get_clientdata(client);
 
 	disable_irq_nosync(aw9523_key->irq);
@@ -1101,7 +1161,7 @@ static int aw9523_i2c_suspend(struct i2c_client *client, pm_message_t msg)
 /*----------------------------------------------------------------------------*/
 static int aw9523_i2c_resume(struct i2c_client *client)
 {
-#ifndef AW9523_EARLAY_SUSPEND
+#ifndef AW9523_EARLY_SUSPEND
 	struct aw9523_key_data *aw9523_key = i2c_get_clientdata(client);
 
 	printk("%s enter\n", __func__);
@@ -1131,7 +1191,10 @@ static int aw9523_i2c_remove(struct i2c_client *client)
 	aw9523_i2c_client = NULL;
 	i2c_set_clientdata(client, NULL);
 #ifdef CONFIG_AW9523_FB
-		fb_unregister_client(&aw9523_key->fb_notif);
+	fb_unregister_client(&aw9523_key->fb_notif);
+#endif
+#ifdef CONFIG_AW9523_HALL
+	hall_unregister_client(&aw9523_key->hall_notif);
 #endif
 
 	return 0;
