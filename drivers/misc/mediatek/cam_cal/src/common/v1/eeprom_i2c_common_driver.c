@@ -63,10 +63,12 @@ static int Read_I2C_CAM_CAL(u16 a_u2Addr, u32 ui4_length, u8 *a_puBuff)
 	g_pstI2CclientG->addr =
 		g_pstI2CclientG->addr & (I2C_MASK_FLAG | I2C_WR_FLAG);
 	spin_unlock(&g_spinLock);
-
+READAGAIN:
 	i4RetValue = i2c_master_send(g_pstI2CclientG, puReadCmd, 2);
 	if (i4RetValue != 2) {
 		pr_debug("I2C send read address failed!!\n");
+		g_pstI2CclientG->addr = 0x50;
+		goto READAGAIN;
 		return -1;
 	}
 
