@@ -22,9 +22,9 @@
 #include <linux/of_irq.h>
 #include <linux/clk.h>
 #include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/kdev_t.h>
-#include <linux/fs.h>
+#include <linux/device.h>                                                                              
+#include <linux/kdev_t.h>                                                                               
+#include <linux/fs.h>                                                                                             
 #include <linux/cdev.h>
 #include <kpd.h>
 #include <mt-plat/aee.h>
@@ -170,7 +170,7 @@ static ssize_t  STM32_DL_FW_write(struct file *file, const char *buffer, size_t 
          //.read  = STM32_DL_FW_read,
          .write = STM32_DL_FW_write
  };
-
+ 
  #define WAKE_STM32_PROC_NAME        "AEON_WAKE_STM32"
 static struct proc_dir_entry *wake_stm32_entry;
 static ssize_t  WAKE_STM32_write(struct file *file, const char *buffer, size_t count,loff_t *data)
@@ -241,14 +241,14 @@ static ssize_t CHARGE_STATUS_read(struct file *filp, char __user *buffer, size_t
     int err = -1;
     size_t len = 0;
 
-    page = kmalloc(128, GFP_KERNEL);
-    if (!page)
-    {
-        kfree(page);
-        return -ENOMEM;
+    page = kmalloc(128, GFP_KERNEL);   
+    if (!page) 
+    {       
+        kfree(page);        
+        return -ENOMEM; 
     }
-    ptr = page;
-
+    ptr = page; 
+       
        //tof_insert_stat = gpio_get_value(tof_insertgpiopin);
        if(aeon_charging_enable){
 		   if(hdmi_plug_in_flag == 1){
@@ -260,7 +260,7 @@ static ssize_t CHARGE_STATUS_read(struct file *filp, char __user *buffer, size_t
 		   }else if(hdmi_plug_in_flag==0 && aeon_otg_enable ==0){
 			  ptr += sprintf(ptr, "left_or_right_charging\n");	//
 		   }
-	   }
+	   }     
        else if(aeon_charging_enable == 0 && hdmi_plug_in_flag == 1 && aeon_otg_enable == 2)
                ptr += sprintf(ptr, "left_otg_and_hdmi\n");//
        else if(aeon_charging_enable == 0 && hdmi_plug_in_flag == 1 && aeon_otg_enable == 0)
@@ -271,22 +271,22 @@ static ssize_t CHARGE_STATUS_read(struct file *filp, char __user *buffer, size_t
                ptr += sprintf(ptr, "right_otg_only\n");//
        else if(aeon_charging_enable == 0 && hdmi_plug_in_flag == 0 && aeon_otg_enable ==0)
                ptr += sprintf(ptr, "discharge\n");//
-
-    len = ptr - page;
+		   
+    len = ptr - page;               
     if(*ppos >= len)
-    {
-        kfree(page);
-        return 0;
-    }
-    err = copy_to_user(buffer,(char *)page,len);
-    *ppos += len;
-    if(err)
-    {
-        kfree(page);
-        return err;
-    }
-    kfree(page);
-    return len;
+    {     
+        kfree(page);      
+        return 0;     
+    } 
+    err = copy_to_user(buffer,(char *)page,len);          
+    *ppos += len;     
+    if(err) 
+    {     
+        kfree(page);        
+        return err;   
+    } 
+    kfree(page);  
+    return len;   
 }
 
 static ssize_t  CHARGE_STATUS_write(struct file *file, const char *buffer, size_t count,loff_t *data)
@@ -405,7 +405,7 @@ static void kpd_stm32_key_work_handler(struct work_struct * work)
 	kpd_stm32_key_state = !kpd_stm32_key_state;
 	printk("stm32_key kpd_stm32_key_work_handler!!!!\n");
 	pressed = (kpd_stm32_key_state == !!0);
-
+	
 	if (kpd_stm32_key_state) {
 		printk(KPD_SAY "stm32_key (%s) HW keycode = using EINT\n",
 		       pressed ? "pressed" : "released");
@@ -414,27 +414,27 @@ static void kpd_stm32_key_work_handler(struct work_struct * work)
 	if(1){//(pressed){
 		printk("stm32_key report Linux pressed = %d\n", pressed);
 		input_report_key(kpd_input_dev, KEY_STM32_WAKE_MTK, 1);
-		input_sync(kpd_input_dev);
+		input_sync(kpd_input_dev);	
 		mdelay(1);
 		input_report_key(kpd_input_dev, KEY_STM32_WAKE_MTK, 0);
-		input_sync(kpd_input_dev);
+		input_sync(kpd_input_dev);		
 	}/*
 	else{
-		printk("stm32_key report Linux pressed = %d\n", pressed);
+		printk("stm32_key report Linux pressed = %d\n", pressed);		
 		input_report_key(kpd_input_dev, KEY_0, 1);
-		input_sync(kpd_input_dev);
+		input_sync(kpd_input_dev);	
 		mdelay(1);
 		input_report_key(kpd_input_dev, KEY_0, 0);
-		input_sync(kpd_input_dev);
-	}
-
+		input_sync(kpd_input_dev);	
+	}		
+	
 	if(!old_state){
 		irq_set_irq_type(stm32_key_irqnr, IRQ_TYPE_EDGE_FALLING);
 	}
 	else{
 		irq_set_irq_type(stm32_key_irqnr, IRQ_TYPE_EDGE_RISING);
 	}*/
-	//gpio_set_debounce(stm32_keygpiopin,stm32_keydebounce);
+	//gpio_set_debounce(stm32_keygpiopin,stm32_keydebounce);	
 	enable_irq(stm32_key_irqnr);
 
 }
@@ -442,7 +442,7 @@ static void kpd_stm32_key_work_handler(struct work_struct * work)
 static void kpd_stm32_key_eint_handler(struct work_struct *work){
 	printk("stm32_key kpd_stm32_key_eint_handler\n");
 	disable_irq_nosync(stm32_key_irqnr);
-	queue_work(stm32_keyWorkqueue, &stm32_key_fcover_work);
+	queue_work(stm32_keyWorkqueue, &stm32_key_fcover_work);		
 
 }
 #endif
@@ -455,7 +455,7 @@ static void kpd_finger_key_work_handler(struct work_struct * work)
 	kpd_finger_key_state = !kpd_finger_key_state;
 	printk("finger_key kpd_finger_key_work_handler!!!!\n");
 	pressed = (kpd_finger_key_state == !!0);
-
+	
 	if (kpd_finger_key_state) {
 		printk(KPD_SAY "finger_key (%s) HW keycode = using EINT\n",
 		       pressed ? "pressed" : "released");
@@ -464,22 +464,22 @@ static void kpd_finger_key_work_handler(struct work_struct * work)
 	if(pressed){
 		printk("finger_key report Linux pressed = %d\n", pressed);
 		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, 1);
-		input_sync(kpd_input_dev);
+		input_sync(kpd_input_dev);		
 	}
 	else{
-		printk("finger_key report Linux pressed = %d\n", pressed);
+		printk("finger_key report Linux pressed = %d\n", pressed);		
 		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, 0);
 		input_sync(kpd_input_dev);
 		mdelay(1);
-	}
-
+	}		
+	
 	if(!old_state){
 		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_LEVEL_LOW);
 	}
 	else{
 		irq_set_irq_type(finger_key_irqnr, IRQ_TYPE_LEVEL_HIGH);
 	}
-	//gpio_set_debounce(finger_keygpiopin,finger_keydebounce);
+	//gpio_set_debounce(finger_keygpiopin,finger_keydebounce);	
 	enable_irq(finger_key_irqnr);
 
 }
@@ -487,7 +487,7 @@ static void kpd_finger_key_work_handler(struct work_struct * work)
 static void kpd_finger_key_eint_handler(struct work_struct *work){
 	printk("finger_key kpd_finger_key_eint_handler\n");
 	disable_irq_nosync(finger_key_irqnr);
-	queue_work(finger_keyWorkqueue, &finger_key_fcover_work);
+	queue_work(finger_keyWorkqueue, &finger_key_fcover_work);		
 
 }
 #endif
@@ -495,7 +495,7 @@ static void kpd_finger_key_eint_handler(struct work_struct *work){
 void right_otg_in_report_key(void){
 	printk("right_otg_report_key\n");
 	input_report_key(kpd_input_dev, KEY_F14, 1);
-	input_sync(kpd_input_dev);
+	input_sync(kpd_input_dev);	
 	mdelay(1);
 	input_report_key(kpd_input_dev, KEY_F14, 0);
 	input_sync(kpd_input_dev);
@@ -503,7 +503,7 @@ void right_otg_in_report_key(void){
 void right_otg_out_report_key(void){
 	printk("right_otg_report_key\n");
 	input_report_key(kpd_input_dev, KEY_F15, 1);
-	input_sync(kpd_input_dev);
+	input_sync(kpd_input_dev);	
 	mdelay(1);
 	input_report_key(kpd_input_dev, KEY_F15, 0);
 	input_sync(kpd_input_dev);
@@ -511,7 +511,7 @@ void right_otg_out_report_key(void){
 void left_otg_in_report_key(void){
 	printk("left_otg_in_report_key\n");
 	input_report_key(kpd_input_dev, KEY_F16, 1);
-	input_sync(kpd_input_dev);
+	input_sync(kpd_input_dev);	
 	mdelay(1);
 	input_report_key(kpd_input_dev, KEY_F16, 0);
 	input_sync(kpd_input_dev);
@@ -519,7 +519,7 @@ void left_otg_in_report_key(void){
 void left_otg_out_report_key(void){
 	printk("left_otg_out_report_key\n");
 	input_report_key(kpd_input_dev, KEY_F17, 1);
-	input_sync(kpd_input_dev);
+	input_sync(kpd_input_dev);	
 	mdelay(1);
 	input_report_key(kpd_input_dev, KEY_F17, 0);
 	input_sync(kpd_input_dev);
@@ -1273,7 +1273,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
                 of_property_read_u32_array(node, "debounce", ints, ARRAY_SIZE(ints));
 				of_property_read_u32_array(node, "interrupts", ints1, ARRAY_SIZE(ints1));
 				//rfid_switch_pin = of_get_named_gpio(node, "gpio-rfid-switch-gpio", 0);//拨动开关
-				stm32_keygpiopin = (ints[0]);
+				stm32_keygpiopin = (ints[0]);				
 				stm32_keydebounce = ints[1];
 				stm32_key_eint_type = ints1[1];
 				//gpio_set_debounce(stm32_keygpiopin, stm32_keydebounce);
@@ -1305,7 +1305,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
                 of_property_read_u32_array(node, "debounce", ints, ARRAY_SIZE(ints));
 				of_property_read_u32_array(node, "interrupts", ints1, ARRAY_SIZE(ints1));
 				//rfid_switch_pin = of_get_named_gpio(node, "gpio-rfid-switch-gpio", 0);//拨动开关
-				finger_keygpiopin = (ints[0]);
+				finger_keygpiopin = (ints[0]);				
 				finger_keydebounce = ints[1];
 				finger_key_eint_type = ints1[1];
 				//gpio_set_debounce(finger_keygpiopin, finger_keydebounce);
@@ -1320,7 +1320,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
         } else
                 printk(KERN_ALERT "[finger_key]can't find compatible node\n");
 		//enable_irq(296);
-	disable_irq_nosync(finger_key_irqnr);
+	disable_irq_nosync(finger_key_irqnr);	
 	enable_irq(finger_key_irqnr);///////////////////////////////////////////////////////////
 #endif
 
@@ -1338,9 +1338,9 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
   if (NULL == reset_stm32_entry)
   {
           printk("proc_create %s failed\n", RESET_STM32_PROC_NAME);
-  }
+  }	
 	aeon_gpio_set("aeon_reset_stm32_low");
-	mdelay(1);
+	mdelay(1);	
 	aeon_gpio_set("aeon_reset_stm32_high");
 	mdelay(20);
 	aeon_gpio_set("aeon_reset_stm32_low");
@@ -1350,7 +1350,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
   {
           printk("proc_create %s failed\n", CHARGE_STATUS_PROC_NAME);
   }
-#endif
+#endif  
 #ifdef CONFIG_MTK_MRDUMP_KEY
 /* This func use as mrdump now, if powerky use kpd eint it need to open another API */
 	mt_eint_register();
