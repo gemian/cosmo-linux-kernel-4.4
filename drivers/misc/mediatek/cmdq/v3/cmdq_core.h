@@ -509,6 +509,7 @@ struct TaskStruct {
 	uint32_t *pCMDEnd;
 	void *user_private;
 	int32_t reorder;
+	bool force_inorder;
 	int32_t thread;		/* ASYNC: CMDQ_INVALID_THREAD if not running */
 	int32_t exclusive_thread;	/* task must use specific thread */
 	int32_t irqFlag;	/* ASYNC: flag of IRQ received */

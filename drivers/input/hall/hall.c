@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2010 MediaTek, Inc.
  *
@@ -25,8 +24,6 @@
 #include <linux/workqueue.h>
 //#include <linux/irqchip/mt-eic.h>
 #include <linux/of_gpio.h>
-#include <soc/mediatek/hall.h>
-
 #define HALL_NAME	"mtk-hall"
 #define MTK_KP_WAKESOURCE	/* this is for auto set wake up source */
 
@@ -45,8 +42,6 @@ static int hall_pdrv_suspend(struct platform_device *pdev, pm_message_t state);
 static int hall_pdrv_resume(struct platform_device *pdev);
 #endif
 extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
-
-//static void hall_fcover_eint_handler(void);
 
 #define HALL_FCOVER_OPEN        (1)
 #define HALL_FCOVER_CLOSE       (0)
@@ -103,24 +98,23 @@ EXPORT_SYMBOL_GPL(hall_notifier_call_chain);
 static void hall_work_handler(struct work_struct *work)
 {
 	new_fcover = gpio_get_value(hallgpiopin);
-    HALL_LOG("hall_work_handler new_fcover=%d , fcover_close_flag=%d", new_fcover, fcover_close_flag);
+	HALL_LOG("hall_work_handler new_fcover=%d , fcover_close_flag=%d", new_fcover, fcover_close_flag);
 
 	if (initVal < 5)
 	     initVal++;
-    HALL_LOG("hall_work_handler init %d", initVal);
+	HALL_LOG("hall_work_handler init %d", initVal);
 
-    if((fcover_close_flag != new_fcover) || initVal < 5)
+	if((fcover_close_flag != new_fcover) || initVal < 5)
 	{
 		spin_lock(&fcover_lock);
 		fcover_close_flag = new_fcover;
-        hall_fcover_lid_closed = (fcover_close_flag == HALL_FCOVER_CLOSE);
+		hall_fcover_lid_closed = (fcover_close_flag == HALL_FCOVER_CLOSE);
 		spin_unlock(&fcover_lock);
 
-        hall_notifier_call_chain(fcover_close_flag, NULL);
+		hall_notifier_call_chain(fcover_close_flag, NULL);
 
 		if(fcover_close_flag == HALL_FCOVER_CLOSE)
 		{
-            HALL_LOG("=======HALL_FCOVER_CLOSE==== %d\n", (int)kpd_accdet_dev->swbit[SW_LID]);
 			//enable_aw9523(0);
 			input_report_key(kpd_accdet_dev, KEY_F15, 1);
 			input_sync(kpd_accdet_dev);
@@ -131,7 +125,6 @@ static void hall_work_handler(struct work_struct *work)
 		}
 		else  // open
 		{
-            HALL_LOG("=======HALL_FCOVER_OPEN==== %d\n", (int)kpd_accdet_dev->swbit[SW_LID]);
 			//enable_aw9523(1);
 			input_report_key(kpd_accdet_dev, KEY_F16, 1);
 			input_sync(kpd_accdet_dev);
@@ -146,8 +139,8 @@ static void hall_work_handler(struct work_struct *work)
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_LOW);
 	else
 		irq_set_irq_type(hall_irqnr, IRQ_TYPE_LEVEL_HIGH);
-
-	gpio_set_debounce(hallgpiopin, halldebounce);
+		
+	gpio_set_debounce(hallgpiopin, halldebounce);	
 	enable_irq(hall_irqnr);
 }
 
@@ -155,8 +148,8 @@ static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 {
 	/* use _nosync to avoid deadlock */
 	disable_irq_nosync(hall_irqnr);
-	queue_work(fcover_workqueue, &fcover_work);
-
+	queue_work(fcover_workqueue, &fcover_work);	
+	
 	return IRQ_HANDLED;
 }
 
@@ -196,6 +189,9 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 //		return -ENOMEM;
 //	}
 
+	__set_bit(EV_KEY, kpd_accdet_dev->evbit);
+	__set_bit(KEY_F15, kpd_accdet_dev->keybit);
+	__set_bit(KEY_F16, kpd_accdet_dev->keybit);
 	__set_bit(EV_SW, kpd_accdet_dev->evbit);
 	__set_bit(SW_LID, kpd_accdet_dev->swbit);
 
@@ -238,7 +234,7 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 		hallgpiopin = of_get_named_gpio(node, "deb-gpios", 0);//ints[0];
 		halldebounce = ints[1];
 		hall_eint_type = ints1[1];
-
+		
                 printk("%s():hallgpiopin =%d, halldebounce=%d, hall_eint_type = %d\n",__func__,
                         hallgpiopin,halldebounce,hall_eint_type);
 
@@ -256,11 +252,11 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	}
 
 	printk("hall_fcover_eint_handler done..\n");
-
+	
 	fcover_data.name = "hall";
 	fcover_data.index = 0;
 	fcover_data.state = fcover_close_flag;
-
+	
 	err = switch_dev_register(&fcover_data);
 	if(err)
 	{

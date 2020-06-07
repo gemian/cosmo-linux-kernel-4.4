@@ -3514,29 +3514,28 @@ static bool cmdq_core_check_instr_valid(const uint64_t instr)
 	return false;
 }
 
-static int32_t cmdq_core_check_task_valid(struct TaskStruct *pTask)
+static bool cmdq_core_check_buffer_valid(void *user_buf, u32 size)
 {
-
-	struct CmdBufferStruct *cmd_buffer = NULL;
-	int32_t cmd_size = CMDQ_CMD_BUFFER_SIZE;
-	uint64_t *va;
+	void *buf, *va;
 	bool ret = true;
 
-	list_for_each_entry(cmd_buffer, &pTask->cmd_buffer_list, listEntry) {
-		if (list_is_last(&cmd_buffer->listEntry,
-			&pTask->cmd_buffer_list))
-			cmd_size -= pTask->buf_available_size;
+	buf = vzalloc(size);
+	if (!buf)
+		return false;
 
-		for (va = (uint64_t *)cmd_buffer->pVABase; ret &&
-			(unsigned long)(va + 1) <
-			(unsigned long)cmd_buffer->pVABase + cmd_size; va++)
-			ret &= cmdq_core_check_instr_valid(*va);
-
-		if (ret && (*va >> 56) != CMDQ_CODE_JUMP)
-			ret &= cmdq_core_check_instr_valid(*va);
-		if (!ret)
-			break;
+	if (copy_from_user(buf, user_buf, size)) {
+		CMDQ_ERR("%s copy from user fail size:%u\n", __func__, size);
+		return false;
 	}
+
+	for (va = buf; va < buf + size; va += 8) {
+		if (!cmdq_core_check_instr_valid(*(uint64_t *)va)) {
+			ret = false;
+			break;
+		}
+	}
+
+	vfree(buf);
 	return ret;
 }
 
@@ -3573,6 +3572,10 @@ static int32_t cmdq_core_insert_read_reg_command(struct TaskStruct *pTask,
 		copyCmdSize = pCommandDesc->blockSize - 2 * CMDQ_INST_SIZE;
 	else
 		copyCmdSize = pCommandDesc->blockSize;
+	/* check valid before copy */
+	if (userSpaceRequest &&
+		!cmdq_core_check_buffer_valid(copyCmdSrc, copyCmdSize))
+		return -EFAULT;
 	status = cmdq_core_copy_cmd_to_task_impl(pTask, copyCmdSrc,
 		copyCmdSize, userSpaceRequest);
 	if (status < 0)
@@ -3585,9 +3588,6 @@ static int32_t cmdq_core_insert_read_reg_command(struct TaskStruct *pTask,
 		"[CMD] line:%d CMDEnd:%p cmdSize:%d bufferSize:%u block size:%u\n",
 		__LINE__, pTask->pCMDEnd, pTask->commandSize,
 		pTask->bufferSize, pCommandDesc->blockSize);
-
-	if (userSpaceRequest && !cmdq_core_check_task_valid(pTask))
-		return -EFAULT;
 
 	/* If no read request, no post-process needed. Do verify and stop */
 	if (!postInstruction) {
@@ -3738,6 +3738,7 @@ static struct TaskStruct *cmdq_core_acquire_task(
 	int32_t status;
 	CMDQ_TIME time_cost;
 	struct TaskPrivateStruct *private = NULL, *desc_private = NULL;
+	const u64 inorder_mask = 1ll << CMDQ_ENG_INORDER;
 
 	CMDQ_MSG(
 		"-->TASK: acquire task begin CMD:0x%p, size:%d, Eng:0x%016llx\n",
@@ -3758,7 +3759,7 @@ static struct TaskStruct *cmdq_core_acquire_task(
 		pTask->desc = pCommandDesc;
 		pTask->scenario = pCommandDesc->scenario;
 		pTask->priority = pCommandDesc->priority;
-		pTask->engineFlag = pCommandDesc->engineFlag;
+		pTask->engineFlag = pCommandDesc->engineFlag & ~inorder_mask;
 		pTask->loopCallback = loopCB;
 		pTask->loopData = loopData;
 		pTask->taskState = TASK_STATE_WAITING;
@@ -3800,6 +3801,9 @@ static struct TaskStruct *cmdq_core_acquire_task(
 			pTask->res_engine_flag_acquire = 0;
 			pTask->res_engine_flag_release = 0;
 		}
+
+		if (pCommandDesc->engineFlag & inorder_mask)
+			pTask->force_inorder = true;
 
 		/* reset private data from desc */
 		desc_private = (struct TaskPrivateStruct *)CMDQ_U32_PTR(
@@ -8503,6 +8507,7 @@ static s32 cmdq_core_consume_waiting_list(struct work_struct *_ignore,
 	uint32_t user_list_count = 0;
 	uint32_t index = 0;
 	CMDQ_TIME consume_cost;
+	bool force_inorder = false;
 
 	/* when we're suspending, do not execute any tasks. delay & hold them. */
 	if (gCmdqSuspended)
@@ -8521,6 +8526,13 @@ static s32 cmdq_core_consume_waiting_list(struct work_struct *_ignore,
 	list_for_each_safe(p, n, &gCmdqContext.taskWaitList) {
 		struct TaskStruct *pTask = list_entry(p, struct TaskStruct,
 			listEntry);
+
+		if (force_inorder && pTask->force_inorder) {
+			CMDQ_LOG(
+				"skip force inorder handle:0x%p engine:0x%llx\n",
+				pTask, pTask->engineFlag);
+			continue;
+		}
 
 		/* check if task from client and no buffer */
 		if (pTask->is_client_buffer &&
@@ -8562,6 +8574,12 @@ static s32 cmdq_core_consume_waiting_list(struct work_struct *_ignore,
 
 		if (thread == CMDQ_INVALID_THREAD) {
 			/* have to wait, remain in wait list */
+			if (pTask->force_inorder) {
+				CMDQ_LOG(
+					"begin force inorder handle:0x%p engine:0x%llx\n",
+					pTask, pTask->engineFlag);
+				force_inorder = true;
+			}
 			CMDQ_MSG("<--THREAD: acquire thread fail, need to wait\n");
 			if (needLog == true) {
 				/* task wait too long */

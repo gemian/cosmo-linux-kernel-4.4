@@ -153,7 +153,7 @@ static int EEPROM_get_cmd_info(unsigned int sensorID,
 				pr_debug("pCamCalList[%d].sensorID==%x\n", i,
 				       pCamCalList[i].sensorID);
 
-				cmdInfo->i2cAddr = pCamCalList[i].slaveID >> 1;
+				cmdInfo->i2cAddr = pCamCalList[i].slaveID >> 1; //move to right 1 bit is real i2c slave addr
 				cmdInfo->readCMDFunc =
 					pCamCalList[i].readCamCalData;
 

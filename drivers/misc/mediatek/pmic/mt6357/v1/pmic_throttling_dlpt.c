@@ -1806,7 +1806,7 @@ int pmic_throttling_dlpt_init(void)
 	char *path;
 
 	#if (CONFIG_MTK_GAUGE_VERSION == 30)
-	path = "/bat_gm30";
+	path = "/battery";
 	np = of_find_node_by_path(path);
 	if (of_property_read_u32(np, "CAR_TUNE_VALUE", &val) == 0) {
 		fg_cust_data.car_tune_value = (int)val*10;
