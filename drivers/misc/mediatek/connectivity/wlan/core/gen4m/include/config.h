@@ -512,10 +512,11 @@
 #define CFG_SUPPORT_WPS2			1
 
 /*------------------------------------------------------------------------------
- * Flags of drop multicast packet when device suspend
+ * Flags 1: drop all multicast packets when device suspend
+ * Flags 0: drop multicast packets except white list when device suspend
  *------------------------------------------------------------------------------
  */
-#define CFG_SUPPORT_DROP_MC_PACKET		1
+#define CFG_SUPPORT_DROP_ALL_MC_PACKET		0
 
 /*------------------------------------------------------------------------------
  * 802.11i RSN Pre-authentication PMKID cahce maximun number
@@ -966,7 +967,7 @@
  * if the value set to 2000, it means the duration of fitler is 2000 ms
  *------------------------------------------------------------------------------
  */
-#define CFG_BEACON_TIMEOUT_FILTER_DURATION_DEFAULT_VALUE	0
+#define CFG_BEACON_TIMEOUT_FILTER_DURATION_DEFAULT_VALUE	2000
 
 /*------------------------------------------------------------------------------
  * Value of scan cache result

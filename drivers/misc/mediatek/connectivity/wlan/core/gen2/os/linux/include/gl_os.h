@@ -225,6 +225,7 @@ extern void wifi_fwlog_event_func_register(wifi_fwlog_event_func_cb pfFwlog);
 #endif
 
 extern struct net_device *gPrDev;
+extern void update_driver_loaded_status(uint8_t loaded);
 
 /*******************************************************************************
 *                              C O N S T A N T S

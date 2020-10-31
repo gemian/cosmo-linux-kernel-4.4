@@ -9094,10 +9094,30 @@ wlanoidSetTxPower(IN P_ADAPTER_T prAdapter, IN PVOID pvSetBuffer, IN UINT_32 u4S
 {
 	/* P_SET_TXPWR_CTRL_T pTxPwr = (P_SET_TXPWR_CTRL_T)pvSetBuffer; */
 	/* UINT_32 i; */
+	P_SET_TXPWR_CTRL_T pTxPwr = (P_SET_TXPWR_CTRL_T) pvSetBuffer;
+	P_SET_TXPWR_CTRL_T prCmd;
+	UINT_32 i;
 	WLAN_STATUS rStatus;
 
 	DEBUGFUNC("wlanoidSetTxPower");
 	DBGLOG(OID, LOUD, "\r\n");
+
+	prCmd = cnmMemAlloc(prAdapter, RAM_TYPE_BUF, sizeof(SET_TXPWR_CTRL_T));
+	kalMemZero(prCmd, sizeof(SET_TXPWR_CTRL_T));
+	prCmd->c2GLegacyStaPwrOffset = pTxPwr->c2GLegacyStaPwrOffset;
+	prCmd->c2GHotspotPwrOffset = pTxPwr->c2GHotspotPwrOffset;
+	prCmd->c2GP2pPwrOffset = pTxPwr->c2GP2pPwrOffset;
+	prCmd->c2GBowPwrOffset = pTxPwr->c2GBowPwrOffset;
+	prCmd->c5GLegacyStaPwrOffset = pTxPwr->c5GLegacyStaPwrOffset;
+	prCmd->c5GHotspotPwrOffset = pTxPwr->c5GHotspotPwrOffset;
+	prCmd->c5GP2pPwrOffset = pTxPwr->c5GP2pPwrOffset;
+	prCmd->c5GBowPwrOffset = pTxPwr->c5GBowPwrOffset;
+	prCmd->ucConcurrencePolicy = pTxPwr->ucConcurrencePolicy;
+	for (i = 0; i < 14; i++)
+		prCmd->acTxPwrLimit2G[i] = pTxPwr->acTxPwrLimit2G[i];
+
+	for (i = 0; i < 4; i++)
+		prCmd->acTxPwrLimit5G[i] = pTxPwr->acTxPwrLimit5G[i];
 
 	ASSERT(prAdapter);
 	ASSERT(pvSetBuffer);
@@ -9125,10 +9145,8 @@ wlanoidSetTxPower(IN P_ADAPTER_T prAdapter, IN PVOID pvSetBuffer, IN UINT_32 u4S
 				      TRUE,	/* fgSetQuery */
 				      FALSE,	/* fgNeedResp */
 				      TRUE,	/* fgIsOid */
-				      NULL,	/* pfCmdDoneHandler */
-				      NULL,	/* pfCmdTimeoutHandler */
-				      u4SetBufferLen,	/* u4SetQueryInfoLen */
-				      (PUINT_8) pvSetBuffer,	/* pucInfoBuffer */
+				      nicCmdEventSetCommon, nicOidCmdTimeoutCommon, sizeof(SET_TXPWR_CTRL_T),
+				      (PUINT_8) prCmd,	/* pucInfoBuffer */
 				      NULL,	/* pvSetQueryBuffer */
 				      0	/* u4SetQueryBufferLen */
 	    );
@@ -12520,52 +12538,6 @@ wlanoidSetWifiLogLevel(IN P_ADAPTER_T prAdapter,
 
 	wlanDbgSetLogLevelImpl(prAdapter, pparam->u4Version, pparam->u4Module,
 			pparam->u4Level);
-
-	return WLAN_STATUS_SUCCESS;
-}
-
-WLAN_STATUS
-wlanoidSetRandomMac(IN P_ADAPTER_T prAdapter, IN PVOID pvSetBuffer,
-		    IN UINT_32 u4SetBufferLen, OUT PUINT_32 pu4SetInfoLen)
-{
-	WLAN_STATUS rStatus;
-	CMD_BASIC_CONFIG prCmdBasicConfig;
-	P_BSS_INFO_T prAisBssInfo;
-
-	/* configure CMD_BASIC_CONFIG */
-	kalMemCopy(&(prCmdBasicConfig.rMyMacAddr), pvSetBuffer, PARAM_MAC_ADDR_LEN);
-	prCmdBasicConfig.ucNative80211 = 0;
-	prCmdBasicConfig.rCsumOffload.u2RxChecksum = 0;
-	prCmdBasicConfig.rCsumOffload.u2TxChecksum = 0;
-#if CFG_TCP_IP_CHKSUM_OFFLOAD
-	if (prAdapter->u4CSUMFlags & CSUM_OFFLOAD_EN_TX_TCP)
-		prCmdBasicConfig.rCsumOffload.u2TxChecksum |= BIT(2);
-
-	if (prAdapter->u4CSUMFlags & CSUM_OFFLOAD_EN_TX_UDP)
-		prCmdBasicConfig.rCsumOffload.u2TxChecksum |= BIT(1);
-
-	if (prAdapter->u4CSUMFlags & CSUM_OFFLOAD_EN_TX_IP)
-		prCmdBasicConfig.rCsumOffload.u2TxChecksum |= BIT(0);
-
-	if (prAdapter->u4CSUMFlags & CSUM_OFFLOAD_EN_RX_TCP)
-		prCmdBasicConfig.rCsumOffload.u2RxChecksum |= BIT(2);
-
-	if (prAdapter->u4CSUMFlags & CSUM_OFFLOAD_EN_RX_UDP)
-		prCmdBasicConfig.rCsumOffload.u2RxChecksum |= BIT(1);
-
-	if (prAdapter->u4CSUMFlags & (CSUM_OFFLOAD_EN_RX_IPv4 | CSUM_OFFLOAD_EN_RX_IPv6))
-		prCmdBasicConfig.rCsumOffload.u2RxChecksum |= BIT(0);
-#endif
-	rStatus = wlanSendSetQueryCmd(prAdapter, CMD_ID_BASIC_CONFIG, TRUE,
-				      FALSE, TRUE, NULL, NULL,
-				      sizeof(CMD_BASIC_CONFIG),
-				      (PUINT_8)&prCmdBasicConfig, NULL, 0);
-
-	prAisBssInfo = &(prAdapter->rWifiVar.arBssInfo[NETWORK_TYPE_AIS_INDEX]);
-	COPY_MAC_ADDR(prAisBssInfo->aucOwnMacAddr, pvSetBuffer);
-	COPY_MAC_ADDR(prAdapter->prGlueInfo->prDevHandler->dev_addr, pvSetBuffer);
-	DBGLOG(INIT, INFO, "Set connect random macaddr to " MACSTR " (%d).\n",
-	       MAC2STR(prAdapter->prGlueInfo->rRegInfo.aucMacAddr), rStatus);
 
 	return WLAN_STATUS_SUCCESS;
 }

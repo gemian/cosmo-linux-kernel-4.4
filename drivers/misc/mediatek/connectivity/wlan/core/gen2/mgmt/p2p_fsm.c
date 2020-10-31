@@ -166,8 +166,11 @@ VOID p2pFsmInit(IN P_ADAPTER_T prAdapter)
 
 		SET_NET_PWR_STATE_IDLE(prAdapter, NETWORK_TYPE_P2P_INDEX);
 
-		p2pFsmStateTransition(prAdapter, prP2pFsmInfo, P2P_STATE_IDLE);
+		if (prP2pFsmInfo->fgIsApMode)
+			p2pFuncSwitchOPMode(prAdapter, prP2pBssInfo,
+				OP_MODE_P2P_DEVICE, TRUE);
 
+		p2pFsmStateTransition(prAdapter, prP2pFsmInfo, P2P_STATE_IDLE);
 	} while (FALSE);
 
 }				/* p2pFsmInit */

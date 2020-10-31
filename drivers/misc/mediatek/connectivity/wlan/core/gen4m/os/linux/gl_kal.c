@@ -2445,9 +2445,10 @@ kalQoSFrameClassifierAndPacketInfo(IN struct GLUE_INFO *prGlueInfo,
 		}
 #if DSCP_SUPPORT
 		if (GLUE_GET_PKT_BSS_IDX(prSkb) != P2P_DEV_BSS_INDEX) {
-			ucUserPriority = getUpFromDscp(prGlueInfo,
+			ucUserPriority = getUpFromDscp(
+				prGlueInfo,
 				GLUE_GET_PKT_BSS_IDX(prSkb),
-				(pucNextProtocol[1] & 0xFC) >> 2);
+				(pucNextProtocol[1] >> 2) & 0x3F);
 			if (ucUserPriority != 0xFF)
 				prSkb->priority = ucUserPriority;
 		}
@@ -2475,6 +2476,26 @@ kalQoSFrameClassifierAndPacketInfo(IN struct GLUE_INFO *prGlueInfo,
 		kalTdlsFrameClassifier(prGlueInfo, prPacket,
 				       pucNextProtocol, prTxPktInfo);
 		break;
+
+	case ETH_P_IPV6:
+#if DSCP_SUPPORT
+		if (GLUE_GET_PKT_BSS_IDX(prSkb) != P2P_DEV_BSS_INDEX) {
+			uint16_t u2Tmp;
+			uint8_t ucIpTos;
+
+			WLAN_GET_FIELD_BE16(pucNextProtocol, &u2Tmp);
+			ucIpTos = u2Tmp >> 4;
+
+			ucUserPriority = getUpFromDscp(
+				prGlueInfo,
+				GLUE_GET_PKT_BSS_IDX(prSkb),
+				(ucIpTos >> 2) & 0x3F);
+			if (ucUserPriority != 0xFF)
+				prSkb->priority = ucUserPriority;
+		}
+#endif
+		break;
+
 	default:
 		/* 4 <4> Handle 802.3 format if LEN <= 1500 */
 		if (u2EtherTypeLen <= ETH_802_3_MAX_LEN)

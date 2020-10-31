@@ -2241,6 +2241,9 @@ static INT_32 wlanProbe(PVOID pvData)
 
 		prGlueInfo->u4FWRoamingEnable = 1;
 
+		update_driver_loaded_status(prGlueInfo->u4ReadyFlag);
+
+
 #if CFG_TCP_IP_CHKSUM_OFFLOAD
 		prAdapter->u4CSUMFlags = (CSUM_OFFLOAD_EN_TX_TCP | CSUM_OFFLOAD_EN_TX_UDP | CSUM_OFFLOAD_EN_TX_IP);
 #endif
@@ -2343,6 +2346,7 @@ static INT_32 wlanProbe(PVOID pvData)
 
 				/* card is ready */
 				prGlueInfo->u4ReadyFlag = 1;
+				update_driver_loaded_status(prGlueInfo->u4ReadyFlag);
 #if CFG_SHOW_MACADDR_SOURCE
 				DBGLOG(INIT, INFO, "MAC address: " MACSTR, MAC2STR(MacAddr.sa_data));
 #endif
@@ -2690,6 +2694,7 @@ static VOID wlanRemove(VOID)
 
 	/* 4 <9> Unregister notifier callback */
 	wlanUnregisterNotifier();
+	update_driver_loaded_status(0);
 
 }				/* end of wlanRemove() */
 

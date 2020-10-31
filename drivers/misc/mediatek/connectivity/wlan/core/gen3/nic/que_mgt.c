@@ -6434,23 +6434,13 @@ BOOLEAN qmHandleRxReplay(P_ADAPTER_T prAdapter, P_SW_RFB_T prSwRfb)
 	}
 
 	prDetRplyInfo = &prGlueInfo->prDetRplyInfo;
-	/* TODO : Need check fw rekey while fw rekey event. */
-	if (ucKeyID != prDetRplyInfo->ucCurKeyId) {
-		DBGLOG(QM, TRACE,
-		       "use last keyID while detect replay information.(0x%x->0x%x)\n",
-		       prDetRplyInfo->ucCurKeyId, ucKeyID);
-		ucKeyID = prDetRplyInfo->ucCurKeyId;
-	}
-
-	if (prDetRplyInfo->arReplayPNInfo[ucKeyID].fgFirstPkt) {
-		prDetRplyInfo->arReplayPNInfo[ucKeyID].fgFirstPkt = FALSE;
-		HAL_RX_STATUS_GET_PN(prSwRfb->prRxStatusGroup1, prDetRplyInfo->arReplayPNInfo[ucKeyID].auPN);
-		DBGLOG(QM, INFO,
-		       "First check packet. Key ID:0x%x\n", ucKeyID);
-		return FALSE;
-	}
-
 	pucPN = prSwRfb->prRxStatusGroup1->aucPN;
+	/* TODO : Need check fw rekey while fw rekey event. */
+	if (ucKeyID != prDetRplyInfo->ucCurKeyId)
+		DBGLOG(QM, TRACE,
+		       "use last keyID[0x%x] check. Some AP set key[0x%x] slowly than our device.\n",
+		       prDetRplyInfo->ucCurKeyId, ucKeyID);
+
 	DBGLOG_LIMITED(QM, LOUD,
 		       "BC packet 0x%x:0x%x:0x%x:0x%x:0x%x:0x%x--0x%x:0x%x:0x%x:0x%x:0x%x:0x%x\n",
 		       pucPN[0], pucPN[1], pucPN[2], pucPN[3], pucPN[4], pucPN[5],
@@ -6461,7 +6451,7 @@ BOOLEAN qmHandleRxReplay(P_ADAPTER_T prAdapter, P_SW_RFB_T prSwRfb)
 		       prDetRplyInfo->arReplayPNInfo[ucKeyID].auPN[4],
 		       prDetRplyInfo->arReplayPNInfo[ucKeyID].auPN[5]);
 	if (qmRxDetectReplay(pucPN, prDetRplyInfo->arReplayPNInfo[ucKeyID].auPN)) {
-		DBGLOG_LIMITED(QM, WARN, "Drop BC replay packet!\n");
+		DBGLOG_LIMITED(QM, WARN, "Drop BC replay packet, ucKeyID[0x%x]!\n", ucKeyID);
 		return TRUE;
 	}
 

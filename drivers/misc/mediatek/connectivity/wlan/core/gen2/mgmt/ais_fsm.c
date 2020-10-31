@@ -1054,6 +1054,15 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 				prAisReq->eReqType, prConnSettings->fgIsConnReqIssued,
 				prConnSettings->fgIsDisconnectedByNonRequest);
 			if (prAisReq == NULL || prAisReq->eReqType == AIS_REQUEST_RECONNECT) {
+				if (IS_NET_ACTIVE(prAdapter, NETWORK_TYPE_AIS_INDEX)) {
+#if !CFG_SUPPORT_RLM_ACT_NETWORK
+					UNSET_NET_ACTIVE(prAdapter, NETWORK_TYPE_AIS_INDEX);
+					nicDeactivateNetwork(prAdapter, NETWORK_TYPE_AIS_INDEX);
+#else
+					rlmDeactivateNetwork(prAdapter, NETWORK_TYPE_AIS_INDEX,
+						NET_ACTIVE_SRC_CONNECT | NET_ACTIVE_SRC_SCAN);
+#endif
+				}
 				if (prConnSettings->fgIsConnReqIssued == TRUE &&
 				    prConnSettings->fgIsDisconnectedByNonRequest == FALSE) {
 
@@ -1075,15 +1084,6 @@ VOID aisFsmSteps(IN P_ADAPTER_T prAdapter, ENUM_AIS_STATE_T eNextState)
 					fgIsTransition = TRUE;
 				} else {
 					SET_NET_PWR_STATE_IDLE(prAdapter, NETWORK_TYPE_AIS_INDEX);
-
-					/* sync with firmware */
-#if !CFG_SUPPORT_RLM_ACT_NETWORK
-					UNSET_NET_ACTIVE(prAdapter, NETWORK_TYPE_AIS_INDEX);
-					nicDeactivateNetwork(prAdapter, NETWORK_TYPE_AIS_INDEX);
-#else
-					rlmDeactivateNetwork(prAdapter, NETWORK_TYPE_AIS_INDEX,
-						NET_ACTIVE_SRC_CONNECT | NET_ACTIVE_SRC_SCAN);
-#endif
 
 					/* check for other pending request */
 

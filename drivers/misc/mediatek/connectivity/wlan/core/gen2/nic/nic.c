@@ -1327,12 +1327,19 @@ WLAN_STATUS nicActivateNetwork(IN P_ADAPTER_T prAdapter, IN ENUM_NETWORK_TYPE_IN
 
 	rCmdActivateCtrl.ucNetTypeIndex = (UINT_8) eNetworkTypeIdx;
 	rCmdActivateCtrl.ucActive = 1;
+	rCmdActivateCtrl.ucVersion = 1;
 
 	if (((UINT_8) eNetworkTypeIdx) < NETWORK_TYPE_INDEX_NUM) {
 		prBssInfo = &prAdapter->rWifiVar.arBssInfo[eNetworkTypeIdx];
+		COPY_MAC_ADDR(rCmdActivateCtrl.aucBssMacAddr,
+			      prBssInfo->aucOwnMacAddr);
 		prBssInfo->fg40mBwAllowed = FALSE;
 		prBssInfo->fgAssoc40mBwAllowed = FALSE;
 	}
+
+	DBGLOG(NIC, INFO, "OwnMac=" MACSTR " BSSID=" MACSTR " NetType=%d\n",
+	       MAC2STR(prBssInfo->aucOwnMacAddr),
+	       MAC2STR(prBssInfo->aucBSSID), eNetworkTypeIdx);
 
 	return wlanSendSetQueryCmd(prAdapter,
 				   CMD_ID_BSS_ACTIVATE_CTRL,

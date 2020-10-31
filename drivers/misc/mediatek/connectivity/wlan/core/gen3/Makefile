@@ -12,11 +12,16 @@ KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 # ---------------------------------------------------
 # Compile Options
 # ---------------------------------------------------
+MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
 ifneq ($(filter "CONSYS_6797" "CONSYS_6759" "CONSYS_6758" "CONSYS_6775" "CONSYS_6771", $(CONFIG_MTK_COMBO_CHIP)),)
 WLAN_CHIP_ID=MT6631
 else
 WLAN_CHIP_ID=MT6630
 endif
+
+$(info $$MTK_PLATFORM is [${MTK_PLATFORM}])
+$(info $$WLAN_CHIP_ID is [${WLAN_CHIP_ID}])
+
 DRIVER_BUILD_DATE=$(shell date +%Y%m%d%H%M%S)
 ccflags-y += -DDRIVER_BUILD_DATE='"$(DRIVER_BUILD_DATE)"'
 
@@ -232,7 +237,7 @@ HIF_OBJS += $(HIF_DIR)ahb_pdma.o
 else
 HIF_OBJS += $(HIF_DIR)ahb_cqdma.o
 endif
-ifneq ($(wildcard $(src)/$(PLAT_DIR)plat_priv.c),)
+ifneq ($(wildcard $(srctree)/drivers/misc/mediatek/connectivity/wlan/core/gen3/$(PLAT_DIR)plat_priv.c),)
 PLAT_OBJS := $(PLAT_DIR)plat_priv.o
 endif
 $(MODULE_NAME)-objs  += $(PLAT_OBJS)
