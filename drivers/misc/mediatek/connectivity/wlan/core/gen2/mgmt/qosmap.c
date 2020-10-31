@@ -69,32 +69,6 @@
 *      Called by: Handle Rx mgmt request
 */
 /*----------------------------------------------------------------------------*/
-static struct _QOS_MAP_SET *QosMapSetMalloc(IN UINT_8 dscpExcNum)
-{
-	if (dscpExcNum)
-		return (struct _QOS_MAP_SET *)kalMemAlloc((sizeof(struct _QOS_MAP_SET) +
-				((dscpExcNum - 1) * sizeof(struct _DSCP_EXCEPTION))), VIR_MEM_TYPE);
-	else
-		return (struct _QOS_MAP_SET *)kalMemAlloc(sizeof(struct _QOS_MAP_SET), VIR_MEM_TYPE);
-}
-
-static void QosMapSetFree(IN P_STA_RECORD_T prStaRec)
-{
-	if (prStaRec && prStaRec->qosMapSet) {
-		if (prStaRec->qosMapSet->dscpExceptionNum) {
-			kalMemFree(prStaRec->qosMapSet, VIR_MEM_TYPE,
-				(sizeof(struct _QOS_MAP_SET) +
-				((prStaRec->qosMapSet->dscpExceptionNum - 1) * sizeof(struct _DSCP_EXCEPTION))));
-		} else
-			kalMemFree(prStaRec->qosMapSet, VIR_MEM_TYPE, sizeof(struct _QOS_MAP_SET));
-	}
-}
-
-void QosMapSetRelease(IN P_STA_RECORD_T prStaRec)
-{
-	QosMapSetFree(prStaRec);
-}
-
 VOID handleQosMapConf(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSwRfb)
 {
 	P_WLAN_ACTION_FRAME prRxFrame;
@@ -136,60 +110,97 @@ int qosHandleQosMapConfigure(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSwRfb)
 	DBGLOG(INIT, INFO, "IEEE 802.11: Received Qos Map Configure Frame from " MACSTR "\n",
 		MAC2STR(prStaRec->aucMacAddr));
 
-	if (prStaRec->qosMapSet)
-		QosMapSetFree(prStaRec);
-	prStaRec->qosMapSet = qosParseQosMapSet(prAdapter, prRxFrame->qosMapSet);
+	qosParseQosMapSet(prAdapter, prStaRec, prRxFrame->qosMapSet);
 
 	return 0;
 }
 
-struct _QOS_MAP_SET *qosParseQosMapSet(IN P_ADAPTER_T prAdapter, IN PUINT_8 qosMapSet)
+VOID qosParseQosMapSet(IN P_ADAPTER_T prAdapter, IN P_STA_RECORD_T prStaRec, IN PUINT_8 qosMapSet)
 {
 	UINT_8 dscpExcNum = 0;
-	struct _QOS_MAP_SET *prQos = NULL;
-	int i, j = 0;
+	int i = 0;
 	PUINT_8 tempq = qosMapSet + 2;
+	PUINT_8 qosmapping = prStaRec->qosMapSet;
+	UINT_8 excTable[64];
 
 	if (IE_ID(qosMapSet) != ELEM_ID_QOS_MAP_SET) {
 		DBGLOG(INIT, WARN, "Wrong QosMapSet IE ID: %d\n", IE_ID(qosMapSet));
-		return NULL;
+		return;
 	}
 	if ((IE_LEN(qosMapSet) < 16) || (IE_LEN(qosMapSet) > 58)) {
 		DBGLOG(INIT, WARN, "Error in QosMapSet IE len: %d\n", IE_LEN(qosMapSet));
-		return NULL;
-	}
-	dscpExcNum = (IE_LEN(qosMapSet) - 16) / 2;
-
-	prQos = QosMapSetMalloc(dscpExcNum);
-	if (!prQos) {
-		DBGLOG(INIT, WARN, "can't alloc qosmap\n");
-		return NULL;
+		return;
 	}
 
-	prQos->dscpExceptionNum = dscpExcNum;
+	qosMapSetInit(prStaRec);
+	kalMemSet(excTable, 0, 64);
+	dscpExcNum = (IE_LEN(qosMapSet) - WMM_UP_INDEX_NUM * 2) / 2;
+
 	for (i = 0; i < dscpExcNum; i++) {
-		prQos->dscpException[i].dscp = *tempq;
-		tempq++;
-		prQos->dscpException[i].userPriority = *tempq;
-		tempq++;
+		UINT_8 dscp = *tempq++;
+		UINT_8 up = *tempq++;
+
+		if (dscp < 64 && up < WMM_UP_INDEX_NUM) {
+			qosmapping[dscp] = up;
+			excTable[dscp] = TRUE;
+		}
 	}
-	for (j = 0; j < 8; j++) {
-		prQos->dscpRange[j].lDscp = *tempq;
-		tempq++;
-		prQos->dscpRange[j].hDscp = *tempq;
-		tempq++;
-		if (prQos->dscpRange[j].hDscp < prQos->dscpRange[j].lDscp)
-			DBGLOG(INIT, WARN, "CHECK: dscp h val should larger than dscp l val, i: %d\n", j);
-		/* TODO: Here skip the overlap check */
+
+	for (i = 0; i < WMM_UP_INDEX_NUM; i++) {
+		UINT_8 lDscp = *tempq++;
+		UINT_8 hDscp = *tempq++;
+		UINT_8 dscp;
+
+		if (lDscp == 255 && hDscp == 255) {
+			DBGLOG(INIT, WARN, "UP %d is not used\n", i);
+			continue;
+		}
+
+		if (hDscp < lDscp) {
+			DBGLOG(INIT, WARN, "CHECK: UP %d, h %d, l %d\n",
+				i, hDscp, lDscp);
+			continue;
+		}
+
+		for (dscp = lDscp; dscp < 64 && dscp < hDscp; dscp++) {
+			if (!excTable[dscp])
+				qosmapping[dscp] = i;
+		}
 	}
-	/*
-	 * kalMemCopy(prQos->dscpException, qosMapSet + 2, dscpExcNum * 2);
-	 * kalMemCopy(prQos->dscpRange, qosMapSet + 2 * dscpExcNum + 2, 16);
-	 */
 
 	DBGLOG(INIT, INFO, "QosMapSet DSCP Exception number: %d\n", dscpExcNum);
+}
 
-	return prQos;
+VOID qosMapSetInit(IN P_STA_RECORD_T prStaRec)
+{
+	/* DSCP to UP maaping based on RFC8325 in the range 0 to 63 */
+	static UINT_8 dscp2up[64] = {
+		[0 ... 63] = 0xFF,
+		[0] = WMM_UP_BE_INDEX,
+		[8] = WMM_UP_BK_INDEX,
+		[10] = WMM_UP_BE_INDEX,
+		[12] = WMM_UP_BE_INDEX,
+		[14] = WMM_UP_BE_INDEX,
+		[16] = WMM_UP_BE_INDEX,
+		[18] = WMM_UP_EE_INDEX,
+		[20] = WMM_UP_EE_INDEX,
+		[22] = WMM_UP_EE_INDEX,
+		[24] = WMM_UP_CL_INDEX,
+		[26] = WMM_UP_CL_INDEX,
+		[28] = WMM_UP_CL_INDEX,
+		[30] = WMM_UP_CL_INDEX,
+		[32] = WMM_UP_CL_INDEX,
+		[34] = WMM_UP_CL_INDEX,
+		[36] = WMM_UP_CL_INDEX,
+		[38] = WMM_UP_CL_INDEX,
+		[40] = WMM_UP_VI_INDEX,
+		[44] = WMM_UP_VO_INDEX,
+		[46] = WMM_UP_VO_INDEX,
+		[48] = WMM_UP_VO_INDEX,
+		[56] = WMM_UP_NC_INDEX,
+	};
+
+	kalMemCopy(prStaRec->qosMapSet, dscp2up, 64);
 }
 
 UINT_8 getUpFromDscp(IN P_GLUE_INFO_T prGlueInfo, IN int type, IN int dscp)
@@ -197,31 +208,15 @@ UINT_8 getUpFromDscp(IN P_GLUE_INFO_T prGlueInfo, IN int type, IN int dscp)
 	P_BSS_INFO_T prAisBssInfo;
 	P_STA_RECORD_T prStaRec;
 
-	int i, j = 0;
-
 	prAisBssInfo = &(prGlueInfo->prAdapter->rWifiVar.arBssInfo[type]);
 	if (prAisBssInfo)
 		prStaRec = prAisBssInfo->prStaRecOfAP;
-	else {
-		DBGLOG(INIT, WARN, "qosmap type: %d\n", type);
+	else
 		return 0xFF;
-	}
 
-	if (prStaRec && prStaRec->qosMapSet) {
-		for (i = 0; i < prStaRec->qosMapSet->dscpExceptionNum; i++) {
-			if (dscp == prStaRec->qosMapSet->dscpException[i].dscp)
-				return prStaRec->qosMapSet->dscpException[i].userPriority;
-		}
-		for (j = 0; j < 8; j++) {
-			if (prStaRec->qosMapSet->dscpRange[j].lDscp == 255 &&
-				prStaRec->qosMapSet->dscpRange[j].hDscp == 255)
-				continue;
-			if (dscp >= prStaRec->qosMapSet->dscpRange[j].lDscp &&
-				dscp <= prStaRec->qosMapSet->dscpRange[j].hDscp)
-				return j;
-		}
-		return 0xFF;
-	} else
-		return 0xFF;
+	if (prStaRec && dscp < 64)
+		return prStaRec->qosMapSet[dscp];
+
+	return 0xFF;
 }
 #endif

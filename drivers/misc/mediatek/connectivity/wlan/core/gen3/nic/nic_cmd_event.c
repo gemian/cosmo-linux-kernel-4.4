@@ -2107,7 +2107,11 @@ VOID nicCmdEventSetAddKey(IN P_ADAPTER_T prAdapter, IN P_CMD_INFO_T prCmdInfo, I
 			prDetRplyInfo->ucCurKeyId = prCmdKey->ucKeyId;
 			prDetRplyInfo->ucKeyType = prCmdKey->ucKeyType;
 			prDetRplyInfo->arReplayPNInfo[prCmdKey->ucKeyId].fgRekey = TRUE;
-			prDetRplyInfo->arReplayPNInfo[prCmdKey->ucKeyId].fgFirstPkt = TRUE;
+			kalMemCopy(prDetRplyInfo->arReplayPNInfo[prCmdKey->ucKeyId].auPN,
+				   prCmdKey->aucKeyRsc, 16);
+			DBGLOG_MEM8(NIC, TRACE,
+				    prDetRplyInfo->arReplayPNInfo[prCmdKey->ucKeyId].auPN,
+				    8);
 			DBGLOG(NIC, TRACE, "Keyid is %d, ucKeyType is %d\n",
 				prCmdKey->ucKeyId, prCmdKey->ucKeyType);
 		}

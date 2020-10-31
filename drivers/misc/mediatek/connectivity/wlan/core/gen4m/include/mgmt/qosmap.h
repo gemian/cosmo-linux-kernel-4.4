@@ -106,13 +106,14 @@ void handleQosMapConf(IN struct ADAPTER *prAdapter,
 int qosHandleQosMapConfigure(IN struct ADAPTER *prAdapter,
 			     IN struct SW_RFB *prSwRfb);
 
-struct _QOS_MAP_SET *qosParseQosMapSet(IN struct ADAPTER
-				       *prAdapter, IN uint8_t *qosMapSet);
+void qosMapSetInit(IN struct STA_RECORD *prStaRec);
+
+void qosParseQosMapSet(IN struct ADAPTER *prAdapter,
+	IN struct STA_RECORD *prStaRec, IN uint8_t *qosMapSet);
 
 uint8_t getUpFromDscp(IN struct GLUE_INFO *prGlueInfo,
 		      IN int type, IN int dscp);
 
-void QosMapSetRelease(IN struct STA_RECORD *prStaRec);
 /*******************************************************************************
  *                              F U N C T I O N S
  *******************************************************************************

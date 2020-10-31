@@ -982,6 +982,7 @@ p2pFuncStartGO(IN P_ADAPTER_T prAdapter,
 		prBssInfo->ucBeaconTimeoutCount = 0;
 
 		/* 3 <2> Update BSS-INFO parameters */
+		prBssInfo->fgIsProtection = FALSE;
 		if (prP2pConnReqInfo->eConnRequest == P2P_CONNECTION_TYPE_GO) {
 			prBssInfo->fgIsProtection = TRUE;	/* Always enable protection at P2P GO */
 			/* kalP2PSetCipher(prAdapter->prGlueInfo, IW_AUTH_CIPHER_CCMP); */

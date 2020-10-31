@@ -409,6 +409,10 @@ VOID scnSendScanReqV3(IN P_ADAPTER_T prAdapter)
 	P_SCAN_PARAM_T prScanParam;
 	/* CMD_SCAN_REQ_V2 rCmdScanReq; */
 	struct _CMD_SCAN_REQ_V3_T *prCmdScanReq;
+#if (CFG_ADD_HT_VHT_PROBE_REQUEST && CFG_SUPPORT_TDLS)
+	P_BSS_INFO_T prBssInfo;
+	UINT_32 u4IELen = 0;
+#endif
 	UINT_32 i;
 
 	ASSERT(prAdapter);
@@ -483,6 +487,43 @@ VOID scnSendScanReqV3(IN P_ADAPTER_T prAdapter)
 
 	if (prScanParam->u2IELen)
 		kalMemCopy(prCmdScanReq->aucIE, prScanParam->aucIE, sizeof(UINT_8) * prCmdScanReq->u2IELen);
+
+#if (CFG_ADD_HT_VHT_PROBE_REQUEST && CFG_SUPPORT_TDLS)
+	prBssInfo = prAdapter->aprBssInfo[prScanParam->ucBssIndex];
+
+	if (!prBssInfo) {
+		DBGLOG(SCN, ERROR, "prBssInfo is Null\n");
+		return;
+	}
+
+	/* Add HT capabilities IE */
+	if (prBssInfo && (prAdapter->rWifiVar.ucAvailablePhyTypeSet & PHY_TYPE_SET_802_11N)) {
+		if ((prCmdScanReq->u2IELen + (ELEM_HDR_LEN + ELEM_MAX_LEN_HT_CAP)) <= MAX_IE_LENGTH) {
+			u4IELen = rlmFillHtCapIEByAdapter(prAdapter, prBssInfo,
+							(prCmdScanReq->aucIE + prCmdScanReq->u2IELen));
+			prCmdScanReq->u2IELen += u4IELen;
+
+			DBGLOG(SCN, TRACE, "Add HT IE in probe request! IELen=%d\n", prCmdScanReq->u2IELen);
+		} else {
+			DBGLOG(SCN, WARN, "Don't add HT IE, IELen=%d\n", prCmdScanReq->u2IELen);
+		}
+	}
+
+	/* Add VHT capabilities IE
+	** Note: HT IElen is 28, VHT IElen is 14, maybe not add HT IE here.
+	** But this is not the point, check the IElen sent from supplicant.
+	*/
+	if (prBssInfo && (prAdapter->rWifiVar.ucAvailablePhyTypeSet & PHY_TYPE_SET_802_11AC)) {
+		if ((prCmdScanReq->u2IELen + (ELEM_HDR_LEN + ELEM_MAX_LEN_VHT_CAP)) <= MAX_IE_LENGTH) {
+			u4IELen = rlmFillVhtCapIEByAdapter(prAdapter, prBssInfo,
+							(prCmdScanReq->aucIE + prCmdScanReq->u2IELen));
+			prCmdScanReq->u2IELen += u4IELen;
+		} else {
+			DBGLOG(SCN, WARN, "Don't add VHT IE, IELen=%d\n", prCmdScanReq->u2IELen);
+		}
+	}
+#endif
+
 	prCmdScanReq->ucScnFuncMask = prScanParam->ucScnFuncMask;
 	if (kalIsValidMacAddr(prScanParam->aucRandomMac)) {
 		prCmdScanReq->ucScnFuncMask = ENUM_SCN_RANDOM_MAC_EN;
@@ -490,11 +531,11 @@ VOID scnSendScanReqV3(IN P_ADAPTER_T prAdapter)
 			prScanParam->aucRandomMac, MAC_ADDR_LEN);
 	}
 	DBGLOG(SCN, INFO,
-		"ScnReqV4: ScnType=%d, SSIDType=%d, Num=%d, ChType=%d, Num=%d, Dwell=%d, RMac=%pM, FuncM=%d, Ver=%d\n",
+		"ScnReqV4: ScnType=%d, SSIDType=%d, Num=%d, ChType=%d, Num=%d, Dwell=%d, RMac=%pM, FuncM=%d, Ver=%d, IELen=%d->%d\n",
 		prCmdScanReq->ucScanType, prCmdScanReq->ucSSIDType, prScanParam->ucSSIDNum,
 		prCmdScanReq->ucChannelType, prCmdScanReq->ucChannelListNum, prCmdScanReq->u2ChannelDwellTime,
 		prCmdScanReq->aucRandomMac, prCmdScanReq->ucScnFuncMask,
-		prCmdScanReq->ucStructVersion);
+		prCmdScanReq->ucStructVersion, prScanParam->u2IELen, prCmdScanReq->u2IELen);
 
 	wlanSendSetQueryCmd(prAdapter,
 			    CMD_ID_SCAN_REQ_V2,
@@ -1205,6 +1246,10 @@ scnFsmSchedScanRequest(IN P_ADAPTER_T prAdapter,
 	BOOLEAN fgIsHiddenSSID = FALSE;
 #endif
 	P_CMD_SET_PSCAN_PARAM prCmdPscnParam = NULL;
+#if (CFG_ADD_HT_VHT_PROBE_REQUEST && CFG_SUPPORT_TDLS)
+	P_BSS_INFO_T prBssInfo;
+	UINT_32 u4IELen = 0;
+#endif
 
 	ASSERT(prAdapter);
 
@@ -1381,6 +1426,44 @@ scnFsmSchedScanRequest(IN P_ADAPTER_T prAdapter,
 
 	if (prSchedScanRequest->u4IELength)
 		kalMemCopy(prCmdNloReq->aucIE, prSchedScanRequest->pucIE, prCmdNloReq->u2IELen);
+
+#if (CFG_ADD_HT_VHT_PROBE_REQUEST && CFG_SUPPORT_TDLS)
+	prBssInfo = prAdapter->aprBssInfo[prNloParam->ucBssIndex];
+
+	if (!prBssInfo) {
+		DBGLOG(SCN, ERROR, "prBssInfo is Null in Pno Scan\n");
+		return FALSE;
+	}
+
+	/* Add HT capabilities IE */
+	if (prBssInfo && (prAdapter->rWifiVar.ucAvailablePhyTypeSet & PHY_TYPE_SET_802_11N)) {
+		if ((prCmdNloReq->u2IELen + (ELEM_HDR_LEN + ELEM_MAX_LEN_HT_CAP)) <= MAX_IE_LENGTH) {
+			u4IELen = rlmFillHtCapIEByAdapter(prAdapter, prBssInfo,
+							(prCmdNloReq->aucIE + prCmdNloReq->u2IELen));
+			prCmdNloReq->u2IELen += u4IELen;
+
+			DBGLOG(SCN, LOUD, "Add HT IE in PNO Scan! IELen=%d\n", prSchedScanRequest->u4IELength);
+		} else {
+			DBGLOG(SCN, WARN, "Don't add HT IELen pno scan, IELen=%d\n", prCmdNloReq->u2IELen);
+		}
+	}
+
+	/* Add VHT capabilities IE
+	** Note: HT IElen is 28, VHT IElen is 14, maybe not add HT IE here.
+	** But this is not the point, check the IElen sent from supplicant.
+	*/
+	if (prBssInfo && (prAdapter->rWifiVar.ucAvailablePhyTypeSet & PHY_TYPE_SET_802_11AC)) {
+		if ((prCmdNloReq->u2IELen + (ELEM_HDR_LEN + ELEM_MAX_LEN_VHT_CAP)) <= MAX_IE_LENGTH) {
+			u4IELen = rlmFillVhtCapIEByAdapter(prAdapter, prBssInfo,
+							(prCmdNloReq->aucIE + prCmdNloReq->u2IELen));
+			prCmdNloReq->u2IELen += u4IELen;
+
+			DBGLOG(SCN, LOUD, "Add VHT IE in Pno Scan probe request! IELen=%d\n", prCmdNloReq->u2IELen);
+		} else {
+			DBGLOG(SCN, WARN, "Don't add VHT IELen pno scan, IELen=%d\n", prCmdNloReq->u2IELen);
+		}
+	}
+#endif
 
 #if !CFG_SUPPORT_SCN_PSCN
 	if (wlanSendSetQueryCmd(prAdapter,

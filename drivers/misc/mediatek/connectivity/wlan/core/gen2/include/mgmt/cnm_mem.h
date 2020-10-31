@@ -197,23 +197,6 @@ typedef struct _STAT_CNT_INFO_DRV_T {
 	STAT_CNT_INFO_FW_T rFw;
 } STAT_CNT_INFO_DRV_T;
 
-#ifdef DSCP_SUPPORT
-struct _DSCP_EXCEPTION {
-	UINT_8 dscp;
-	UINT_8 userPriority;
-};
-
-struct _DSCP_RANGE {
-	UINT_8 lDscp;
-	UINT_8 hDscp;
-};
-
-struct _QOS_MAP_SET {
-	struct _DSCP_RANGE dscpRange[8];
-	UINT_8 dscpExceptionNum;
-	struct _DSCP_EXCEPTION dscpException[1];
-};
-#endif
 
 /* Define STA record structure */
 struct _STA_RECORD_T {
@@ -499,8 +482,8 @@ struct _STA_RECORD_T {
 
 	UINT8 ucStatsGenDisplayCnt;
 #endif				/* CFG_SUPPORT_STATISTICS */
-#ifdef DSCP_SUPPORT
-	struct _QOS_MAP_SET *qosMapSet;
+#if DSCP_SUPPORT
+	UINT_8  qosMapSet[64];
 #endif
 	UINT_16 u2MaxIdlePeriod;
 	UINT_8 ucIdleOption;

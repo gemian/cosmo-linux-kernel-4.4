@@ -253,24 +253,6 @@ struct STA_PMF_CFG {
 };
 #endif
 
-#if DSCP_SUPPORT
-struct _DSCP_EXCEPTION {
-	uint8_t dscp;
-	uint8_t userPriority;
-};
-
-struct _DSCP_RANGE {
-	uint8_t lDscp;
-	uint8_t hDscp;
-};
-
-struct _QOS_MAP_SET {
-	struct _DSCP_RANGE dscpRange[8];
-	uint8_t dscpExceptionNum;
-	struct _DSCP_EXCEPTION dscpException[1];
-};
-#endif
-
 /* Define STA record structure */
 struct STA_RECORD {
 	struct LINK_ENTRY rLinkEntry;
@@ -694,7 +676,7 @@ struct STA_RECORD {
 	struct STA_PMF_CFG rPmfCfg;
 #endif
 #if DSCP_SUPPORT
-	struct _QOS_MAP_SET *qosMapSet;
+	uint8_t  qosMapSet[64];
 #endif
 	u_int8_t fgSupportBTM; /* Indicates whether to support BTM */
 

@@ -2298,6 +2298,7 @@ wlanoidSetAddKey(IN P_ADAPTER_T prAdapter, IN PVOID pvSetBuffer, IN UINT_32 u4Se
 	prCmdKey->ucIsAuthenticator = ((prNewKey->u4KeyIndex & IS_AUTHENTICATOR) == IS_AUTHENTICATOR) ? 1 : 0;
 
 	kalMemCopy(prCmdKey->aucPeerAddr, (PUINT_8) prNewKey->arBSSID, MAC_ADDR_LEN);
+	kalMemCopy(prCmdKey->aucKeyRsc, (PUINT_8) & prNewKey->rKeyRSC, sizeof(PARAM_KEY_RSC));
 
 	prCmdKey->ucBssIdx = prBssInfo->ucBssIndex;	/* AIS BSS */
 

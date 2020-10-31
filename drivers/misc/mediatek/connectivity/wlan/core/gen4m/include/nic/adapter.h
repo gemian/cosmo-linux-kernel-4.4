@@ -946,9 +946,6 @@ struct WIFI_VAR {
 	uint8_t ucP2pShareMacAddr;
 	uint8_t ucSmartRTS;
 
-	/* The duration in ms to check TRX while the beacon timeout event */
-	uint32_t u4BeaconTimoutFilterDurationMs;
-
 	uint32_t u4UapsdAcBmp;
 	uint32_t u4MaxSpLen;
 	/* 0: enable online scan, non-zero: disable online scan */
