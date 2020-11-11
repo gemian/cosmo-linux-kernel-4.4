@@ -1666,7 +1666,7 @@ static const struct usb_gadget_driver configfs_driver_template = {
 		.name		= "configfs-gadget",
 	},
 };
-extern test_right_usb(void);
+extern int test_right_usb(void);
 
 #ifdef CONFIG_USB_CONFIGFS_UEVENT
 
