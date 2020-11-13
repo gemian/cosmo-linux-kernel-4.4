@@ -191,7 +191,7 @@ static void __ipv6_ifa_notify(int event, struct inet6_ifaddr *ifa);
 static void ipv6_ifa_notify(int event, struct inet6_ifaddr *ifa);
 static void inet6_no_ra_notify(int event, struct inet6_dev *idev);
 static int inet6_fill_nora(struct sk_buff *skb, struct inet6_dev *idev,
-			   u32 portid, u32 seq, int event, unsigned int flags);
+			   u32 portid, u32 seq, int event);
 
 static void inet6_send_rs_vzw(struct inet6_ifaddr *ifp);
 
@@ -3564,7 +3564,8 @@ static void addrconf_rs_timer(unsigned long data)
 
 		write_lock(&idev->lock);
 
-		if (ip6_operator_isop12())
+		if (ip6_operator_isop12() &&
+		    (strncmp(dev->name, "ccmni", 2) == 0))
 			idev->rs_interval = idev->cnf.rtr_solicit_interval;
 		else
 			idev->rs_interval = rfc3315_s14_backoff_update(
@@ -3832,7 +3833,8 @@ static void addrconf_dad_completed(struct inet6_ifaddr *ifp)
 		write_lock_bh(&ifp->idev->lock);
 		spin_lock(&ifp->lock);
 
-		if (ip6_operator_isop12())
+		if (ip6_operator_isop12() &&
+		    (strncmp(dev->name, "ccmni", 2) == 0))
 			ifp->idev->rs_interval = ifp->idev->cnf.rtr_solicit_interval;
 		else
 			ifp->idev->rs_interval = rfc3315_s14_backoff_init(
@@ -3891,7 +3893,9 @@ struct rt6_info *calc_lft_vzw(struct inet6_ifaddr *ifp, u32 *minimum_lft)
 	if (rt && (rt->rt6i_flags & RTF_EXPIRES)) {
 		route_lft = (rt->dst.expires - ifp->tstamp) / HZ;
 		*minimum_lft = min(ifp->prefered_lft, route_lft);
-		pr_info("[mtk_net]RA: min_lft %lld\n", (u64)(*minimum_lft));
+		pr_info("[mtk_net]RA: ifp %p, rt %p, rt_lft %lld, pre_lft %lld, min_lft %lld, dev: %s\n",
+			ifp, rt, (u64)route_lft, (u64)ifp->prefered_lft,
+			(u64)(*minimum_lft), rt->rt6i_idev->dev->name);
 	} else {
 		*minimum_lft = ifp->prefered_lft;
 	}
@@ -3904,7 +3908,8 @@ static void calc_next_vzw(struct inet6_ifaddr *ifp, struct rt6_info *rt,
 {
 	if (strncmp(ifp->idev->dev->name, "ccmni", 2) == 0) {
 		if (is_expires || (rt && (rt->rt6i_flags & RTF_EXPIRES))) {
-			if (!(ifp->idev->if_flags & IF_RS_VZW_SENT) && age >= (minimum_lft * 3 / 4))
+			if (!(ifp->idev->if_flags & IF_RS_VZW_SENT) &&
+			    (age >= (minimum_lft * 3 / 4)))
 				inet6_send_rs_vzw(ifp);
 			pr_info("[mtk_net]RA: min_lft %lld, age %lld\n",
 				(u64)minimum_lft, (u64)age);
@@ -5085,7 +5090,8 @@ static int inet6_set_iftoken(struct inet6_dev *idev, struct in6_addr *token)
 
 	if (update_rs) {
 		idev->if_flags |= IF_RS_SENT;
-		if (ip6_operator_isop12())
+		if (ip6_operator_isop12() &&
+		    (strncmp(dev->name, "ccmni", 2) == 0))
 			idev->rs_interval = idev->cnf.rtr_solicit_interval;
 		else
 			idev->rs_interval = rfc3315_s14_backoff_init(
@@ -5411,7 +5417,7 @@ static void inet6_no_ra_notify(int event, struct inet6_dev *idev)
 	if (!skb)
 		goto errout;
 
-	err = inet6_fill_nora(skb, idev, 0, 0, event, 0);
+	err = inet6_fill_nora(skb, idev, 0, 0, event);
 	if (err < 0) {
 		/* -EMSGSIZE implies BUG in inet6_prefix_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
@@ -5427,7 +5433,7 @@ errout:
 
 /*Fill skb for  no ra  msg*/
 static int inet6_fill_nora(struct sk_buff *skb, struct inet6_dev *idev,
-			   u32 portid, u32 seq, int event, unsigned int flags)
+			   u32 portid, u32 seq, int event)
 {
 	struct nlmsghdr *nlh;
 
@@ -5442,10 +5448,10 @@ static int inet6_fill_nora(struct sk_buff *skb, struct inet6_dev *idev,
 		*/
 		/*hdr->ifi_flags = dev_get_flags(dev); */
 		if (idev->if_flags & IF_RS_VZW_SENT) {
-			flags = 0;
+			flag = 0;
 			pr_info("[mtk_net][vzw]RA refresh Fail\n");
 		} else {
-			flags = 1;
+			flag = 1;
 			pr_info("[mtk_net][vzw]RA init Fail\n");
 		}
 	}

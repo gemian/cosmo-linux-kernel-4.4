@@ -43,53 +43,21 @@ static int hall_pdrv_resume(struct platform_device *pdev);
 #endif
 extern void mt_irq_set_polarity(unsigned int irq, unsigned int polarity);
 
-//static void hall_fcover_eint_handler(void);
-
-/*zhaolong add for GPIO request*/
-
-struct platform_device *fcoverPltFmDev;
-struct pinctrl *fcoverctrl = NULL;
-struct pinctrl_state *hall_pins_default;
-struct pinctrl_state *hall_pins_cfg;
-
-#if 0
-int fcover_gpio_init(void)
-{
-	int ret = 0;
-	printk("zhaolong:======%s======.\n" , __func__);
-	fcoverctrl = devm_pinctrl_get(&fcoverPltFmDev->dev);
-	if (IS_ERR(fcoverctrl)) {
-		ret = PTR_ERR(fcoverctrl);
-		printk("Cannot find fcover pinctrl!\n");
-	}
-	hall_pins_default = pinctrl_lookup_state(fcoverctrl, "pin_default");
-	if (IS_ERR(hall_pins_default)) {
-		ret = PTR_ERR(hall_pins_default);
-		printk("Cannot find fcover pinctrl default!\n");
-	}
-
-	hall_pins_cfg = pinctrl_lookup_state(fcoverctrl, "pin_cfg");
-	if (IS_ERR(hall_pins_cfg)) {
-		ret = PTR_ERR(hall_pins_cfg);
-		printk("Cannot find fcover pinctrl pin_cfg!\n");
-	}
-	pinctrl_select_state(fcoverctrl, hall_pins_cfg);
-	return ret;	
-}
-#endif
-
-#define FCOVER_OPEN        (1)
-#define FCOVER_CLOSE       (0)
+#define HALL_FCOVER_OPEN        (1)
+#define HALL_FCOVER_CLOSE       (0)
 
 static struct switch_dev fcover_data;
 static struct work_struct fcover_work;
 static struct workqueue_struct *fcover_workqueue = NULL;
 static DEFINE_SPINLOCK(fcover_lock);
-int new_fcover = FCOVER_OPEN;
-static int fcover_close_flag = FCOVER_OPEN;
+int new_fcover = HALL_FCOVER_OPEN;
+static int fcover_close_flag = HALL_FCOVER_OPEN;
 extern struct input_dev *kpd_accdet_dev;
+bool hall_fcover_lid_closed = false;
 static int initVal = 0;
 extern void enable_aw9523(int enable);
+
+static BLOCKING_NOTIFIER_HEAD(hall_notifier_list);
 
 int is_hall_state(void)
 {
@@ -97,39 +65,73 @@ int is_hall_state(void)
 }
 EXPORT_SYMBOL(is_hall_state);
 
-static void fcover_key_handler(struct work_struct *work)
+/**
+ *      hall_register_client - register a client notifier
+ *      @nb: notifier block to callback on events
+ */
+int hall_register_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&hall_notifier_list, nb);
+}
+EXPORT_SYMBOL(hall_register_client);
+
+/**
+ *      hall_unregister_client - unregister a client notifier
+ *      @nb: notifier block to callback on events
+ */
+int hall_unregister_client(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&hall_notifier_list, nb);
+}
+EXPORT_SYMBOL(hall_unregister_client);
+
+/**
+ * hall_notifier_call_chain - notify clients of lid switch events
+ *
+ */
+int hall_notifier_call_chain(unsigned long val, void *v)
+{
+	return blocking_notifier_call_chain(&hall_notifier_list, val, v);
+}
+EXPORT_SYMBOL_GPL(hall_notifier_call_chain);
+
+static void hall_work_handler(struct work_struct *work)
 {
 	new_fcover = gpio_get_value(hallgpiopin);
-	printk("fcover_key_handler new_fcover=%d , fcover_close_flag=%d\n",new_fcover, fcover_close_flag);
+	HALL_LOG("hall_work_handler new_fcover=%d , fcover_close_flag=%d", new_fcover, fcover_close_flag);
 
 	if (initVal < 5)
 	     initVal++;
-	printk("fcover init %d", initVal);
+	HALL_LOG("hall_work_handler init %d", initVal);
+
 	if((fcover_close_flag != new_fcover) || initVal < 5)
 	{
 		spin_lock(&fcover_lock);
 		fcover_close_flag = new_fcover;
+		hall_fcover_lid_closed = (fcover_close_flag == HALL_FCOVER_CLOSE);
 		spin_unlock(&fcover_lock);
-		
-		if(fcover_close_flag == FCOVER_CLOSE)
+
+		hall_notifier_call_chain(fcover_close_flag, NULL);
+
+		if(fcover_close_flag == HALL_FCOVER_CLOSE)
 		{
 			//enable_aw9523(0);
-			input_report_key(kpd_accdet_dev, KEY_F11, 1);
+			input_report_key(kpd_accdet_dev, KEY_F15, 1);
 			input_sync(kpd_accdet_dev);
 			mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F11, 0);
-      input_sync(kpd_accdet_dev);
-     	printk("zhaolong=======F11====\n");
+			input_report_key(kpd_accdet_dev, KEY_F15, 0);
+			input_report_switch(kpd_accdet_dev, SW_LID, hall_fcover_lid_closed);
+			input_sync(kpd_accdet_dev);
 		}
 		else  // open
 		{
 			//enable_aw9523(1);
-			input_report_key(kpd_accdet_dev, KEY_F12, 1);
-      input_sync(kpd_accdet_dev);
-      mdelay(10);
-			input_report_key(kpd_accdet_dev, KEY_F12, 0);
-      input_sync(kpd_accdet_dev);
-      printk("zhaolong=======F12====\n");
+			input_report_key(kpd_accdet_dev, KEY_F16, 1);
+			input_sync(kpd_accdet_dev);
+			mdelay(10);
+			input_report_key(kpd_accdet_dev, KEY_F16, 0);
+			input_report_switch(kpd_accdet_dev, SW_LID, hall_fcover_lid_closed);
+			input_sync(kpd_accdet_dev);
 		}
 		switch_set_state((struct switch_dev *)&fcover_data, fcover_close_flag);
 	}
@@ -142,16 +144,6 @@ static void fcover_key_handler(struct work_struct *work)
 	enable_irq(hall_irqnr);
 }
 
-#if 0
-static void hall_fcover_eint_handler(void)
-{
-	printk("hall_fcover_eint_handler ..\n");
-	disable_irq_nosync(hall_irqnr);
-	
-	queue_work(fcover_workqueue, &fcover_work);	
-	//schedule_work(&obj->eint_work);
-}
-#else
 static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 {
 	/* use _nosync to avoid deadlock */
@@ -160,7 +152,6 @@ static irqreturn_t hall_fcover_eint_handler(int irq, void *dev_id)
 	
 	return IRQ_HANDLED;
 }
-#endif
 
 static const struct of_device_id hall_of_match[] = {
 	{.compatible = "mediatek, hall-eint"},
@@ -181,35 +172,6 @@ static struct platform_driver hall_pdrv = {
 		   },
 };
 
-/*****************************************************************************************/
-#if 0
-int hall_dev_open(struct inode *inode, struct file *file)
-{
-	return 0;
-}
-
-static const struct file_operations hall_dev_fops = {
-	.owner = THIS_MODULE,
-	//.unlocked_ioctl = hall_dev_ioctl,
-	.open = hall_dev_open,
-};
-
-/*********************************************************************/
-static struct miscdevice hall_dev = {
-	.minor = MISC_DYNAMIC_MINOR,
-	.name = HALL_NAME,
-	.fops = &hall_dev_fops,
-};
-#endif
-
-#if 0
-static int hall_open(struct input_dev *dev)
-{
-	//hall_slide_qwerty_init();	/* API 1 for hall slide qwerty init settings */
-	return 0;
-}
-#endif
-
 static int hall_pdrv_probe(struct platform_device *pdev)
 {
 	int err = 0;
@@ -219,8 +181,6 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	struct device_node *node = NULL;
 
 	printk("%s,hall probe start!!!\n",__func__);
-	
-	fcoverPltFmDev = pdev;
 
 	/* initialize and register input device (/dev/input/eventX) */
 //	hall_input_dev = input_allocate_device();
@@ -230,8 +190,10 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 //	}
 
 	__set_bit(EV_KEY, kpd_accdet_dev->evbit);
-	__set_bit(KEY_F11, kpd_accdet_dev->keybit);
-	__set_bit(KEY_F12, kpd_accdet_dev->keybit);		
+	__set_bit(KEY_F15, kpd_accdet_dev->keybit);
+	__set_bit(KEY_F16, kpd_accdet_dev->keybit);
+	__set_bit(EV_SW, kpd_accdet_dev->evbit);
+	__set_bit(SW_LID, kpd_accdet_dev->swbit);
 
 //	hall_input_dev->id.bustype = BUS_HOST;
 //	hall_input_dev->name = HALL_NAME;
@@ -259,7 +221,7 @@ static int hall_pdrv_probe(struct platform_device *pdev)
 	wake_lock_init(&hall_suspend_lock, WAKE_LOCK_SUSPEND, "hall wakelock");
 
 	fcover_workqueue = create_singlethread_workqueue("fcover");
-	INIT_WORK(&fcover_work, fcover_key_handler);
+	INIT_WORK(&fcover_work, hall_work_handler);
 
 	fcover_close_flag = gpio_get_value(hallgpiopin);
 
