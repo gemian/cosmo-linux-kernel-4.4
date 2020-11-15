@@ -36,9 +36,6 @@ binary-arch:
 	ln -s /usr/src/linux-headers-4.4 debian/tmp/lib/modules/build
 	mv debian/tmp/lib/modules/build debian/tmp/lib/modules/4.4.146*/
 
-	# temporary workaround untill building Wi-Fi module is fixed
-	rm debian/tmp/lib/modules/4.4.146*/kernel/drivers/misc/mediatek/connectivity/wlan/core/gen3/wlan_drv_gen3.ko
-
 	dpkg-gencontrol -DArchitecture=arm64 -pcosmo-linux-kernel
 	dpkg --build debian/tmp ..
 
