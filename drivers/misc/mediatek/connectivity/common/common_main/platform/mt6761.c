@@ -668,7 +668,7 @@ static INT32 consys_ahb_clock_ctrl(MTK_WCN_BOOL enable)
 
 static INT32 polling_consys_chipid(VOID)
 {
-	UINT32 retry = 10;
+	INT32 retry = 10;
 	UINT32 consys_ver_id = 0;
 	UINT8 *consys_reg_base = NULL;
 	UINT32 value = 0;
@@ -679,14 +679,18 @@ static INT32 polling_consys_chipid(VOID)
 		consys_ver_id = CONSYS_REG_READ(conn_reg.mcu_top_misc_off_base + CONSYS_IP_VER_OFFSET);
 		if (consys_ver_id == 0x10020300) {
 			WMT_PLAT_PR_INFO("retry(%d)consys version id(0x%08x)\n", retry, consys_ver_id);
-			consys_dl_rom_patch(consys_ver_id);
-			break;
+			if (consys_dl_rom_patch(consys_ver_id) == 0)
+				break;
 		} else if (pre_ver_id != consys_ver_id) {
 			pre_ver_id = consys_ver_id;
 			WMT_PLAT_PR_ERR("Read CONSYS version id(0x%08x)", consys_ver_id);
 		}
 		msleep(20);
 	}
+
+	if (retry <= 0)
+		return -1;
+
 	consys_ver_id = CONSYS_REG_READ(conn_reg.mcu_top_misc_off_base + CONSYS_CONF_ID_OFFSET);
 	WMT_PLAT_PR_INFO("consys configuration id(0x%x)\n", consys_ver_id & 0xF);
 	consys_ver_id = CONSYS_REG_READ(conn_reg.mcu_base + CONSYS_HW_ID_OFFSET);
@@ -1079,6 +1083,8 @@ static INT32 consys_dl_rom_patch(UINT32 ip_ver)
 	if (rom_patch_dl_flag) {
 		if (mtk_wcn_soc_rom_patch_dwn(ip_ver) == 0)
 			rom_patch_dl_flag = 1;
+		else
+			return -1;
 	}
 
 	return 0;

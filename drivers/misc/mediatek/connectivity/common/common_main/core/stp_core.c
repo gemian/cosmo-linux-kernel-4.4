@@ -2519,7 +2519,8 @@ INT32 mtk_wcn_stp_set_wmt_last_close(UINT32 value)
 {
 	STP_INFO_FUNC("set wmt_last_close flag (%d)\n", value);
 
-	STP_SET_WMT_LAST_CLOSE(stp_core_ctx, value);
+	/* test whether last_close can be removed safely */
+	/* STP_SET_WMT_LAST_CLOSE(stp_core_ctx, value); */
 
 	return 0;
 }

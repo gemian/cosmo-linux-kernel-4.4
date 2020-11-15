@@ -214,6 +214,9 @@ static UINT8 WMT_COEX_EXT_ELAN_GAIN_P1_CMD[] = { 0x01, 0x10, 0x12, 0x00, 0x1B, 0
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 static UINT8 WMT_COEX_EXT_ELAN_GAIN_P1_EVT[] = { 0x02, 0x10, 0x01, 0x00, 0x00 };
+
+static UINT8 WMT_COEX_EXT_EPA_MODE_CMD[] = { 0x01, 0x10, 0x02, 0x00, 0x1D, 0x00 };
+static UINT8 WMT_COEX_EXT_EPA_MODE_EVT[] = { 0x02, 0x10, 0x01, 0x00, 0x00 };
 #endif
 
 static UINT8 WMT_EPA_SETTING_CONFIG_CMD[] = { 0x01, 0x02, 0x02, 0x00, 0x0E, 0x00 };
@@ -925,6 +928,7 @@ static struct init_script coex_table[] = {
 #else
 	INIT_CMD(WMT_COEX_WIFI_PATH_CMD, WMT_COEX_WIFI_PATH_EVT, "wifi path"),
 	INIT_CMD(WMT_COEX_EXT_ELAN_GAIN_P1_CMD, WMT_COEX_EXT_ELAN_GAIN_P1_EVT, "wifi elan gain p1"),
+	INIT_CMD(WMT_COEX_EXT_EPA_MODE_CMD, WMT_COEX_EXT_EPA_MODE_EVT, "wifi ext epa mode"),
 #endif
 };
 
@@ -1435,7 +1439,9 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 
 	/* init coex before start RF calibration */
 	if (wmt_ic_ops_soc.icId == 0x6765 ||
-		wmt_ic_ops_soc.icId == 0x6761) {
+		wmt_ic_ops_soc.icId == 0x6761 ||
+		wmt_ic_ops_soc.icId == 0x6768 ||
+		wmt_ic_ops_soc.icId == 0x6785) {
 		iRet = wmt_stp_init_coex();
 		if (iRet) {
 			WMT_ERR_FUNC("init_coex fail(%d)\n", iRet);
@@ -1476,6 +1482,8 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 
 	if (wmt_ic_ops_soc.icId != 0x6765 &&
 	    wmt_ic_ops_soc.icId != 0x3967 &&
+	    wmt_ic_ops_soc.icId != 0x6768 &&
+	    wmt_ic_ops_soc.icId != 0x6785 &&
 	    wmt_ic_ops_soc.icId != 0x6761) {
 		iRet = wmt_stp_init_coex();
 		if (iRet) {
@@ -2158,6 +2166,7 @@ static INT32 wmt_stp_init_coex(VOID)
 #else
 #define COEX_WIFI_PATH 1
 #define COEX_EXT_ELAN_GAIN_P1 2
+#define COEX_EXT_EPA_MODE 3
 #endif
 #define WMT_COXE_CONFIG_ADJUST_ANTENNA_OPCODE 6
 
@@ -2180,7 +2189,8 @@ static INT32 wmt_stp_init_coex(VOID)
 
 	if (wmt_ic_ops_soc.icId == 0x6765 ||
 		wmt_ic_ops_soc.icId == 0x6761 ||
-		wmt_ic_ops_soc.icId == 0x6768) {
+		wmt_ic_ops_soc.icId == 0x6768 ||
+		wmt_ic_ops_soc.icId == 0x6785) {
 		WMT_INFO_FUNC("elna_gain_p1_support:0x%x\n", pWmtGenConf->coex_wmt_ext_elna_gain_p1_support);
 		if (pWmtGenConf->coex_wmt_ext_elna_gain_p1_support != 1)
 			return 0;
@@ -2309,6 +2319,8 @@ static INT32 wmt_stp_init_coex(VOID)
 				   coex_table[COEX_EXT_ELAN_GAIN_P1].str,
 				   coex_table[COEX_EXT_ELAN_GAIN_P1].cmdSz);
 	}
+
+	coex_table[COEX_EXT_EPA_MODE].cmd[5] = pWmtGenConf->coex_wmt_ext_epa_mode;
 #endif
 
 	iRet = wmt_core_init_script(coex_table, ARRAY_SIZE(coex_table));
@@ -3402,6 +3414,9 @@ INT32 mtk_wcn_soc_rom_patch_dwn(UINT32 ip_ver)
 		if (iRet > 0) {
 			WMT_INFO_FUNC("There is no need to download (%d) type patch!\n", type);
 			continue;
+		} else if (iRet < 0) {
+			WMT_ERR_FUNC("failed to get patch (type: %d, ret: %d)\n", type, iRet);
+			goto done;
 		}
 
 		/* <2.2> read patch content */

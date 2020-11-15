@@ -339,8 +339,9 @@ INT32 mtk_wcn_consys_hw_reg_ctrl(UINT32 on, UINT32 co_clock_type)
 
 		WMT_STEP_DO_ACTIONS_FUNC(STEP_TRIGGER_POINT_POWER_ON_BEFORE_GET_CONNSYS_ID);
 
-		if (wmt_consys_ic_ops->polling_consys_ic_chipid)
-			wmt_consys_ic_ops->polling_consys_ic_chipid();
+		if (wmt_consys_ic_ops->polling_consys_ic_chipid &&
+			wmt_consys_ic_ops->polling_consys_ic_chipid() < 0)
+			return -1;
 		if (wmt_consys_ic_ops->update_consys_rom_desel_value)
 			wmt_consys_ic_ops->update_consys_rom_desel_value();
 		if (wmt_consys_ic_ops->consys_ic_acr_reg_setting)
