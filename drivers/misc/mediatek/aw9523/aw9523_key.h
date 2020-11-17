@@ -23,13 +23,15 @@
 
 #define AW9523_KEY_NAME	"aw9523-key"
  
-#define AW9523_TAG                  "[aw9523] "
+#define AW9523_TAG "[aw9523] "
 
-#define AW9523_ERR(fmt, args...)    printk(KERN_ERR AW9523_TAG"%s %d : "fmt, __FUNCTION__, __LINE__, ##args)
+#define AW9523_ERR(fmt, args...)    dev_err(AW9523_TAG"%s %d : "fmt, __FUNCTION__, __LINE__, ##args)
+
 //#define AW9523_DEBUG
+
 #ifdef AW9523_DEBUG
-#define AW9523_FUN(f)    	    printk(KERN_ERR AW9523_TAG"%s\n", __FUNCTION__)
-#define AW9523_LOG(fmt, args...)    printk(KERN_ERR AW9523_TAG fmt, ##args)
+#define AW9523_FUN(f) printk(KERN_ERR AW9523_TAG "%s\n", __FUNCTION__)
+#define AW9523_LOG(fmt, args...) printk(KERN_ERR AW9523_TAG fmt, ##args)
 #else
 #define AW9523_LOG(fmt, args...)
 #define AW9523_FUN(f)
@@ -39,22 +41,12 @@
 #define  AW9523_SDA_PIN     (GPIO137 | 0x80000000)
 #define  AW9523_RESET_PIN   (GPIO127 | 0x80000000)
 
-//IIC的写地址，={1011，0，AD1，AD0，0}，AD0,AD1接低则为0xB0 ，接高则是0xB6
-#define IIC_ADDRESS_WRITE		0xB0       
+//IIC write address，={1011，0，AD1，AD0，0}，AD0,AD1 is low and 0xB0，and high is 0xB6
+#define IIC_ADDRESS_WRITE		0xB0
 #define IIC_ADDRESS_READ		0xB1 
 
-#define X_NUM  8   //列
-#define Y_NUM  7   //行
-
-//i2c  tranfer ,repeat try times
-#define AW9523_I2C_MAX_LOOP  50	
-
-#define AW9523_GPIO_AS_INT(pin)        do{                                                     		\
-                                            mt_set_gpio_mode(pin, GPIO_AW9523_EN_PIN_M_EINT);   	\
-                                            mt_set_gpio_dir(pin, GPIO_DIR_IN);                  	\
-                                            mt_set_gpio_pull_enable(pin, GPIO_PULL_ENABLE);    		\
-					    mt_set_gpio_pull_select(pin, GPIO_PULL_UP); 	\
-                                        }while(0)
+#define X_NUM  8   //Column
+#define Y_NUM  7   //Row
 
 //reg address
 #define INPUT_PORT0  	0x00
