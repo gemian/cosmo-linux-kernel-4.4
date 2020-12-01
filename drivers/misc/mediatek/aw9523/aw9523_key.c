@@ -52,7 +52,7 @@
 /**
  * AW9523_EARLY_SUSPEND added by wangyongsheng 20171227
  * Keys can be pressed whilst the screen is closed, early suspend provides a way disable the keyboard whilst the device
- * is closed, this can be triggered via frame buffer (FB) or device open/closed state (HALL) callback.
+ * is closed, this can be triggered open/closed state (HALL) callback.
 */
 
 #ifdef CONFIG_AW9523_HALL
@@ -301,6 +301,7 @@ static void aw9523_reset_to_monitor_for_state_change(void) {
     val = i2c_read_reg(P0_INT);
     i2c_write_reg(P0_INT, 0x00);    //enable p0 port irq
 
+    AW9523_LOG("%s irq enabled: %d\n", __func__, aw9523_key->irq_enabled);
     if (!aw9523_key->irq_enabled) {
         enable_irq(aw9523_key->irq);
         aw9523_key->irq_enabled = true;
@@ -517,7 +518,7 @@ static irqreturn_t aw9523_key_eint_func(int irq, void *desc) {
     AW9523_LOG("IRQ disable I nosync\n");
     disable_irq_nosync(aw9523_key->irq);
     aw9523_key->irq_enabled = false;
-    AW9523_LOG("Interrupt Enter\n");
+    AW9523_LOG("%s irq enabled: %d (Int Enter)\n", __func__, aw9523_key->irq_enabled);
 
     if (aw9523_key == NULL) {
         AW9523_LOG("aw9523_key == NULL");
@@ -557,6 +558,8 @@ int aw9523_key_setup_eint(void) {
             pr_err("%s IRQ LINE NOT AVAILABLE!!\n", __func__);
             return -EINVAL;
         }
+        aw9523_key->irq_enabled = true;
+        AW9523_LOG("%s irq enabled: %d\n", __func__, aw9523_key->irq_enabled);
     } else {
         AW9523_LOG("null irq node!!\n");
         return -EINVAL;
@@ -823,7 +826,7 @@ static int aw9523_i2c_probe(struct i2c_client *client, const struct i2c_device_i
     aw9523_key->hall_notif.notifier_call = aw9523_hall_notifier_callback;
     err = hall_register_client(&aw9523_key->hall_notif);
     if (err) {
-        AW9523_ERR("Unable to register aw9523_key fb_notifier: %d\n", err);
+        AW9523_LOG("Unable to register aw9523_key fb_notifier: %d\n", err);
     } else {
         AW9523_LOG("Success to register aw9523_key fb_notifier.\n");
     }
@@ -860,6 +863,7 @@ static void aw9523_i2c_early_suspend(struct i2c_client *client) {
 
     AW9523_LOG("IRQ disable es 1 nosync\n");
     disable_irq_nosync(aw9523_key->irq);
+    aw9523_key->irq_enabled = false;
 
     pinctrl_select_state(aw9523_pin, shdn_low);
     msleep(5);
@@ -890,6 +894,7 @@ static int aw9523_i2c_suspend(struct i2c_client *client, pm_message_t msg) {
 
     AW9523_LOG("IRQ disable S nosync\n");
     disable_irq_nosync(aw9523_key->irq);
+    aw9523_key->irq_enabled = false;
 
     if (msg.event == PM_EVENT_SUSPEND) {
         pinctrl_select_state(aw9523_pin, shdn_low);
@@ -908,8 +913,8 @@ static int aw9523_i2c_resume(struct i2c_client *client) {
 #ifndef AW9523_EARLY_SUSPEND
     struct aw9523_key_data *aw9523_key = i2c_get_clientdata(client);
 
-    AW9523_LOG("%s enter\n", __func__);
     AW9523_LOG("IRQ Re-enable 2 resume\n");
+    AW9523_LOG("%s irq enabled: %d\n", __func__, aw9523_key->irq_enabled);
     if (!aw9523_key->irq_enabled) {
         enable_irq(aw9523_key->irq);
         aw9523_key->irq_enabled = true;
@@ -1016,6 +1021,7 @@ static int aw9523_key_suspend(struct platform_device *pdev, pm_message_t state)
     AW9523_LOG("%s enter!\n", __func__);
     AW9523_LOG("IRQ disable 3 nosync\n");
     disable_irq_nosync(aw9523_key->irq);
+    aw9523_key->irq_enabled = false;
 
     pinctrl_select_state(aw9523_pin, shdn_low);
     msleep(5);
@@ -1029,8 +1035,8 @@ static int aw9523_key_suspend(struct platform_device *pdev, pm_message_t state)
 
 static int aw9523_key_resume(struct platform_device *pdev)
 {
-    AW9523_LOG("%s enter!\n", __func__);
     AW9523_LOG("IRQ Re-enable 3 resume\n");
+    AW9523_LOG("%s irq enabled: %d\n", __func__, aw9523_key->irq_enabled);
     if (!aw9523_key->irq_enabled) {
         enable_irq(aw9523_key->irq);
         aw9523_key->irq_enabled = true;
