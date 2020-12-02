@@ -25,8 +25,6 @@
  
 #define AW9523_TAG "[aw9523] "
 
-#define AW9523_ERR(fmt, args...)    dev_err(AW9523_TAG"%s %d : "fmt, __FUNCTION__, __LINE__, ##args)
-
 //#define AW9523_DEBUG
 
 #ifdef AW9523_DEBUG
