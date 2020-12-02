@@ -26,7 +26,7 @@
 #define AW9524_TAG                  "[aw9524] "
 
 #define AW9524_ERR(fmt, args...)    printk(KERN_ERR AW9524_TAG"%s %d : "fmt, __FUNCTION__, __LINE__, ##args)
-#define AW9524_DEBUG
+//#define AW9524_DEBUG
 #ifdef AW9524_DEBUG
 #define AW9524_FUN(f)    	    printk(KERN_ERR AW9524_TAG"%s\n", __FUNCTION__)
 #define AW9524_LOG(fmt, args...)    printk(KERN_ERR AW9524_TAG fmt, ##args)
