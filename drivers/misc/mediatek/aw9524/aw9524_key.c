@@ -39,18 +39,12 @@
 #include <linux/of_gpio.h>
 #include <linux/miscdevice.h>
 #include <linux/workqueue.h>
+#include <linux/leds.h>
 #include <linux/mutex.h>
 #include <mt-plat/mtk_pwm.h>
 
 #define CONFIG_GREAT_AW9524_LED_PROBE
 
-//#define CONFIG_AW9524_FB
-//#define AW9524_EARLAY_SUSPEND
-/*
-*add by wangyongsheng20171227 
-*释 : 解决外扩按键在盒盖被压住时进不去休眠和偶尔出现按键不能相应
-*及让该设备在灭屏时就进入休眠不等系统调用suspend方法再进入
-*/
 #ifdef CONFIG_AW9524_FB
 #include <linux/notifier.h>
 #include <linux/fb.h>
@@ -112,11 +106,9 @@ struct aw9524_key_data {
 	struct input_dev	*input_dev_aw9524;
 	struct work_struct 	eint_work_aw9524;
 	struct device_node *irq_node_aw9524;
+	struct led_classdev led_dev;
 	int irq_aw9524;
 	bool is_screen_on_aw9524;
-#ifdef CONFIG_AW9524_FB
-		struct notifier_block	fb_notif_aw9524;
-#endif		
 };
 
 struct pinctrl *aw9524_pin;
@@ -128,15 +120,8 @@ struct i2c_client *aw9524_i2c_client;
 
 unsigned int gpio_aw9524_eint;
 
-#ifdef CONFIG_AW9524_FB
-static int aw9524_fb_notifier_callback(struct notifier_block *self,
-                     unsigned long event, void *data);
-#endif
-#ifdef AW9524_EARLAY_SUSPEND
-static void aw9524_i2c_early_suspend(struct i2c_client *client);
-static void aw9524_i2c_early_resume(struct i2c_client *client);
-#endif
-
+#define LED_MAX_BRIGHTNESS 5
+#define DEFAULT_LED_NAME "kbd_backlight"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GPIO Control
@@ -178,113 +163,6 @@ static void aw9524_hw_reset(void)
 	AW9524_LOG("%s out\n", __func__);
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Interrupt
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 0
-static void aw9524_key_eint_work(struct work_struct *work)
-{
-	unsigned char var,var1;
-	AW9524_LOG("aw9524_key_eint_work\n");
-	
-	mutex_lock(&aw9524_lock);
-	
-	var = aw9524_i2c_read_reg(P1_INPUT_AW9524);
-	AW9524_LOG("P1_INPUT_AW9524 = 0x%0X\n", var);
-
-	var1 = aw9524_i2c_read_reg(P0_INPUT_AW9524);
-	AW9524_LOG("P0_INPUT_AW9524 = 0x%0X\n", var1);
-	
-	if (aw9524_key->input_dev_aw9524){
-		if(!(var & (0x01<<4))){
-			AW9524_LOG("key3\n");
-			input_report_key(aw9524_key->input_dev_aw9524, KEY_F3, 1);
-			input_sync(aw9524_key->input_dev_aw9524);
-			mdelay(1);
-			input_report_key(aw9524_key->input_dev_aw9524, KEY_F3, 0);
-			input_sync(aw9524_key->input_dev_aw9524);
-		}
-		
-		if(!(var & (0x01<<5))) {
-			AW9524_LOG("key4\n");
-			input_report_key(aw9524_key->input_dev_aw9524, KEY_ENTER, 1);
-			input_sync(aw9524_key->input_dev_aw9524);
-			mdelay(1);
-			input_report_key(aw9524_key->input_dev_aw9524, KEY_ENTER, 0);
-			input_sync(aw9524_key->input_dev_aw9524);
-		}
-	}
-	
-
-	aw9524_i2c_write_reg(P0_INT_AW9524, 0x00);
-	aw9524_i2c_write_reg(P1_INT_AW9524, 0xCF);		// P1: 1100 1111 
-	
-	mutex_unlock(&aw9524_lock);
-	
-	gpio_set_debounce(gpio_aw9524_eint,500);	
-	enable_irq(aw9524_key->irq_aw9524);
-}
-
-/*********************************************************
- *
- * int work
- *
- ********************************************************/
-static irqreturn_t aw9524_key_eint_func(int irq, void *desc)
-{	
-	disable_irq_nosync(aw9524_key->irq_aw9524);
-	aw9524_i2c_read_reg(P0_INPUT_AW9524);
-	aw9524_i2c_read_reg(P1_INPUT_AW9524);
-	aw9524_i2c_write_reg(P0_INT_AW9524, 0xFF);
-	aw9524_i2c_write_reg(P1_INT_AW9524, 0xFF);
-	
-	AW9524_LOG("Interrupt Enter\n");
-	
-	if(aw9524_key == NULL){
-		AW9524_LOG("aw9524_key == NULL");
-		return  IRQ_NONE;
-	}	
-	
-	queue_work(aw9524_wq, &aw9524_key->eint_work_aw9524);
-	
-	return IRQ_HANDLED;
-}
-
-int aw9524_key_setup_eint(void)
-{
-	int ret = 0;
-
-	aw9524_key->irq_node_aw9524 = of_find_compatible_node(NULL, NULL, "mediatek,aw9524_eint");
-	if (!aw9524_key->irq_node_aw9524){
-		AW9524_LOG("get aw9524_key->irq_node_aw9524 failed! [%d]\n",__LINE__);
-		return -ENODEV;
-	} 
-
-	gpio_aw9524_eint = of_get_named_gpio(aw9524_key->irq_node_aw9524, "aw9524_eint-gpio", 0);
-	if (gpio_aw9524_eint < 0) {
-		AW9524_LOG("get gpio_aw9524_eint fail! [%d]\n",__LINE__);
-	}
-
-	ret = gpio_request(gpio_aw9524_eint, "aw9524_eint-gpio");
-	if (ret)
-		AW9524_LOG("gpio_request gpio_aw9524_eint fail, ret = %d [%d]\n",ret,__LINE__);
-
-	gpio_direction_input(gpio_aw9524_eint);
-	aw9524_key->irq_aw9524 = gpio_to_irq(gpio_aw9524_eint);
-
-	ret = request_irq(aw9524_key->irq_aw9524, aw9524_key_eint_func, IRQ_TYPE_EDGE_FALLING, "aw9524_eint", NULL);
-	if (ret != 0) {
-		AW9524_LOG("request_irq aw9524_key->irq_aw9524 failed\n");
-	} else {
-		AW9524_LOG("set EINT finished, aw9524_key->irq_aw9524=%d\n",aw9524_key->irq_aw9524);
-	}
-
-	disable_irq_nosync(aw9524_key->irq_aw9524);
-	enable_irq(aw9524_key->irq_aw9524);
-	
-    return 0;
-}
-#endif
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // i2c write and read
 //////////////////////////////////////////////////////////////////////////
@@ -418,186 +296,24 @@ static int aw9524_create_sysfs(struct i2c_client *client)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if 0
-static void aw9524_input_register(void)
-{
-	int err;
-	struct input_dev *input_dev;
-	
-	input_dev = input_allocate_device();
-	if (input_dev == NULL){
-		printk(KERN_ERR"aw9524 not enough memory\n");
-		err = -ENOMEM;
-		goto exit_input_dev_alloc_failed;
-	}
-	
-	aw9524_key->input_dev_aw9524 = input_dev;
-	__set_bit(EV_KEY, input_dev->evbit);
-	__set_bit(EV_SYN, input_dev->evbit);
-	input_set_capability(aw9524_key->input_dev_aw9524, EV_KEY, KEY_F3);
-	input_set_capability(aw9524_key->input_dev_aw9524, EV_KEY, KEY_ENTER);
-	input_dev->name	= AW9524_I2C_NAME;
-	err = input_register_device(input_dev);
-	if (err) {
-		printk(KERN_ERR"aw9524 failed to register device\n");
-		goto exit_input_register_device_failed;
-	}	
-	
-exit_input_dev_alloc_failed:
-	cancel_work_sync(&aw9524_key->eint_work_aw9524);
-exit_input_register_device_failed:
-	input_free_device(input_dev);
-}
-#endif
-
-#ifdef CONFIG_AW9524_FB
-static int aw9524_fb_notifier_callback(struct notifier_block *self,
-                     unsigned long event, void *data)
-{
-	struct aw9524_key_data *aw9524 = container_of(self, struct aw9524_key_data, fb_notif_aw9524);
-    struct fb_event *evdata = data;
-    int *blank;
-
-    if (evdata && evdata->data && event == FB_EVENT_BLANK) {
-        blank = evdata->data;
-        if (*blank == FB_BLANK_UNBLANK) {
-            AW9524_LOG("%s: fbnotify screen on mode.\n", __func__);
-			aw9524_i2c_early_resume(aw9524_i2c_client);
-			aw9524->is_screen_on_aw9524 = true;
-        } else if (*blank == FB_BLANK_POWERDOWN) {
-			AW9524_LOG("%s: fbnotify screen off mode.\n", __func__);
-			//这两句代码顺序不能反了，不然会出现进入休眠的同时按按键就出现乱报点，导致按键无效问题。
-			//先执行赋值，代码会先执行上面的all key release那段代码再执行进入suspend。
-			aw9524->is_screen_on_aw9524 = false; 
-			aw9524_i2c_early_suspend(aw9524_i2c_client);			
-        }
-    }
-	
-	AW9524_LOG("%s: aw9524_key->is_screen_on_aw9524=%d \n", __func__,aw9524_key->is_screen_on_aw9524);	
-    return 0;
-}
-#endif
 
 #ifdef  CONFIG_GREAT_AW9524_LED_PROBE
 extern unsigned int hdmi_det_gpio;
 extern unsigned int keyboardlight_flag;
-static void gpio_main_pwm_keyboardlight_100(void)
-{
-	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 1;
-	//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
-	aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-	pwm_setting.pwm_no	= PWM1;
-	pwm_setting.mode	= PWM_MODE_FIFO;
-	pwm_setting.clk_div = CLK_DIV8;
-	pwm_setting.clk_src = PWM_CLK_NEW_MODE_BLOCK;
-	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.GUARD_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.STOP_BITPOS_VALUE = 63;
-	pwm_setting.PWM_MODE_FIFO_REGS.HDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0xffffffff;   //100%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0xffffffff;
-	pwm_set_spec_config(&pwm_setting);
-}
 
-static void gpio_main_pwm_keyboardlight_80(void)
+static void gpio_main_pwm_keyboardlight(u32 data1, u32 data2)
 {
 	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 1;
-	//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
-	aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-	pwm_setting.pwm_no	= PWM1;
-	pwm_setting.mode	= PWM_MODE_FIFO;
-	pwm_setting.clk_div = CLK_DIV8;
-	pwm_setting.clk_src = PWM_CLK_NEW_MODE_BLOCK;
-	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.GUARD_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.STOP_BITPOS_VALUE = 63;
-	pwm_setting.PWM_MODE_FIFO_REGS.HDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0xffffffff;   //80%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x000fffff;
-	pwm_set_spec_config(&pwm_setting);
-}
-
-static void gpio_main_pwm_keyboardlight_60(void)
-{
-	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 1;
-	//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
-	aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-	pwm_setting.pwm_no	= PWM1;
-	pwm_setting.mode	= PWM_MODE_FIFO;
-	pwm_setting.clk_div = CLK_DIV8;
-	pwm_setting.clk_src = PWM_CLK_NEW_MODE_BLOCK;
-	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.GUARD_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.STOP_BITPOS_VALUE = 63;
-	pwm_setting.PWM_MODE_FIFO_REGS.HDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0xffffffff;   //60%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x0000003F;
-	pwm_set_spec_config(&pwm_setting);
-}
-
-static void gpio_main_pwm_keyboardlight_40(void)
-{
-	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 1;
-	//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
-	aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-	pwm_setting.pwm_no	= PWM1;
-	pwm_setting.mode	= PWM_MODE_FIFO;
-	pwm_setting.clk_div = CLK_DIV8;
-	pwm_setting.clk_src = PWM_CLK_NEW_MODE_BLOCK;
-	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.GUARD_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.STOP_BITPOS_VALUE = 63;
-	pwm_setting.PWM_MODE_FIFO_REGS.HDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0x07ffffff;   //40%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x00000000;
-	pwm_set_spec_config(&pwm_setting);
-}
-
-static void gpio_main_pwm_keyboardlight_20(void)
-{
-	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 1;
-	//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
-	aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-	pwm_setting.pwm_no	= PWM1;
-	pwm_setting.mode	= PWM_MODE_FIFO;
-	pwm_setting.clk_div = CLK_DIV8;
-	pwm_setting.clk_src = PWM_CLK_NEW_MODE_BLOCK;
-	pwm_setting.PWM_MODE_FIFO_REGS.IDLE_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.GUARD_VALUE = false;
-	pwm_setting.PWM_MODE_FIFO_REGS.STOP_BITPOS_VALUE = 63;
-	pwm_setting.PWM_MODE_FIFO_REGS.HDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
-	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0x00001fff;   //20%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x00000000;
-	pwm_set_spec_config(&pwm_setting);
-}
-
-static void gpio_main_pwm_keyboardlight_0(void)
-{
-	struct pwm_spec_config pwm_setting;
-	keyboardlight_flag = 0;
-	if (!gpio_get_value(hdmi_det_gpio)){
-		//aeon_gpio_set("sil9022_hdmi_pwren0");//GPIO160
-		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+	if (data1 == 0x0) {
+		keyboardlight_flag = 0;
+		if (!gpio_get_value(hdmi_det_gpio)) {
+			aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+		}
+	}
+	else
+	{
+		keyboardlight_flag = 1;
+		aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
 	}
 	pwm_setting.pwm_no	= PWM1;
 	pwm_setting.mode	= PWM_MODE_FIFO;
@@ -610,26 +326,10 @@ static void gpio_main_pwm_keyboardlight_0(void)
 	pwm_setting.PWM_MODE_FIFO_REGS.LDURATION = 1;
 	pwm_setting.PWM_MODE_FIFO_REGS.GDURATION = 0;
 	pwm_setting.PWM_MODE_FIFO_REGS.WAVE_NUM  = 0;
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = 0x00000000;   //0%
-	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = 0x00000000;
+	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA0 = data1;
+	pwm_setting.PWM_MODE_FIFO_REGS.SEND_DATA1 = data2;
 	pwm_set_spec_config(&pwm_setting);
 }
-/*
-static void init_led_test(void){
-	aw9524_i2c_write_reg(P0_0_DIM0_AW9524,16); 
-	aw9524_i2c_write_reg(P0_3_DIM0_AW9524,16);
-	aw9524_i2c_write_reg(P1_0_DIM0_AW9524,16);
-	aw9524_i2c_write_reg(P1_3_DIM0_AW9524,16);
-	aw9524_i2c_write_reg(P0_1_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P0_4_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P1_1_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P1_4_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P0_2_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P0_5_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P1_2_DIM0_AW9524,20);
-	aw9524_i2c_write_reg(P1_5_DIM0_AW9524,20);
-	gpio_main_pwm_keyboardlight_80();
-}*/
 
 static ssize_t aw9524_led_proc_fops_write(struct file *filp, const char __user *buff, size_t count, loff_t *ppos)
 {
@@ -661,20 +361,6 @@ static ssize_t aw9524_led_proc_fops_write(struct file *filp, const char __user *
 		} else if (str_buf[1]== '3') {
 			aw9524_i2c_write_reg(P0_5_DIM0_AW9524,(((int)str_buf[2]-48)*brightness));
 		} 
-	/*} else if (str_buf[0]== '1'){
-		if (str_buf[1]== '1') {
-			aw9524_i2c_write_reg(P0_0_DIM0_AW9524,0x00);
-		} else if (str_buf[1]== '2') {
-			aw9524_i2c_write_reg(P0_1_DIM0_AW9524,0x00);
-		} else if (str_buf[1]== '3') {
-			aw9524_i2c_write_reg(P0_2_DIM0_AW9524,0x00);
-		} else if (str_buf[1]== '4') {
-			aw9524_i2c_write_reg(P0_3_DIM0_AW9524,0x00);
-		} else if (str_buf[1]== '5') {
-			aw9524_i2c_write_reg(P0_4_DIM0_AW9524,0x00);
-		} else if (str_buf[1]== '6') {
-			aw9524_i2c_write_reg(P0_5_DIM0_AW9524,0x00);
-		}*/
 	} else if (str_buf[0]== '2'){
 		if (str_buf[1]== '1') {
 			aw9524_i2c_write_reg(P1_0_DIM0_AW9524,(((int)str_buf[2]-48)*brightness_red));
@@ -708,19 +394,19 @@ static ssize_t aw9524_led_proc_fops_write(struct file *filp, const char __user *
 			aw9524_i2c_write_reg(P1_2_DIM0_AW9524,(((int)str_buf[2]-48)*brightness));
 			aw9524_i2c_write_reg(P1_5_DIM0_AW9524,(((int)str_buf[2]-48)*brightness));
 		} 
-	} else if (str_buf[0]== '4'){  //keyboardlight
+	} else if (str_buf[0]== '4'){  //keyboard light
 		if (str_buf[1]== '0') {	
-			gpio_main_pwm_keyboardlight_0();
+			gpio_main_pwm_keyboardlight(0x00000000, 0x00000000); //0
 		} else if (str_buf[1]== '1') {
-			gpio_main_pwm_keyboardlight_20();
+			gpio_main_pwm_keyboardlight(0x00001fff, 0x00000000); //20
 		} else if (str_buf[1]== '2') {
-			gpio_main_pwm_keyboardlight_40();
+			gpio_main_pwm_keyboardlight(0x07ffffff, 0x00000000); //40
 		} else if (str_buf[1]== '3') {
-			gpio_main_pwm_keyboardlight_60();
+			gpio_main_pwm_keyboardlight(0xffffffff, 0x0000003F); //60
 		}else if (str_buf[1]== '4') {
-			gpio_main_pwm_keyboardlight_80();
+			gpio_main_pwm_keyboardlight(0xffffffff, 0x000fffff); //80
 		}else if (str_buf[1]== '5') {
-			gpio_main_pwm_keyboardlight_100();
+			gpio_main_pwm_keyboardlight(0xffffffff, 0xffffffff); //100
 		}
 	}else{
 		AW9524_LOG("proc end!\n");
@@ -733,6 +419,31 @@ static ssize_t aw9524_led_proc_fops_write(struct file *filp, const char __user *
 	AW9524_LOG("end P1_OUTPUT_AW9524 reg_val_1 = 0x%2X\n", reg_val_1);  
     AW9524_LOG("%s \n", str_buf);	
     return count;
+}
+
+static void aw9524_brightness_set(struct led_classdev *led_cdev,
+								 enum led_brightness val)
+{
+	switch ((int)val) {
+		case 0:
+			gpio_main_pwm_keyboardlight(0x00000000, 0x00000000); //0
+			break;
+		case 1:
+			gpio_main_pwm_keyboardlight(0x00001fff, 0x00000000); //20
+			break;
+		case 2:
+			gpio_main_pwm_keyboardlight(0x07ffffff, 0x00000000); //40
+			break;
+		case 3:
+			gpio_main_pwm_keyboardlight(0xffffffff, 0x0000003F); //60
+			break;
+		case 4:
+			gpio_main_pwm_keyboardlight(0xffffffff, 0x000fffff); //80
+			break;
+		case 5:
+			gpio_main_pwm_keyboardlight(0xffffffff, 0xffffffff); //100
+			break;
+	}
 }
 
 static const struct file_operations aw9524_led_proc_fops = { 
@@ -751,13 +462,6 @@ static int aw9524_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 		err = -ENODEV;
 		goto exit_check_functionality_failed;
 	}
-	AW9524_LOG("%s: kzalloc\n", __func__);
-	aw9524_key = kzalloc(sizeof(*aw9524_key), GFP_KERNEL);
-	if (!aw9524_key)	{
-		err = -ENOMEM;
-		goto exit_alloc_data_failed;
-	}
-
 	aw9524_i2c_client = client;
 	i2c_set_clientdata(client, aw9524_key);
 	
@@ -787,8 +491,6 @@ static int aw9524_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	
 	mutex_init(&aw9524_lock);
 	
-	//aw9524_input_register();
-
 	aw9524_init_functioncfg();
 
 #ifdef CONFIG_AW9524_FB
@@ -802,12 +504,6 @@ static int aw9524_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 #endif	
 
-	//aw9524_wq = create_singlethread_workqueue("aw9524_wq");
-	//INIT_WORK(&aw9524_key->eint_work_aw9524, aw9524_key_eint_work);
-	
-	//Interrupt
-	//aw9524_key_setup_eint();	
-
 	aw9524_create_sysfs(client);
 	
 	aw9524_i2c_flag =1;
@@ -817,8 +513,6 @@ static int aw9524_i2c_probe(struct i2c_client *client, const struct i2c_device_i
 
 exit_create_singlethread:
 	aw9524_i2c_client = NULL;
-exit_alloc_data_failed:
-	kfree(aw9524_key);
 exit_check_functionality_failed:
 	return err;	
 }
@@ -899,9 +593,18 @@ static int aw9524_key_remove(struct platform_device *pdev)
 }
 static int aw9524_key_probe(struct platform_device *pdev)
 {
-	int ret;
+	struct aw9524_led *led;
+	struct device *dev = &pdev->dev;
+	int ret = 0;
 
 	AW9524_LOG("%s start!\n", __func__);
+
+	AW9524_LOG("%s: kzalloc\n", __func__);
+	aw9524_key = kzalloc(sizeof(*aw9524_key), GFP_KERNEL);
+	if (!aw9524_key)	{
+		ret = -ENOMEM;
+		return ret;
+	}
 
 	ret = aw9524_pinctrl_init(pdev);
 	if (ret != 0) {
@@ -919,7 +622,18 @@ static int aw9524_key_probe(struct platform_device *pdev)
 		AW9524_LOG("[%s] Success to register aw9524 i2c driver.\n", __func__);
 	}
 
-	return 0;
+	AW9524_FUN("RegisterLED");
+	aw9524_key->led_dev.max_brightness = LED_MAX_BRIGHTNESS;
+	aw9524_key->led_dev.brightness_set = aw9524_brightness_set;
+	aw9524_key->led_dev.name = DEFAULT_LED_NAME;
+
+	ret = devm_led_classdev_register(dev, &aw9524_key->led_dev);
+	if (ret) {
+		dev_err(dev, "led register err: %d\n", ret);
+		return ret;
+	}
+
+	return ret;
 }
 
 #ifdef CONFIG_OF
