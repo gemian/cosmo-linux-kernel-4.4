@@ -36,6 +36,9 @@ static u16 kpd_keymap_state[KPD_NUM_MEMS] = {
 };
 
 static bool kpd_sb_enable;
+extern struct input_dev *aw9523_kpd_input_dev;
+extern bool aw9523MetaKeyPressed;
+bool powerKeyWasPressed = false;
 
 #ifdef CONFIG_MTK_SMARTBOOK_SUPPORT
 static void sb_kpd_release_keys(struct input_dev *dev)
@@ -358,8 +361,16 @@ void kpd_pmic_pwrkey_hal(unsigned long pressed)
 {
 #ifdef CONFIG_KPD_PWRKEY_USE_PMIC
 	if (!kpd_sb_enable) {
-		input_report_key(kpd_input_dev, KEY_ESC, pressed);
-		input_sync(kpd_input_dev);
+		kpd_print("pwrkey_hal pressed:%d, meta:%d, was:%d \n",(int)pressed,aw9523MetaKeyPressed,powerKeyWasPressed);
+		if (aw9523MetaKeyPressed || powerKeyWasPressed) {
+			kpd_print("KEY_POWER");
+			input_report_key(aw9523_kpd_input_dev, KEY_POWER, pressed);
+			powerKeyWasPressed = !!pressed;
+		} else {
+			kpd_print("KEY_ESC");
+			input_report_key(aw9523_kpd_input_dev, KEY_ESC, pressed);
+		}
+		input_sync(aw9523_kpd_input_dev);
 		if (kpd_show_hw_keycode) {
 			kpd_print(KPD_SAY "(%s) HW keycode =%d using PMIC\n",
 			       pressed ? "pressed" : "released", kpd_dts_data.kpd_sw_pwrkey);

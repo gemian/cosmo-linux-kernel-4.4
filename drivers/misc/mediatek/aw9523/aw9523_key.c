@@ -249,6 +249,9 @@ static void aw9523_i2c_early_suspend(struct i2c_client *client);
 static void aw9523_i2c_early_resume(struct i2c_client *client);
 #endif
 
+bool aw9523MetaKeyPressed = false;
+struct input_dev *aw9523_kpd_input_dev;
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // GPIO Control
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -333,7 +336,7 @@ static void aw9523_key_eint_work(struct work_struct *work) {
     bool setKeyValue;
     bool forceAllKeyRelease;
 
-    AW9523_LOG("Handling Interrupt\n");
+    AW9523_LOG("Handling Interrupt (%d)\n",aw9523_key->irq_enabled);
 
 #ifdef CONFIG_AW9523_HALL
     if (aw9523_key->is_device_closed) {
@@ -438,10 +441,18 @@ static void aw9523_key_eint_work(struct work_struct *work) {
                         keymap[idx].key_val = 0;
                         release_codes[release_count] = keymap[idx].key_code;
                         release_count++;
+                        if (keymap[idx].key_code == KEY_LEFTMETA) {
+                            AW9523_LOG("LEFTMETA RELEASE");
+                            aw9523MetaKeyPressed = false;
+                        }
                     } else {    // press
                         keymap[idx].key_val = 1;
                         press_codes[press_count] = keymap[idx].key_code;
                         press_count++;
+                        if (keymap[idx].key_code == KEY_LEFTMETA) {
+                            AW9523_LOG("LEFTMETA PRESS");
+                            aw9523MetaKeyPressed = true;
+                        }
                     }
                     AW9523_LOG("Storing key code %d val %d\n",
                                keymap[idx].key_code,
@@ -673,18 +684,19 @@ static int aw9523_create_sysfs(struct i2c_client *client) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static void aw9523_input_register(void) {
     int err;
-    struct input_dev *input_dev;
-
-    input_dev = input_allocate_device();
-    if (!input_dev) {
+	aw9523_kpd_input_dev = input_allocate_device();
+    if (!aw9523_kpd_input_dev) {
+        AW9523_LOG("No kpd_input_dev");
         err = -ENOMEM;
         goto exit_input_dev_alloc_failed;
     }
     AW9523_LOG("%s[%d]\n", __func__,__LINE__);
-    aw9523_key->input_dev = input_dev;
-    __set_bit(EV_KEY, input_dev->evbit);
-    __set_bit(EV_SYN, input_dev->evbit);
+    aw9523_key->input_dev = aw9523_kpd_input_dev;
+    __set_bit(EV_KEY, aw9523_kpd_input_dev->evbit);
+    __set_bit(EV_SYN, aw9523_kpd_input_dev->evbit);
 
+    input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_ESC);
+    input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_POWER);
     input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_1);
     input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_2);
     input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_3);
@@ -740,19 +752,18 @@ static void aw9523_input_register(void) {
     input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_I);
     input_set_capability(aw9523_key->input_dev, EV_KEY, KEY_UNKNOWN);
 
-    input_dev->name = AW9523_I2C_NAME;
-    err = input_register_device(input_dev);
+    aw9523_kpd_input_dev->name = AW9523_I2C_NAME;
+    err = input_register_device(aw9523_kpd_input_dev);
     if (err) {
-//		dev_err(&client->dev,
-//		"aw9523_i2c_probe: failed to register input device: %s\n",
-//		dev_name(&client->dev));
+        AW9523_LOG("aw9523_input_register: failed to register input device\n");
         goto exit_input_register_device_failed;
     }
+    return;
 
-    exit_input_dev_alloc_failed:
+exit_input_dev_alloc_failed:
     cancel_work_sync(&aw9523_key->eint_work);
-    exit_input_register_device_failed:
-    input_free_device(input_dev);
+exit_input_register_device_failed:
+    input_free_device(aw9523_kpd_input_dev);
 }
 
 
