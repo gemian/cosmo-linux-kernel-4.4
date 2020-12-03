@@ -305,10 +305,10 @@ static void aw9523_reset_to_monitor_for_state_change(void) {
     i2c_write_reg(P0_INT, 0x00);    //enable p0 port irq
 
     AW9523_LOG("%s irq enabled: %d\n", __func__, aw9523_key->irq_enabled);
-    if (!aw9523_key->irq_enabled) {
-        enable_irq(aw9523_key->irq);
-        aw9523_key->irq_enabled = true;
-    }
+//    if (!aw9523_key->irq_enabled) {
+    enable_irq(aw9523_key->irq);
+    aw9523_key->irq_enabled = true;
+//    }
 }
 
 static void aw9523_schedule_matrix_rescan(bool fast) {
