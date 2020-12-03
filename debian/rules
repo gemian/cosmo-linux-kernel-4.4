@@ -17,13 +17,13 @@ build-stamp:
 ifneq ($(DEB_HOST_ARCH), arm64)
 	@echo building kernel
 	make O=../KERNEL_OUT ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
-	@echo building modules
-	make O=../KERNEL_OUT ARCH=arm64 modules CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
+#	@echo building modules
+#	make O=../KERNEL_OUT ARCH=arm64 modules CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
 else
 	@echo building kernel
 	make O=../KERNEL_OUT ARCH=arm64
-	@echo building modules
-	make O=../KERNEL_OUT ARCH=arm64 modules
+#	@echo building modules
+#	make O=../KERNEL_OUT ARCH=arm64 modules
 endif
 	@echo done
 
