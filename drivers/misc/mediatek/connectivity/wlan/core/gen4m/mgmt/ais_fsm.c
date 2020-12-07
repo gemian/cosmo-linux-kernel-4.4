@@ -5150,6 +5150,11 @@ enum ENUM_AIS_STATE aisFsmRoamingScanResultsUpdate(IN struct ADAPTER *prAdapter)
 
 	eNextState = prAisFsmInfo->eCurrentState;
 	if (prRoamingFsmInfo->eCurrentState == ROAMING_STATE_DISCOVERY) {
+		/* clear pending roaming connection request */
+		aisFsmIsRequestPending(prAdapter,
+				AIS_REQUEST_ROAMING_SEARCH, TRUE);
+		aisFsmIsRequestPending(prAdapter,
+				AIS_REQUEST_ROAMING_CONNECT, TRUE);
 		roamingFsmRunEventRoam(prAdapter);
 		eNextState = AIS_STATE_SEARCH;
 	} else if (prAisFsmInfo->eCurrentState == AIS_STATE_LOOKING_FOR) {

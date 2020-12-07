@@ -1977,6 +1977,9 @@ kalQoSFrameClassifierAndPacketInfo(IN P_GLUE_INFO_T prGlueInfo,
 	PUINT_8 aucLookAheadBuf = NULL;
 	UINT_8 ucEthTypeLenOffset = ETHER_HEADER_LEN - ETHER_TYPE_LEN;
 	PUINT_8 pucNextProtocol = NULL;
+#if DSCP_SUPPORT
+	UINT_8 ucUserPriority;
+#endif
 
 	u4PacketLen = prSkb->len;
 
@@ -2011,7 +2014,16 @@ kalQoSFrameClassifierAndPacketInfo(IN P_GLUE_INFO_T prGlueInfo,
 			DBGLOG(INIT, WARN, "Invalid IPv4 packet length: %u\n", u4PacketLen);
 			break;
 		}
-
+#if DSCP_SUPPORT
+		if (GLUE_GET_PKT_BSS_IDX(prSkb) != P2P_DEV_BSS_INDEX) {
+			ucUserPriority = getUpFromDscp(
+				prGlueInfo,
+				GLUE_GET_PKT_BSS_IDX(prSkb),
+				(pucNextProtocol[1] >> 2) & 0x3F);
+			if (ucUserPriority != 0xFF)
+				prSkb->priority = ucUserPriority;
+		}
+#endif
 		kalIPv4FrameClassifier(prGlueInfo, prPacket, pucNextProtocol, prTxPktInfo);
 		break;
 
@@ -2032,6 +2044,26 @@ kalQoSFrameClassifierAndPacketInfo(IN P_GLUE_INFO_T prGlueInfo,
 	case ETH_PRO_TDLS:
 		kalTdlsFrameClassifier(prGlueInfo, prPacket, pucNextProtocol, prTxPktInfo);
 		break;
+
+	case ETH_P_IPV6:
+#if DSCP_SUPPORT
+		if (GLUE_GET_PKT_BSS_IDX(prSkb) != P2P_DEV_BSS_INDEX) {
+			UINT_16 u2Tmp = 0;
+			UINT_8 ucIpTos = 0;
+
+			WLAN_GET_FIELD_BE16(pucNextProtocol, &u2Tmp);
+			ucIpTos = u2Tmp >> 4;
+
+			ucUserPriority = getUpFromDscp(
+				prGlueInfo,
+				GLUE_GET_PKT_BSS_IDX(prSkb),
+				(ucIpTos >> 2) & 0x3F);
+			if (ucUserPriority != 0xFF)
+				prSkb->priority = ucUserPriority;
+		}
+#endif
+		break;
+
 	default:
 		/* 4 <4> Handle 802.3 format if LEN <= 1500 */
 		if (u2EtherType <= ETH_802_3_MAX_LEN)
@@ -2046,7 +2078,6 @@ kalQoSFrameClassifierAndPacketInfo(IN P_GLUE_INFO_T prGlueInfo,
 	/* prSkb->priority is assigned by Linux wireless utility function(cfg80211_classify8021d) */
 	/* at net_dev selection callback (ndo_select_queue) */
 	prTxPktInfo->ucPriorityParam = prSkb->priority;
-
 	/* 4 <6> Retrieve Packet Information - DA */
 	/* Packet Length/ Destination Address */
 	prTxPktInfo->u4PacketLen = u4PacketLen;

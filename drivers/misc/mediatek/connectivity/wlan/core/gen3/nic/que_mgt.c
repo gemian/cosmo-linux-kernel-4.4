@@ -4213,6 +4213,12 @@ VOID mqmProcessAssocRsp(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSwRfb, IN PUIN
 				if (IE_LEN(pucIE) == (sizeof(IE_HT_CAP_T) - 2))
 					prStaRec->fgIsQoS = TRUE;
 				break;
+#if DSCP_SUPPORT
+			case ELEM_ID_QOS_MAP_SET:
+				DBGLOG(QM, WARN, "QM: received assoc resp qosmapset ie\n");
+				qosParseQosMapSet(prAdapter, prStaRec, pucIE);
+				break;
+#endif
 			default:
 				break;
 			}

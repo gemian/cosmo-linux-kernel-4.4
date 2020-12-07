@@ -131,6 +131,8 @@
 #include "rate.h"
 #include "wnm.h"
 
+#include "qosmap.h"
+
 #include "aa_fsm.h"
 
 #include "cnm_timer.h"

@@ -555,7 +555,9 @@ P_STA_RECORD_T cnmStaRecAlloc(P_ADAPTER_T prAdapter, ENUM_STA_TYPE_T eStaType, U
 
 			for (k = 0; k < NUM_OF_PER_STA_TX_QUEUES; k++)
 				QUEUE_INITIALIZE(&prStaRec->arTxQueue[k]);
-
+#if DSCP_SUPPORT
+			qosMapSetInit(prStaRec);
+#endif
 			break;
 		}
 	}
