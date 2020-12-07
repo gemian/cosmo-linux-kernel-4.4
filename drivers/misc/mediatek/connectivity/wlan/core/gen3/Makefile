@@ -115,7 +115,11 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/connectivity/common/
 ccflags-y += -D MTK_WCN_WMT_STP_EXP_SYMBOL_ABSTRACT
 
 MODULE_NAME := wlan_drv_gen3
+ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
+obj-y += $(MODULE_NAME).o
+else
 obj-m += $(MODULE_NAME).o
+endif
 
 # ---------------------------------------------------
 # Directory List
