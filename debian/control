@@ -20,7 +20,6 @@ Multi-Arch: same
 Depends:
  mkbootimg,
  initramfs-tools-halium,
- droid-hal-cosmopda (>= 0.2),
 Recommends:
 Description: Gemian Kernel with Modules for Cosmo PDA
  .
