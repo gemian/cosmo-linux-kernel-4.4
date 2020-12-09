@@ -16,14 +16,10 @@ build-stamp:
 	make O=../KERNEL_OUT ARCH=arm64 k71v1_64_bsp_defconfig
 ifneq ($(DEB_HOST_ARCH), arm64)
 	@echo building kernel
-	make O=../KERNEL_OUT ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
-#	@echo building modules
-#	make O=../KERNEL_OUT ARCH=arm64 modules CROSS_COMPILE=/usr/bin/aarch64-linux-gnu-
+	make O=../KERNEL_OUT ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- -j8
 else
 	@echo building kernel
-	make O=../KERNEL_OUT ARCH=arm64
-#	@echo building modules
-#	make O=../KERNEL_OUT ARCH=arm64 modules
+	make O=../KERNEL_OUT ARCH=arm64 -j8
 endif
 	@echo done
 
