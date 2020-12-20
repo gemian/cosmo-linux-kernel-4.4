@@ -255,7 +255,7 @@ struct cf_device {
 #define DEBUG_LOG (2)
 
 /* debug log setting */
-u8 cf_debug_level = DEBUG_LOG;
+u8 cf_debug_level = ERR_LOG;
 
 #define cf_debug(level, fmt, args...) do { \
 	if (cf_debug_level >= level) {\
@@ -263,8 +263,13 @@ u8 cf_debug_level = DEBUG_LOG;
 	} \
 } while (0)
 
+#if 0
 #define FUNC_ENTRY()  cf_debug(DEBUG_LOG, "entry\n")
 #define FUNC_EXIT()  cf_debug(DEBUG_LOG, "exit\n")
+#else
+#define FUNC_ENTRY()
+#define FUNC_EXIT()
+#endif
 
 /*************************************************************/
 extern int cf_sfr_read(struct spi_device *spi, unsigned short addr, unsigned char *recv_buf, unsigned short buflen);
