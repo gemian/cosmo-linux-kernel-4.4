@@ -33,6 +33,8 @@
 #include <linux/proc_fs.h>
 #include<linux/slab.h>
 #include <linux/uaccess.h>
+#include <linux/notifier.h>
+#include <soc/mediatek/hall.h>
 #define KPD_NAME	"mtk-kpd"
 #define MTK_KP_WAKESOURCE	/* this is for auto set wake up source */
 
@@ -95,6 +97,9 @@ static unsigned int finger_key_eint_type;
 static struct wakeup_source finger_key_suspend_lock;	/* For suspend usage */
 static struct workqueue_struct *finger_keyWorkqueue = NULL;
 static struct work_struct finger_key_fcover_work;
+
+static struct notifier_block hall_notif;
+bool kpd_is_device_closed;
 #endif
 
 /* for keymap handling */
@@ -448,28 +453,36 @@ static void kpd_stm32_key_eint_handler(struct work_struct *work){
 #endif
 
 #ifdef AEON_FINGER_KEY
+static int kpd_hall_notifier_callback(struct notifier_block *self, unsigned long event, void *data) {
+	if (event == HALL_FCOVER_CLOSE) {
+		kpd_is_device_closed = true;
+	} else if (event == HALL_FCOVER_OPEN) {
+		kpd_is_device_closed = false;
+	}
+	return 0;
+}
+
 static void kpd_finger_key_work_handler(struct work_struct * work)
 {
 	u8 old_state = kpd_finger_key_state;
 	bool pressed;
 	kpd_finger_key_state = !kpd_finger_key_state;
-	printk("finger_key kpd_finger_key_work_handler!!!!\n");
+//	printk("finger_key kpd_finger_key_work_handler!!!!\n");
 	pressed = (kpd_finger_key_state == !!0);
 	
-	if (kpd_finger_key_state) {
-		printk(KPD_SAY "finger_key (%s) HW keycode = using EINT\n",
-		       pressed ? "pressed" : "released");
-	}
+//	if (kpd_finger_key_state) {
+//		printk(KPD_SAY "finger_key (%s) HW keycode = using EINT\n",
+//		       pressed ? "pressed" : "released");
+//	}
 
-	if(pressed){
-		printk("finger_key report Linux pressed = %d\n", pressed);
-		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, 1);
-		input_sync(kpd_input_dev);		
+//	printk("finger_key report Linux pressed = %d\n", pressed);
+	if (kpd_is_device_closed) {
+		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, pressed);
+	} else {
+		input_report_key(kpd_input_dev, BTN_RIGHT, pressed);
 	}
-	else{
-		printk("finger_key report Linux pressed = %d\n", pressed);		
-		input_report_key(kpd_input_dev, KEY_VOLUMEDOWN, 0);
-		input_sync(kpd_input_dev);
+	input_sync(kpd_input_dev);
+	if (!pressed) {
 		mdelay(1);
 	}		
 	
@@ -485,7 +498,7 @@ static void kpd_finger_key_work_handler(struct work_struct * work)
 }
 
 static void kpd_finger_key_eint_handler(struct work_struct *work){
-	printk("finger_key kpd_finger_key_eint_handler\n");
+//	printk("finger_key kpd_finger_key_eint_handler\n");
 	disable_irq_nosync(finger_key_irqnr);
 	queue_work(finger_keyWorkqueue, &finger_key_fcover_work);		
 
@@ -1296,7 +1309,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
 #ifdef AEON_FINGER_KEY
 	mt_eint_register();
 	finger_keyWorkqueue = create_singlethread_workqueue("finger_key");
-	printk(KERN_ALERT "[finger_key]---\n");
+//	printk(KERN_ALERT "[finger_key]---\n");
 	INIT_WORK(&finger_key_fcover_work, kpd_finger_key_work_handler);
 	//wake_lock_init(&finger_key_suspend_lock, WAKE_LOCK_SUSPEND, "finger_key wakelock");
 	wakeup_source_init(&finger_key_suspend_lock, "finger_key wakelock");
@@ -1310,7 +1323,7 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
 				finger_key_eint_type = ints1[1];
 				//gpio_set_debounce(finger_keygpiopin, finger_keydebounce);
                 finger_key_irqnr = irq_of_parse_and_map(node, 0);
-				printk(KERN_ALERT "[finger_key]ints gpio:xx debounce:%d irq:%d type:%d\n",finger_keydebounce,finger_key_irqnr,finger_key_eint_type);
+//				printk(KERN_ALERT "[finger_key]ints gpio:xx debounce:%d irq:%d type:%d\n",finger_keydebounce,finger_key_irqnr,finger_key_eint_type);
                 ret =
                     request_irq(finger_key_irqnr, (irq_handler_t) kpd_finger_key_eint_handler, IRQ_TYPE_LEVEL_LOW,
                                 "FINGER_KEY-eint", NULL);
@@ -1322,6 +1335,12 @@ static int kpd_pdrv_probe(struct platform_device *pdev)
 		//enable_irq(296);
 	disable_irq_nosync(finger_key_irqnr);	
 	enable_irq(finger_key_irqnr);///////////////////////////////////////////////////////////
+
+	input_set_capability(kpd_input_dev, EV_KEY, BTN_LEFT); //reported in hal_kpd.c
+	input_set_capability(kpd_input_dev, EV_KEY, BTN_RIGHT);
+	kpd_is_device_closed = true;
+	hall_notif.notifier_call = kpd_hall_notifier_callback;
+	err = hall_register_client(&hall_notif);
 #endif
 
   stm32_dl_proc_entry = proc_create(STM32_DL_FW_PROC_NAME, 0777, NULL, &stm32_dl_proc_fops);

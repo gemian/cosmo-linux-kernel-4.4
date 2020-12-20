@@ -40,6 +40,8 @@ extern struct input_dev *aw9523_kpd_input_dev;
 extern bool aw9523MetaKeyPressed;
 bool powerKeyWasPressed = false;
 
+extern bool kpd_is_device_closed;
+
 #ifdef CONFIG_MTK_SMARTBOOK_SUPPORT
 static void sb_kpd_release_keys(struct input_dev *dev)
 {
@@ -347,7 +349,12 @@ void kpd_pmic_rstkey_hal(unsigned long pressed)
 {
 	if (kpd_dts_data.kpd_sw_rstkey != 0) {
 		if (!kpd_sb_enable) {
-			input_report_key(kpd_input_dev, kpd_dts_data.kpd_sw_rstkey, pressed);
+			if (kpd_is_device_closed) {
+				// See drivers/misc/mediatek/dws/mt6771/k71v1_64_bsp.dws for start of Home->rst->VolDown path
+				input_report_key(kpd_input_dev, kpd_dts_data.kpd_sw_rstkey, pressed);
+			} else {
+				input_report_key(kpd_input_dev, BTN_LEFT, pressed);
+			}
 			input_sync(kpd_input_dev);
 			if (kpd_show_hw_keycode) {
 				kpd_print(KPD_SAY "(%s) HW keycode =%d using PMIC\n",
