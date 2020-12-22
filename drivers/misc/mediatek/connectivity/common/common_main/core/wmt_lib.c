@@ -1198,10 +1198,10 @@ static INT32 met_thread(void *pvData)
 		read_ptr = CONSYS_REG_READ(emi_met_base + EMI_MET_READ_OFFSET);
 		write_ptr = CONSYS_REG_READ(emi_met_base + EMI_MET_WRITE_OFFSET);
 
-		if (read_ptr == write_ptr)
+		if (read_ptr == write_ptr) {
 			WMT_DBG_FUNC("read_ptr(0x%x) == write_ptr(0x%x) no met data need dump!!!\n",
-					read_ptr, write_ptr);
-		else if (write_ptr > (emi_met_size - EMI_MET_DATA_OFFSET)) {
+						 read_ptr, write_ptr);
+		} else if (write_ptr > (emi_met_size - EMI_MET_DATA_OFFSET)) {
 			WMT_ERR_FUNC("write_ptr(0x%x) overflow!!!\n", write_ptr);
 			wmt_lib_trigger_assert(WMTDRV_TYPE_WMT, 42);
 			goto met_exit;
@@ -1496,11 +1496,11 @@ MTK_WCN_BOOL wmt_lib_put_act_op(P_OSAL_OP pOp)
 		WMT_DBG_FUNC("osal_wait_for_signal_timeout:%d\n", waitRet);
 
 		/* if (unlikely(!wait_ret)) { */
-		if (waitRet == 0)
+		if (waitRet == 0) {
 			WMT_ERR_FUNC("opId(%d) completion timeout\n", pOp->op.opId);
-		else if (pOp->result)
+		} else if (pOp->result) {
 			WMT_WARN_FUNC("opId(%d) result:%d\n", pOp->op.opId, pOp->result);
-
+		}
 		/* op completes, check result */
 		bRet = (pOp->result) ? MTK_WCN_BOOL_FALSE : MTK_WCN_BOOL_TRUE;
 	} while (0);
@@ -1736,11 +1736,11 @@ static INT32 wmt_lib_pin_ctrl(WMT_IC_PIN_ID id, WMT_IC_PIN_STATE stat, UINT32 fl
 
 	bRet = wmt_lib_put_act_op(pOp);
 	ENABLE_PSM_MONITOR();
-	if (bRet == MTK_WCN_BOOL_FALSE)
+	if (bRet == MTK_WCN_BOOL_FALSE) {
 		WMT_WARN_FUNC("PIN_ID(%d) PIN_STATE(%d) flag(%d) fail\n", id, stat, flag);
-	else
+	} else {
 		WMT_DBG_FUNC("OPID(%d) type(%zu) ok\n", pOp->op.opId, pOp->op.au4OpData[0]);
-
+	}
 	return 0;
 }
 

@@ -69,8 +69,9 @@ char log_buffer[128];
 int usedBytes;
 #endif
 
-#define pbm_emerg(fmt, args...)		pr_emerg(fmt, ##args)
-#define pbm_alert(fmt, args...)		pr_alert(fmt, ##args)
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+
 #define pbm_crit(fmt, args...)		pr_crit(fmt, ##args)
 #define pbm_err(fmt, args...)		pr_err(fmt, ##args)
 #define pbm_warn(fmt, args...)		pr_warn(fmt, ##args)
@@ -82,6 +83,17 @@ int usedBytes;
 		if (mt_pbm_debug)		\
 			pr_crit(fmt, ##args);	\
 	} while (0)
+
+#else
+
+#define pbm_crit(...) {}
+#define pbm_err(...) {}
+#define pbm_warn(...) {}
+#define pbm_notice(...) {}
+#define pbm_info(...) {}
+#define pbm_debug(...) {}
+
+#endif
 
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))
 

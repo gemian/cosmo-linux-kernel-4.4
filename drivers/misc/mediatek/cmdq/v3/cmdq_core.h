@@ -89,6 +89,9 @@ struct DumpFirstErrorStruct {
 extern void ddp_dump_and_reset_dsi0(void);
 #endif
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+
 #define CMDQ_LOG(string, args...) \
 do {			\
 	pr_notice("[CMDQ]"string, ##args); \
@@ -155,6 +158,31 @@ do {			\
 } while (0);	\
 }
 #endif
+
+#else
+
+#define CMDQ_LOG(...) { \
+}
+#define CMDQ_MSG(...) { \
+}
+#define CMDQ_VERBOSE(...) { \
+}
+#define CMDQ_ERR(...) { \
+}
+#define CMDQ_CHECK_AND_BREAK_STATUS(...) { \
+}
+#ifdef CMDQ_AEE_READY
+#define CMDQ_AEE_EX(...) { \
+}
+#define CMDQ_AEE(...) { \
+}
+#else
+#define CMDQ_AEE(...) { \
+}
+#endif
+
+#endif
+
 
 /*#define CMDQ_PROFILE*/
 

@@ -158,7 +158,7 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 			pdata->charging_current_limit = 500000;
 		}
 
-		chr_err("type-C:%d current:%d\n",
+		chr_info("type-C:%d current:%d\n",
 			info->pd_type, tcpm_inquire_typec_remote_rp_curr(info->tcpc));
 	} else if (mtk_pdc_check_charger(info) == true) {
 		int vbus = 0, cur = 0, idx = 0;
@@ -172,7 +172,7 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 			pdata->input_current_limit = info->data.usb_charger_current_configured;
 			pdata->charging_current_limit = info->data.usb_charger_current_configured;
 		}
-		chr_err("[%s]vbus:%d input_cur:%d idx:%d current:%d\n", __func__,
+		chr_info("[%s]vbus:%d input_cur:%d idx:%d current:%d\n", __func__,
 			vbus, cur, idx, info->data.pd_charger_current);
 
 	} else if (info->chr_type == STANDARD_HOST) {
@@ -211,9 +211,9 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 	}
 
 	if (info->enable_sw_jeita) {
-		if (IS_ENABLED(CONFIG_USBIF_COMPLIANCE) && info->chr_type == STANDARD_HOST)
-			pr_debug("USBIF & STAND_HOST skip current check\n");
-		else {
+		if (IS_ENABLED(CONFIG_USBIF_COMPLIANCE) && info->chr_type == STANDARD_HOST) {
+			chr_info("USBIF & STAND_HOST skip current check\n");
+		} else {
 			if (info->sw_jeita.sm == TEMP_T0_TO_T1) {
 				pdata->input_current_limit = 500000;
 				pdata->charging_current_limit = 350000;
@@ -247,7 +247,7 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 		if (pdata->input_current_limit_by_aicl < pdata->input_current_limit)
 			pdata->input_current_limit = pdata->input_current_limit_by_aicl;
 #endif
-	printk("qzs>>>info->chr_type =%d temp=%d-%d-%d<><>charging_limit=%d,input_limit=%d,input_current_limit_by_aicl=%d\n",info->chr_type,info->battery_temperature,battery_get_bat_temperature(),force_get_tbat(true),pdata->charging_current_limit,pdata->input_current_limit,pdata->input_current_limit_by_aicl);
+	chr_info("qzs>>>info->chr_type =%d temp=%d-%d-%d<><>charging_limit=%d,input_limit=%d,input_current_limit_by_aicl=%d\n",info->chr_type,info->battery_temperature,battery_get_bat_temperature(),force_get_tbat(true),pdata->charging_current_limit,pdata->input_current_limit,pdata->input_current_limit_by_aicl);
 done:
 	ret = charger_dev_get_min_charging_current(info->chg1_dev, &ichg1_min);
 	if (ret != -ENOTSUPP && pdata->charging_current_limit < ichg1_min)
@@ -257,7 +257,7 @@ done:
 	if (ret != -ENOTSUPP && pdata->input_current_limit < aicr1_min)
 		pdata->input_current_limit = 0;
 
-	chr_err("force:%d thermal:%d,%d pe4:%d,%d,%d setting:%d %d type:%d usb_unlimited:%d usbif:%d usbsm:%d aicl:%d\n",
+	chr_info("force:%d thermal:%d,%d pe4:%d,%d,%d setting:%d %d type:%d usb_unlimited:%d usbif:%d usbsm:%d aicl:%d\n",
 		_uA_to_mA(pdata->force_charging_current),
 		_uA_to_mA(pdata->thermal_input_current_limit),
 		_uA_to_mA(pdata->thermal_charging_current_limit),
@@ -328,7 +328,7 @@ static void swchg_turn_on_charging(struct charger_manager *info)
 		charging_enable = false;
 		info->chg1_data.input_current_limit = 200000; /* 200mA */
 		charger_dev_set_input_current(info->chg1_dev, info->chg1_data.input_current_limit);
-		chr_err("[charger]In meta or advanced meta mode, disable charging and set input current limit to 200mA\n");
+		chr_info("[charger]In meta or advanced meta mode, disable charging and set input current limit to 200mA\n");
 	} else {
 		mtk_pe20_start_algorithm(info);
 		mtk_pe_start_algorithm(info);
@@ -336,7 +336,7 @@ static void swchg_turn_on_charging(struct charger_manager *info)
 		swchg_select_charging_current_limit(info);
 		if (info->chg1_data.input_current_limit == 0 || info->chg1_data.charging_current_limit == 0) {
 			charging_enable = false;
-			chr_err("[charger]charging current is set 0mA, turn off charging !\r\n");
+			chr_info("[charger]charging current is set 0mA, turn off charging !\r\n");
 		} else {
 			swchg_select_cv(info);
 		}
@@ -377,7 +377,7 @@ static int mtk_switch_charging_do_charging(struct charger_manager *info, bool en
 {
 	struct switch_charging_alg_data *swchgalg = info->algorithm_data;
 
-	chr_err("mtk_switch_charging_do_charging en:%d %s\n", en, info->algorithm_name);
+	chr_info("mtk_switch_charging_do_charging en:%d %s\n", en, info->algorithm_name);
 	if (en) {
 		swchgalg->disable_charging = false;
 		swchgalg->state = CHR_CC;
@@ -451,7 +451,7 @@ static int mtk_switch_chr_cc(struct charger_manager *info)
 	swchgalg->total_charging_time = charging_time.tv_sec;
 
 	if (mtk_pe40_is_ready(info)) {
-		chr_err("enter PE4.0!\n");
+		chr_info("enter PE4.0!\n");
 		swchgalg->state = CHR_PE40_INIT;
 		info->pe4.is_connect = true;
 		return 1;
@@ -463,7 +463,7 @@ static int mtk_switch_chr_cc(struct charger_manager *info)
 	if (chg_done) {
 		swchgalg->state = CHR_BATFULL;
 		charger_dev_do_event(info->chg1_dev, EVENT_EOC, 0);
-		chr_err("battery full!\n");
+		chr_info("battery full!\n");
 	}
 
 	/* If it is not disabled by throttling,
@@ -531,7 +531,7 @@ int mtk_switch_chr_full(struct charger_manager *info)
 		mtk_pe40_set_is_enable(info, true);
 		info->enable_dynamic_cv = true;
 		get_monotonic_boottime(&swchgalg->charging_begin_time);
-		chr_err("battery recharging!\n");
+		chr_info("battery recharging!\n");
 		info->polling_interval = CHARGING_INTERVAL;
 	}
 
@@ -559,7 +559,7 @@ static int mtk_switch_charging_run(struct charger_manager *info)
 	struct switch_charging_alg_data *swchgalg = info->algorithm_data;
 	int ret = 0;
 
-	chr_err("%s [%d %d], timer=%d\n", __func__, swchgalg->state,
+	chr_info("%s [%d %d], timer=%d\n", __func__, swchgalg->state,
 		info->pd_type,
 		swchgalg->total_charging_time);
 
@@ -575,7 +575,7 @@ static int mtk_switch_charging_run(struct charger_manager *info)
 
 	do {
 		switch (swchgalg->state) {
-			chr_err("mtk_switch_charging_run2 [%d] %d\n", swchgalg->state, info->pd_type);
+//			chr_err("mtk_switch_charging_run2 [%d] %d\n", swchgalg->state, info->pd_type);
 		case CHR_CC:
 			ret = mtk_switch_chr_cc(info);
 			break;
@@ -633,7 +633,7 @@ int charger_dev_event(struct notifier_block *nb, unsigned long event, void *v)
 		break;
 	case CHARGER_DEV_NOTIFY_VBUS_OVP:
 		info->vbusov_stat = data->vbusov_stat;
-		chr_err("%s: vbus ovp = %d\n", __func__, info->vbusov_stat);
+		chr_info("%s: vbus ovp = %d\n", __func__, info->vbusov_stat);
 		break;
 	default:
 		return NOTIFY_DONE;
@@ -655,9 +655,9 @@ int mtk_switch_charging_init(struct charger_manager *info)
 		return -ENOMEM;
 
 	info->chg1_dev = get_charger_by_name("primary_chg");
-	if (info->chg1_dev)
-		chr_err("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
-	else
+	if (info->chg1_dev) {
+		chr_info("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
+	} else
 		chr_err("*** Error : can't find primary charger [%s]***\n", "primary_chg");
 
 	mutex_init(&swch_alg->ichg_aicr_access_mutex);

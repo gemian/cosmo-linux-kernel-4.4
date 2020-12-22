@@ -55,6 +55,13 @@
 
 #define AEE_DBG 0
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define PRNOTICELOG(...) pr_notice(##__VA_ARGS__)
+#else
+#define PRNOTICELOG(...) {}
+#endif
+
 static unsigned int count_time_out = 100;
 static unsigned int total_time_out;
 static int battmp;
@@ -173,9 +180,9 @@ int wk_vbat_cali(int vbat_out, int vthr)
 	}
 
 	if (abs(vbat_out - vbat_out_old) > 1000) {
-		pr_notice("vbat_out_old=%d, vthr=%d, T_curr=%d, vbat_out=%d\n",
+		PRNOTICELOG("vbat_out_old=%d, vthr=%d, T_curr=%d, vbat_out=%d\n",
 			vbat_out_old, vthr, T_curr, vbat_out);
-		pr_notice("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+		PRNOTICELOG("%d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 			g_DEGC, g_O_VTS, g_O_SLOPE_SIGN, g_O_SLOPE,
 			g_SIGN_AUX, g_SIGN_BGRL, g_SIGN_BGRH,
 			g_AUXCALI_EN, g_BGRCALI_EN,
@@ -263,7 +270,7 @@ void wk_auxadc_dbg_dump(void)
 			snprintf(reg_str, 20, "Reg[0x%x]=0x%x, ", adc_dbg_addr[j], pmic_adc_dbg[dbg_stamp].reg[j]);
 			strncat(reg_log, reg_str, 860);
 		}
-		pr_notice("[%s] %d %d %s\n", __func__, dbg_stamp, pmic_adc_dbg[dbg_stamp].ktime_sec, reg_log);
+		PRNOTICELOG("[%s] %d %d %s\n", __func__, dbg_stamp, pmic_adc_dbg[dbg_stamp].ktime_sec, reg_log);
 		strncpy(reg_log, "", 860);
 		dbg_stamp++;
 		if (dbg_stamp >= 4)
@@ -291,7 +298,7 @@ int wk_auxadc_battmp_dbg(int bat_temp)
 	vbif = pmic_get_auxadc_value(AUXADC_LIST_VBIF);
 	bat_temp3 = pmic_get_auxadc_value(AUXADC_LIST_BATTEMP);
 	bat_id = pmic_get_auxadc_value(AUXADC_LIST_BATID);
-	pr_notice("BAT_TEMP1: %d, BAT_TEMP2:%d, VBIF:%d, BAT_TEMP3:%d, BATID:%d\n",
+	PRNOTICELOG("BAT_TEMP1: %d, BAT_TEMP2:%d, VBIF:%d, BAT_TEMP3:%d, BATID:%d\n",
 		bat_temp, bat_temp2, vbif, bat_temp3, bat_id);
 
 	if (bat_temp < 200 ||
@@ -385,25 +392,25 @@ void wake_up_mts_monitor(void)
 		wake_lock(&mts_monitor_wake_lock);
 		wake_up_process(mts_thread_handle);
 	} else
-		pr_notice(PMICTAG "[%s] mts_thread_handle not ready\n", __func__);
+		PRNOTICELOG(PMICTAG "[%s] mts_thread_handle not ready\n", __func__);
 }
 
 /*--Monitor MTS reg--*/
 static void mt6358_mts_reg_dump(void)
 {
 	/* AUXADC_ADC_RDY_MDRT & AUXADC_ADC_OUT_MDRT */
-	pr_notice("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
-	pr_notice("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
-	pr_notice("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
-	pr_notice("AUXADC_ADC31 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC31));
-	pr_notice("AUXADC_MDRT_0 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_0));
-	pr_notice("AUXADC_MDRT_1 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_1));
-	pr_notice("AUXADC_MDRT_2 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_2));
-	pr_notice("AUXADC_MDRT_3 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_3));
-	pr_notice("AUXADC_MDRT_4 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_4));
+	PRNOTICELOG("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
+	PRNOTICELOG("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
+	PRNOTICELOG("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
+	PRNOTICELOG("AUXADC_ADC31 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC31));
+	PRNOTICELOG("AUXADC_MDRT_0 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_0));
+	PRNOTICELOG("AUXADC_MDRT_1 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_1));
+	PRNOTICELOG("AUXADC_MDRT_2 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_2));
+	PRNOTICELOG("AUXADC_MDRT_3 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_3));
+	PRNOTICELOG("AUXADC_MDRT_4 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_MDRT_4));
 	/*--AUXADC CLK--*/
-	pr_notice("RG_AUXADC_CK_PDN = 0x%x\n", pmic_get_register_value(PMIC_RG_AUXADC_CK_PDN));
-	pr_notice("RG_AUXADC_CK_PDN_HWEN = 0x%x\n", pmic_get_register_value(PMIC_RG_AUXADC_CK_PDN_HWEN));
+	PRNOTICELOG("RG_AUXADC_CK_PDN = 0x%x\n", pmic_get_register_value(PMIC_RG_AUXADC_CK_PDN));
+	PRNOTICELOG("RG_AUXADC_CK_PDN_HWEN = 0x%x\n", pmic_get_register_value(PMIC_RG_AUXADC_CK_PDN_HWEN));
 }
 
 void mt6358_auxadc_monitor_mts_regs(void)
@@ -419,7 +426,7 @@ void mt6358_auxadc_monitor_mts_regs(void)
 		return;
 	mts_timestamp = mts_timestamp_cur;
 	mts_adc_tmp = pmic_get_register_value(PMIC_AUXADC_ADC_OUT_MDRT);
-	pr_notice("[MTS_ADC] OLD = 0x%x, NOW = 0x%x, CNT = %d\n", mts_adc, mts_adc_tmp, mts_count);
+	PRNOTICELOG("[MTS_ADC] OLD = 0x%x, NOW = 0x%x, CNT = %d\n", mts_adc, mts_adc_tmp, mts_count);
 
 	if (mts_adc ==  mts_adc_tmp)
 		mts_count++;
@@ -447,22 +454,22 @@ void mt6358_auxadc_monitor_mts_regs(void)
 			if ((count++) > count_time_out)
 				break;
 		}
-		pr_notice("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
-		pr_notice("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
-		pr_notice("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
+		PRNOTICELOG("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
+		PRNOTICELOG("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
+		PRNOTICELOG("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
 	}
 	if (mts_count > 30) {
 #ifdef CONFIG_MTK_PMIC_WRAP_HAL
 		pwrap_dump_all_register();
 #endif
-		pr_notice("DEW_READ_TEST = 0x%x\n", pmic_get_register_value(PMIC_DEW_READ_TEST));
+		PRNOTICELOG("DEW_READ_TEST = 0x%x\n", pmic_get_register_value(PMIC_DEW_READ_TEST));
 		/*--AUXADC--*/
 		mt6358_mts_reg_dump();
 		/*--AUXADC CH7--*/
 		pmic_get_auxadc_value(AUXADC_LIST_TSX);
-		pr_notice("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
-		pr_notice("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
-		pr_notice("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
+		PRNOTICELOG("AUXADC_ADC15 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC15));
+		PRNOTICELOG("AUXADC_ADC16 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC16));
+		PRNOTICELOG("AUXADC_ADC17 = 0x%x\n", upmu_get_reg_value(MT6358_AUXADC_ADC17));
 		mts_count = 0;
 		wake_up_mts_monitor();
 	}
@@ -501,13 +508,13 @@ int mts_kthread(void *x)
 			}
 			ktrhead_mts_adc = pmic_get_register_value(PMIC_AUXADC_ADC_OUT_MDRT);
 			if (polling_cnt % 20 == 0) {
-				pr_notice("[MTS_ADC] (%d) Ready at %d(%d)ms, Reg_MDRT=0x%x, MDRT_OUT=%d\n",
+				PRNOTICELOG("[MTS_ADC] (%d) Ready at %d(%d)ms, Reg_MDRT=0x%x, MDRT_OUT=%d\n",
 					polling_cnt, j, i,
 					upmu_get_reg_value(PMIC_AUXADC_ADC_OUT_MDRT_ADDR),
 					ktrhead_mts_adc);
 			}
 			if (polling_cnt == 156) { /* 156 * 32ms ~= 5s*/
-				pr_notice("[MTS_ADC] (%d) reset AUXADC\n",
+				PRNOTICELOG("[MTS_ADC] (%d) reset AUXADC\n",
 					polling_cnt);
 				pmic_set_register_value(PMIC_RG_AUXADC_RST, 1);
 				pmic_set_register_value(PMIC_RG_AUXADC_RST, 0);
@@ -531,13 +538,13 @@ int mts_kthread(void *x)
 
 static void mt6358_auxadc_timeout_dump(unsigned short ch_num)
 {
-	pr_notice("[%s] (%d) Time out! STA0=0x%x, STA1=0x%x, STA2=0x%x\n",
+	PRNOTICELOG("[%s] (%d) Time out! STA0=0x%x, STA1=0x%x, STA2=0x%x\n",
 		__func__,
 		ch_num,
 		upmu_get_reg_value(MT6358_AUXADC_STA0),
 		upmu_get_reg_value(MT6358_AUXADC_STA1),
 		upmu_get_reg_value(MT6358_AUXADC_STA2));
-	pr_notice("[%s] Reg[0x%x]=0x%x, RG_AUXADC_CK_PDN_HWEN=%d, RG_AUXADC_CK_TSTSEL=%d, RG_SMPS_CK_TSTSEL=%d\n",
+	PRNOTICELOG("[%s] Reg[0x%x]=0x%x, RG_AUXADC_CK_PDN_HWEN=%d, RG_AUXADC_CK_TSTSEL=%d, RG_SMPS_CK_TSTSEL=%d\n",
 		__func__,
 		MT6358_STRUP_CON6, upmu_get_reg_value(MT6358_STRUP_CON6),
 		pmic_get_register_value(PMIC_RG_AUXADC_CK_PDN_HWEN),
@@ -579,12 +586,12 @@ static int get_device_adc_out(unsigned short channel,
 		total_time_out++;
 		if (total_time_out > 10 && total_time_out < 13) {
 			pmic_set_hk_reg_value(PMIC_AUXADC_DATA_REUSE_EN, 1);
-			pr_notice("AUXADC timeout, enable DATA REUSE\n");
+			PRNOTICELOG("AUXADC timeout, enable DATA REUSE\n");
 			aee_kernel_warning("PMIC AUXADC:TIMEOUT", "");
 		}
 	} else if (total_time_out != 0) {
 		total_time_out = 0;
-		pr_notice("AUXADC timeout resolved, disable DATA REUSE\n");
+		PRNOTICELOG("AUXADC timeout resolved, disable DATA REUSE\n");
 		pmic_set_hk_reg_value(PMIC_AUXADC_DATA_REUSE_EN, 0);
 	}
 
@@ -620,7 +627,7 @@ int mt6358_get_auxadc_nolock(u8 channel)
 	else if (auxadc_channel->resolution == 15)
 		adc_result = (reg_val * auxadc_channel->r_val *
 					VOLTAGE_FULL_RANGE) / 32768;
-	pr_notice("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, adc_result = %d\n",
+	PRNOTICELOG("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, adc_result = %d\n",
 		__func__, channel, auxadc_channel->ch_num,
 		reg_val, adc_result);
 
@@ -675,18 +682,18 @@ int mt6358_get_auxadc_value(u8 channel)
 #endif
 			if (is_charging == 0)
 				bat_cur = 0 - bat_cur;
-			pr_notice("[%s] ch_idx = %d, channel = %d, bat_cur = %d, reg_val = 0x%x, adc_result = %d\n",
+			PRNOTICELOG("[%s] ch_idx = %d, channel = %d, bat_cur = %d, reg_val = 0x%x, adc_result = %d\n",
 				__func__, channel, auxadc_channel->ch_num,
 				bat_cur, reg_val, adc_result);
 		} else if (channel == AUXADC_LIST_BATADC) {
 			vthr = pmic_get_auxadc_value(AUXADC_LIST_CHIP_TEMP);
 			vbat_cali = DIV_ROUND_CLOSEST(wk_vbat_cali(adc_result * 10, vthr), 10);
-			pr_notice("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, old_vbat = %d, vthr = %d, adc_result = %d\n",
+			PRNOTICELOG("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, old_vbat = %d, vthr = %d, adc_result = %d\n",
 				__func__, channel, auxadc_channel->ch_num,
 				reg_val, adc_result, vthr, vbat_cali);
 			adc_result = vbat_cali;
 		} else {
-			pr_notice("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, adc_result = %d\n",
+			PRNOTICELOG("[%s] ch_idx = %d, channel = %d, reg_val = 0x%x, adc_result = %d\n",
 				__func__, channel, auxadc_channel->ch_num,
 				reg_val, adc_result);
 		}

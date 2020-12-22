@@ -22,6 +22,15 @@
 #include "inc/mt6370_pmu.h"
 #include "inc/mt6370_pmu_rgbled.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGDEV(...) dev_dbg(##__VA_ARGS__)
+#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#else
+#define DBGLOGDEV(...) {}
+#define DBGLOGINFO(...) {}
+#endif
+
 enum {
 	MT6370_PMU_LED_PWMMODE = 0,
 	MT6370_PMU_LED_BREATHMODE,
@@ -211,7 +220,7 @@ static inline int mt6370_pmu_led_config_pwm(struct led_classdev *led_cdev,
 	int reg_addr, reg_mask, reg_shift;
 	int i, j, ret = 0;
 
-	dev_dbg(led_cdev->dev, "%s, on %lu, off %lu\n", __func__, ton, toff);
+	DBGLOGDEV(led_cdev->dev, "%s, on %lu, off %lu\n", __func__, ton, toff);
 	/* find the close dim freq */
 	for (i = ARRAY_SIZE(dim_time) - 1; i >= 0; i--) {
 		if (dim_time[i] >= (ton + toff))
@@ -1174,7 +1183,7 @@ static void mt6370_led_enable_dwork_func(struct work_struct *work)
 	uint8_t reg_data = 0, reg_mask = 0xe0;
 	int ret = 0;
 
-	dev_dbg(rgbled_data->dev, "%s\n", __func__);
+	DBGLOGDEV(rgbled_data->dev, "%s\n", __func__);
 	/* red */
 	if (mt6370_led_classdev[0].led_dev.brightness != 0)
 		reg_data |= 0x80;
@@ -1305,7 +1314,7 @@ static int mt6370_pmu_rgbled_probe(struct platform_device *pdev)
 	}
 
 	mt6370_pmu_rgbled_irq_register(pdev);
-	dev_info(&pdev->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(&pdev->dev, "%s successfully\n", __func__);
 	return 0;
 out_led_register:
 	while (--i >= 0)
@@ -1330,7 +1339,7 @@ static int mt6370_pmu_rgbled_remove(struct platform_device *pdev)
 		led_classdev_unregister(&mt6370_led_classdev[i].led_dev);
 	for (i = 0; i < ARRAY_SIZE(mt6370_pmu_led_trigger); i++)
 		led_trigger_register(&mt6370_pmu_led_trigger[i]);
-	dev_info(rgbled_data->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(rgbled_data->dev, "%s successfully\n", __func__);
 	return 0;
 }
 

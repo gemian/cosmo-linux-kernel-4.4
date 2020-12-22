@@ -21,6 +21,13 @@
 #include <linux/regulator/of_regulator.h>
 #include "inc/mt6370_pmu.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) {}
+#endif
+
 struct mt6370_dsv_regulator_struct {
 	unsigned char vol_reg;
 	unsigned char vol_mask;
@@ -389,7 +396,7 @@ static struct regulator_init_data *mt_parse_regulator_init_data(
 	}
 	init_data = of_get_regulator_init_data(dev, sub_np, NULL);
 	if (init_data) {
-		dev_info(dev,
+		DBGLOGINFO(dev,
 			"regulator_name = %s, min_uV = %d, max_uV = %d\n",
 			init_data->constraints.name,
 			init_data->constraints.min_uV,
@@ -446,7 +453,7 @@ static int mt6370_pmu_dsv_probe(struct platform_device *pdev)
 	struct mt6370_pmu_dsv_platform_data pdata, mask;
 	int ret;
 
-	dev_info(&pdev->dev, "Probing....\n");
+	DBGLOGINFO(&pdev->dev, "Probing....\n");
 	dsv_data = devm_kzalloc(&pdev->dev, sizeof(*dsv_data), GFP_KERNEL);
 	if (!dsv_data)
 		return -ENOMEM;
@@ -494,13 +501,13 @@ static int mt6370_pmu_dsv_probe(struct platform_device *pdev)
 	}
 
 	mt6370_pmu_dsv_irq_register(pdev);
-	dev_info(&pdev->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(&pdev->dev, "%s successfully\n", __func__);
 	return ret;
 reg_apply_dts_fail:
 reg_dsvn_register_fail:
 	regulator_unregister(dsv_data->dsvp->regulator);
 reg_dsvp_register_fail:
-	dev_info(&pdev->dev, "%s failed\n", __func__);
+	dev_err(&pdev->dev, "%s failed\n", __func__);
 	return ret;
 }
 
@@ -508,7 +515,7 @@ static int mt6370_pmu_dsv_remove(struct platform_device *pdev)
 {
 	struct mt6370_pmu_dsv_data *dsv_data = platform_get_drvdata(pdev);
 
-	dev_info(dsv_data->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(dsv_data->dev, "%s successfully\n", __func__);
 	return 0;
 }
 

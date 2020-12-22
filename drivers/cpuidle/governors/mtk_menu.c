@@ -483,8 +483,8 @@ static void menu_reflect(struct cpuidle_device *dev, int index)
 	data->last_state_idx = index;
 	data->needs_update = 1;
 
-	mtk_idle_dump_cnt_in_interval();
-	mcdi_heart_beat_log_dump();
+//	mtk_idle_dump_cnt_in_interval();
+//	mcdi_heart_beat_log_dump();
 }
 
 /**

@@ -631,13 +631,15 @@ INT32 wmt_plat_eirq_ctrl(ENUM_PIN_ID id, ENUM_PIN_STATE state)
 					bgf_irq_num = irq_of_parse_and_map(node, 1);
 					ret = request_irq(bgf_irq_num, wmt_plat_bgf_irq_isr,
 							  IRQF_TRIGGER_LOW, "BGF-eint", NULL);
-					if (ret)
+					if (ret) {
 						WMT_ERR_FUNC("BGF EINT IRQ LINE NOT AVAILABLE!!\n");
-					else
+					} else {
 						WMT_INFO_FUNC("BGF EINT request_irq success!!\n");
-				} else
+					}
+				} else {
 					WMT_ERR_FUNC("[%s] can't find BGF eint compatible node\n",
-						     __func__);
+								 __func__);
+				}
 			}
 			g_bgf_irq_lock.counter = 1;
 		} else if (state == PIN_STA_EINT_EN) {
@@ -690,8 +692,9 @@ INT32 wmt_plat_eirq_ctrl(ENUM_PIN_ID id, ENUM_PIN_STATE state)
 				WMT_DBG_FUNC("WMT-PLAT:ALLInt (DEINIT but not used yet)\n");
 				/* de-init: nothing to do in ALPS, such as un-registration... */
 			}
-		} else
+		} else {
 			WMT_DBG_FUNC("WMT-PLAT:ALL EINT not defined\n");
+		}
 
 		iret = 0;
 		break;

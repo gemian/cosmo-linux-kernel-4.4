@@ -4163,10 +4163,11 @@ static bool cmdq_core_check_engine_conflict_unlocked(
 						   " also occupied by thread %d, secure:%d\n",
 						   pEngine[index].currOwner,
 						   task->secData.is_secure);
-				if (forceLog)
+				if (forceLog) {
 					CMDQ_LOG("%s", long_msg);
-				else
+				} else {
 					CMDQ_VERBOSE("%s", long_msg);
+				}
 
 				isEngineConflict = true;	/* engine conflict! */
 				thread = CMDQ_INVALID_THREAD;

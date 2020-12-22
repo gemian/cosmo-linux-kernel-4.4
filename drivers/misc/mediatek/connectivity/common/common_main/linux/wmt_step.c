@@ -596,18 +596,18 @@ static int wmt_step_access_line_state_pd(char *tok,
 	int pd_ms = -1;
 
 	pd_ms = wmt_step_parse_pd_expires(tok);
-	if (pd_ms == -1)
+	if (pd_ms == -1) {
 		WMT_ERR_FUNC("STEP failed: PD ms failed %s\n", tok);
-
-	if (p_parse_info->p_pd_entry != NULL)
+	}
+	if (p_parse_info->p_pd_entry != NULL) {
 		WMT_ERR_FUNC("STEP failed: Please add [PD-] after [PD+], tok = %s\n", tok);
-
+	}
 	p_parse_info->p_pd_entry = wmt_step_get_periodic_dump_entry(pd_ms);
-	if (p_parse_info->p_pd_entry == NULL)
+	if (p_parse_info->p_pd_entry == NULL) {
 		WMT_ERR_FUNC("STEP failed: p_pd_entry create fail\n");
-	else
+	} else {
 		p_parse_info->p_target_list = &(p_parse_info->p_pd_entry->action_list);
-
+	}
 	return STEP_PARSE_LINE_RET_BREAK;
 }
 
@@ -744,10 +744,11 @@ static void wmt_step_print_trigger_time(enum step_trigger_point_id tp_id, char *
 	const char *p_trigger_name = NULL;
 
 	p_trigger_name = STEP_TRIGGER_TIME_NAME[tp_id];
-	if (reason != NULL)
+	if (reason != NULL) {
 		WMT_INFO_FUNC("STEP show: Trigger point: %s reason: %s\n", p_trigger_name, reason);
-	else
+	} else {
 		WMT_INFO_FUNC("STEP show: Trigger point: %s\n", p_trigger_name);
+	}
 }
 
 static VOID wmt_step_do_actions_from_tp(enum step_trigger_point_id tp_id, char *reason)

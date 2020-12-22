@@ -21,7 +21,7 @@
 #include <mtk_wcn_cmb_stub.h>
 #include <linux/timer.h>
 
-INT32 gPsmDbgLevel = STP_PSM_LOG_INFO;
+INT32 gPsmDbgLevel = STP_PSM_LOG_ERR;
 MTKSTP_PSM_T stp_psm_i;
 MTKSTP_PSM_T *stp_psm = &stp_psm_i;
 

@@ -913,14 +913,16 @@ INT32 wmt_ctrl_host_baudrate_set(P_WMT_CTRL_DATA pWmtCtrlData)
 	if (osal_test_bit(WMT_STAT_STP_OPEN, &gDevWmt.state)) {
 		osal_snprintf(cmdStr, NAME_MAX, "baud_%d_%d", u4Baudrate, u4FlowCtrl);
 		iRet = wmt_ctrl_ul_cmd(&gDevWmt, cmdStr);
-		if (iRet)
+		if (iRet) {
 			WMT_WARN_FUNC("CTRL_BAUDRATE baud(%d), flowctrl(%zu) fail(%d)\n",
-				      u4Baudrate, pWmtCtrlData->au4CtrlData[1], iRet);
-		else
+						  u4Baudrate, pWmtCtrlData->au4CtrlData[1], iRet);
+		} else {
 			WMT_DBG_FUNC("CTRL_BAUDRATE baud(%d), flowctrl(%d) ok\n",
-				     u4Baudrate, u4FlowCtrl);
-	} else
+						 u4Baudrate, u4FlowCtrl);
+		}
+	} else {
 		WMT_INFO_FUNC("CTRL_BAUDRATE but invalid Handle of WmtStp\n");
+	}
 	return iRet;
 }
 
@@ -1006,19 +1008,21 @@ INT32 wmt_ctrl_sdio_func(P_WMT_CTRL_DATA pWmtCtrlData)
 					break;
 				}
 			}
-			if (iRet)
+			if (iRet) {
 				WMT_ERR_FUNC
-				    ("mtk_wcn_hif_sdio_wmt_control(%d, TRUE) fail(%d) retry(%d)\n",
-				     sdioFuncType, iRet, retry);
-			else
+						("mtk_wcn_hif_sdio_wmt_control(%d, TRUE) fail(%d) retry(%d)\n",
+						 sdioFuncType, iRet, retry);
+			} else {
 				osal_set_bit(statBit, &pDev->state);
+			}
 		}
 	} else {
 		if (osal_test_bit(statBit, &pDev->state)) {
 			iRet = mtk_wcn_hif_sdio_wmt_control(sdioFuncType, MTK_WCN_BOOL_FALSE);
-			if (iRet)
+			if (iRet) {
 				WMT_ERR_FUNC("mtk_wcn_hif_sdio_wmt_control(%d, FALSE) fail(%d)\n",
-					     sdioFuncType, iRet);
+							 sdioFuncType, iRet);
+			}
 			/*any way, set to OFF state */
 			osal_clear_bit(statBit, &pDev->state);
 		} else {
@@ -1065,10 +1069,10 @@ static INT32 wmt_ctrl_gps_sync_set(P_WMT_CTRL_DATA pData)
 	    wmt_plat_gpio_ctrl(PIN_GPS_SYNC,
 			       (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_MUX);
 
-	if (iret)
+	if (iret) {
 		WMT_WARN_FUNC("ctrl GPS_SYNC(%d) fail!(%d) ignore it...\n",
-			      (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_MUX, iret);
-
+					  (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_MUX, iret);
+	}
 	return 0;
 }
 
@@ -1083,10 +1087,10 @@ static INT32 wmt_ctrl_gps_lna_set(P_WMT_CTRL_DATA pData)
 	    wmt_plat_gpio_ctrl(PIN_GPS_LNA,
 			       (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_OUT_H);
 
-	if (iret)
+	if (iret) {
 		WMT_WARN_FUNC("ctrl GPS_SYNC(%d) fail!(%d) ignore it...\n",
-			      (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_OUT_H, iret);
-
+					  (pData->au4CtrlData[0] == 0) ? PIN_STA_DEINIT : PIN_STA_OUT_H, iret);
+	}
 	return 0;
 }
 
@@ -1158,8 +1162,8 @@ static INT32 wmt_ctrl_trg_assert(P_WMT_CTRL_DATA pWmtCtrlData)
 			wmt_lib_set_host_assert_info(drv_type, reason, 1);
 			stp_dbg_set_keyword(keyword);
 		}
-	} else
+	} else {
 		WMT_INFO_FUNC("do trigger assert & chip reset in stp noack\n");
-
+	}
 	return 0;
 }

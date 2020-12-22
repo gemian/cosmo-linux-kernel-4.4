@@ -174,11 +174,11 @@ static MTK_WCN_BOOL mtk_wcn_wmt_func_ctrl(ENUM_WMTDRV_TYPE_T type, ENUM_WMT_OPID
 		ENABLE_PSM_MONITOR();
 	wmt_lib_host_awake_put();
 
-	if (bRet == MTK_WCN_BOOL_FALSE)
+	if (bRet == MTK_WCN_BOOL_FALSE) {
 		WMT_WARN_FUNC("OPID(%d) type(%zu) fail\n", pOp->op.opId, pOp->op.au4OpData[0]);
-	else
+	} else {
 		WMT_INFO_FUNC("OPID(%d) type(%zu) ok\n", pOp->op.opId, pOp->op.au4OpData[0]);
-
+	}
 	return bRet;
 }
 
@@ -355,11 +355,11 @@ MTK_WCN_BOOL mtk_wcn_wmt_dsns_ctrl(ENUM_WMTDSNS_TYPE_T eType)
 	bRet = wmt_lib_put_act_op(pOp);
 	ENABLE_PSM_MONITOR();
 
-	if (bRet == MTK_WCN_BOOL_FALSE)
+	if (bRet == MTK_WCN_BOOL_FALSE) {
 		WMT_WARN_FUNC("OPID(%d) type(%zu) fail\n\n", pOpData->opId, pOpData->au4OpData[0]);
-	else
+	} else {
 		WMT_INFO_FUNC("OPID(%d) type(%zu) ok\n\n", pOpData->opId, pOpData->au4OpData[0]);
-
+	}
 	return bRet;
 }
 EXPORT_SYMBOL(mtk_wcn_wmt_dsns_ctrl);
@@ -607,10 +607,11 @@ EXPORT_SYMBOL(mtk_wcn_wmt_wlan_unreg);
 MTK_WCN_BOOL mtk_wcn_set_connsys_power_off_flag(MTK_WCN_BOOL value)
 {
 	g_pwr_off_flag = value;
-	if (g_pwr_off_flag)
+	if (g_pwr_off_flag) {
 		WMT_DBG_FUNC("enable connsys power off flag\n");
-	else
+	} else {
 		WMT_INFO_FUNC("disable connsys power off, maybe need trigger coredump!\n");
+	}
 	return g_pwr_off_flag;
 }
 EXPORT_SYMBOL(mtk_wcn_set_connsys_power_off_flag);

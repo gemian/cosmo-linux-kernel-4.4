@@ -57,7 +57,7 @@ int mtk_pe40_pd_1st_request(struct charger_manager *pinfo,
 	int ret;
 	int mivr;
 
-	chr_err("pe40_pd_req:vbus:%d ibus:%d input_current:%d\n",
+	chr_info("pe40_pd_req:vbus:%d ibus:%d input_current:%d\n",
 		adapter_mv, adapter_ma, ma);
 
 	mivr = pinfo->data.min_charger_voltage / 1000;
@@ -91,7 +91,7 @@ int mtk_pe40_pd_request(struct charger_manager *pinfo,
 	int ret;
 	int mivr;
 
-	chr_err("pe40_pd_req:vbus:%d ibus:%d input_current:%d\n",
+	chr_info("pe40_pd_req:vbus:%d ibus:%d input_current:%d\n",
 		adapter_mv, adapter_ma, ma);
 
 	mivr = pinfo->data.min_charger_voltage / 1000;
@@ -127,7 +127,7 @@ void mtk_pe40_reset(struct charger_manager *pinfo, bool enable)
 		charger_enable_vbus_ovp(pinfo, true);
 		pinfo->polling_interval = 10;
 		swchgalg->state = CHR_CC;
-		chr_err("set TD true\n");
+		chr_info("set TD true\n");
 		charger_dev_enable_termination(pinfo->chg1_dev, true);
 	}
 
@@ -151,7 +151,7 @@ void mtk_pe40_end(struct charger_manager *pinfo, int type, bool retry)
 {
 	if (pinfo->enable_pe_4) {
 		mtk_pe40_reset(pinfo, retry);
-		chr_err("mtk_pe40_end:%d retry:%d\n", type, retry);
+		chr_info("mtk_pe40_end:%d retry:%d\n", type, retry);
 	}
 }
 
@@ -204,14 +204,14 @@ void mtk_pe40_init_cap(struct charger_manager *info)
 		if (cap.pwr_limit == 1)
 			pe40->max_vbus = 9000;
 		idx++;
-		chr_err("pps_boundary[%d], %d mv ~ %d mv, %d ma pl:%d\n",
+		chr_info("pps_boundary[%d], %d mv ~ %d mv, %d ma pl:%d\n",
 			cap_i, cap.min_mv, cap.max_mv, cap.ma, cap.pwr_limit);
 	}
 
 	pe40_cap->nr = idx;
 
 	for (i = 0; i < pe40_cap->nr; i++) {
-		chr_err("pps_cap[%d:%d], %d mv ~ %d mv, %d ma pl:%d\n", i, (int)pe40_cap->nr,
+		chr_info("pps_cap[%d:%d], %d mv ~ %d mv, %d ma pl:%d\n", i, (int)pe40_cap->nr,
 			pe40_cap->min_mv[i],
 			pe40_cap->max_mv[i],
 			pe40_cap->ma[i],
@@ -219,7 +219,7 @@ void mtk_pe40_init_cap(struct charger_manager *info)
 	}
 
 	if (cap_i == 0)
-		chr_err("no APDO for pps\n");
+	chr_info("no APDO for pps\n");
 }
 
 int mtk_pe40_get_setting_by_watt(struct charger_manager *pinfo, int *voltage, int *adapter_ibus,
@@ -256,7 +256,7 @@ int mtk_pe40_get_setting_by_watt(struct charger_manager *pinfo, int *voltage, in
 
 		pe40->max_charger_ibus = max_ibus * (100 - IBUS_ERR) / 100;
 
-		chr_err("pe4: %d %d %d %d %d %d\n",
+		chr_info("pe4: %d %d %d %d %d %d\n",
 			pe40_cap->ma[i], pe40->max_ibus,
 			pinfo->pe4.input_current_limit / 1000,
 			pe40->pe4_input_current_limit / 1000,
@@ -317,7 +317,7 @@ int mtk_pe40_get_setting_by_watt(struct charger_manager *pinfo, int *voltage, in
 	*actual_current = ibus;
 	*adapter_ibus = ta_ibus;
 
-	chr_err("mtk_pe40_get_setting_by_watt:[%d,%d]%d vbus:%d ibus:%d aicl:%d current:%d %d\n",
+	chr_info("mtk_pe40_get_setting_by_watt:[%d,%d]%d vbus:%d ibus:%d aicl:%d current:%d %d\n",
 		idx, i,
 		watt, *voltage,
 		*adapter_ibus,
@@ -368,7 +368,7 @@ bool mtk_pe40_is_ready(struct charger_manager *pinfo)
 	pdata = &pinfo->chg1_data;
 
 	ret = charger_dev_get_ibus(pinfo->chg1_dev, &ibus);
-	chr_err("pe40_ready:%d hv:%d thermal:%d,%d tmp:%d,%d,%d pps:%d en:%d ibus:%d %d\n",
+	chr_info("pe40_ready:%d hv:%d thermal:%d,%d tmp:%d,%d,%d pps:%d en:%d ibus:%d %d\n",
 		pinfo->enable_pe_4,
 		pinfo->enable_hv_charging,
 		pdata->thermal_charging_current_limit,
@@ -477,7 +477,7 @@ int mtk_pe40_get_init_watt(struct charger_manager *pinfo)
 			charger_dev_is_chip_enabled(pinfo->chg2_dev, &is_chip_enable);
 		}
 
-		chr_err("[pe40_vbus] vbus1:%d ibus1:%d vbus2:%d ibus2:%d watt:%d en:%d %d vbat:%d %d\n",
+		chr_info("[pe40_vbus] vbus1:%d ibus1:%d vbus2:%d ibus2:%d watt:%d en:%d %d vbat:%d %d\n",
 			vbus1, ibus1, vbus2, ibus2, voltage1 * ibus1, is_enable,
 			is_chip_enable, vbat1, vbat2);
 	}
@@ -508,7 +508,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 	if (pinfo->enable_hv_charging == false)
 		goto disable_hv;
 
-	chr_err("set TD false\n");
+	chr_info("set TD false\n");
 	charger_dev_enable_termination(pinfo->chg1_dev, false);
 
 	charger_enable_vbus_ovp(pinfo, false);
@@ -555,7 +555,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 		goto err;
 	}
 
-	chr_err("[pe40_i0] can_query:%d ret:%d\n",
+	chr_info("[pe40_i0] can_query:%d ret:%d\n",
 		pe40->can_query,
 		ret);
 
@@ -563,7 +563,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 	pe40->TA_vbus = cap.output_mv;
 	pe40->vbus_cali = pe40->TA_vbus - pe40->pmic_vbus;
 
-	chr_err("[pe40_i0]pmic_vbus:%d TA_vbus:%d cali:%d ibus:%d chip2:%d\n",
+	chr_info("[pe40_i0]pmic_vbus:%d TA_vbus:%d cali:%d ibus:%d chip2:%d\n",
 		pe40->pmic_vbus, pe40->TA_vbus, pe40->vbus_cali,
 		cap.output_ma, chg2_chip_enabled);
 
@@ -610,7 +610,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 				goto err;
 			}
 
-			chr_err("[pe40_i11]vbus:%d ibus:%d vbat:%d TA_vbus:%d TA_ibus:%d setting:%d %d\n",
+			chr_info("[pe40_i11]vbus:%d ibus:%d vbat:%d TA_vbus:%d TA_ibus:%d setting:%d %d\n",
 				vbus1, ibus1, vbat1,
 				cap1.output_mv, cap1.output_ma,
 				voltage, actual_current);
@@ -640,7 +640,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 			if (ret != 0)
 				goto err;
 
-			chr_err("[pe40_i12]vbus:%d ibus:%d vbat:%d TA_vbus:%d TA_ibus:%d setting:%d %d\n",
+			chr_info("[pe40_i12]vbus:%d ibus:%d vbat:%d TA_vbus:%d TA_ibus:%d setting:%d %d\n",
 				vbus2, ibus2, vbat2,
 				cap2.output_mv, cap2.output_ma,
 				voltage, actual_current);
@@ -648,7 +648,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 				break;
 		}
 
-		chr_err("[pe40_i1]vbus:%d,%d,%d,%d ibus:%d,%d,%d,%d vbat:%d,%d\n",
+		chr_info("[pe40_i1]vbus:%d,%d,%d,%d ibus:%d,%d,%d,%d vbat:%d,%d\n",
 			vbus1, vbus2, cap1.output_mv, cap2.output_mv,
 			ibus1, ibus2, cap1.output_ma, cap2.output_ma,
 			vbat1, vbat2);
@@ -668,7 +668,7 @@ int mtk_pe40_init_state(struct charger_manager *pinfo)
 		else if (pe40->r_cable_1 >= 500)
 			pe40->pe4_input_current_limit = 1000000;
 
-		chr_err("[pe40_i2]r_sw:%d r_cable:%d r_cable_1:%d r_cable_2:%d pe4_icl:%d\n",
+		chr_info("[pe40_i2]r_sw:%d r_cable:%d r_cable_1:%d r_cable_2:%d pe4_icl:%d\n",
 			pe40->r_sw, pe40->r_cable, pe40->r_cable_1, pe40->r_cable_2,
 			pe40->pe4_input_current_limit);
 		} else
@@ -760,7 +760,7 @@ int mtk_pe40_safety_check(struct charger_manager *pinfo)
 			ret != TCP_DPM_RET_NOT_SUPPORT &&
 			ret != TCP_DPM_RET_TIMEOUT) {
 			high_tmp_cnt++;
-			chr_err("[pe40]TA Thermal:%d cnt:%d\n",
+			chr_info("[pe40]TA Thermal:%d cnt:%d\n",
 				TAstatus.internal_temp, high_tmp_cnt);
 		} else if (ret == TCP_DPM_RET_TIMEOUT) {
 			chr_err("[pe40]TA tcpm_dpm_pd_get_status timeout\n");
@@ -782,14 +782,14 @@ int mtk_pe40_safety_check(struct charger_manager *pinfo)
 			TAstatus.event_flags & PD_STATUS_EVENT_OTP ||
 			TAstatus.event_flags & PD_STATUS_EVENT_OVP) {
 
-			chr_err("[pe40_err]TA protect: ocp:%d otp:%d ovp:%d\n",
+			chr_info("[pe40_err]TA protect: ocp:%d otp:%d ovp:%d\n",
 				TAstatus.event_flags & PD_STASUS_EVENT_OCP,
 				TAstatus.event_flags & PD_STATUS_EVENT_OTP,
 				TAstatus.event_flags & PD_STATUS_EVENT_OVP);
 			goto err;
 		}
 
-		chr_err("PD_TA:TA protect: ocp:%d otp:%d ovp:%d tmp:%d\n",
+		chr_info("PD_TA:TA protect: ocp:%d otp:%d ovp:%d tmp:%d\n",
 			TAstatus.event_flags & PD_STASUS_EVENT_OCP,
 			TAstatus.event_flags & PD_STATUS_EVENT_OTP,
 			TAstatus.event_flags & PD_STATUS_EVENT_OVP,
@@ -856,7 +856,7 @@ int mtk_pe40_cc_state(struct charger_manager *pinfo)
 
 	max_watt = pe40->avbus * max_icl;
 
-	chr_err("[pe40_cc]vbus:%d:%d,ibus:%d,ibat:%d icl:%d:%d,ccl:%d,%d,vbat:%d,maxIbus:%d\n",
+	chr_info("[pe40_cc]vbus:%d:%d,ibus:%d,ibat:%d icl:%d:%d,ccl:%d,%d,vbat:%d,maxIbus:%d\n",
 		pe40->avbus, vbus,
 		ibus,
 		ibat,

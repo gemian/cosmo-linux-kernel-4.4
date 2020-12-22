@@ -22,6 +22,13 @@
 #include "inc/mt6370_pmu.h"
 #include "inc/mt6370_pmu_bled.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) {}
+#endif
+
 struct mt6370_pmu_bled_data {
 	struct rt_fled_dev base;
 	struct mt6370_pmu_chip *chip;
@@ -520,7 +527,7 @@ static int mt6370_pmu_bled_probe(struct platform_device *pdev)
 	}
 
 	mt6370_pmu_bled_irq_register(pdev);
-	dev_info(&pdev->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(&pdev->dev, "%s successfully\n", __func__);
 	return 0;
 out_mt_flash_register:
 	led_classdev_unregister(&mt6370_pmu_bled_dev);
@@ -538,7 +545,7 @@ static int mt6370_pmu_bled_remove(struct platform_device *pdev)
 
 	platform_device_unregister(bled_data->mt_flash_dev);
 	led_classdev_unregister(&mt6370_pmu_bled_dev);
-	dev_info(bled_data->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(bled_data->dev, "%s successfully\n", __func__);
 	return 0;
 }
 

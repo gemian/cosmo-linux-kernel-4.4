@@ -913,14 +913,15 @@ static INT32 mt6632_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 		WMT_SET_CRYSTAL_TRIMING_EVT[4] = 0x2;
 		WMT_SET_CRYSTAL_TRIMING_EVT[5] = 0x0;
 		iRet = wmt_core_init_script(set_crystal_timing_script, ARRAY_SIZE(set_crystal_timing_script));
-		if (iRet == 0)
+		if (iRet == 0) {
 			WMT_INFO_FUNC("set to Xtal mode suceed\n");
-		else
+		} else {
 			WMT_INFO_FUNC("set to Xtal mode failed, iRet:%d.\n", iRet);
+		}
 
-
-	} else
+	} else {
 		WMT_INFO_FUNC("co-clock disabled.\n");
+	}
 #if MT6632_BRINGUP
 	WMT_INFO_FUNC("Bring up period, skip merge interface settings\n");
 #else
@@ -957,9 +958,9 @@ static INT32 mt6632_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 			return -18;
 		}
 		WMT_INFO_FUNC("enable mt662x firmware coredump\n");
-	} else
+	} else {
 		WMT_INFO_FUNC("disable mt662x firmware coredump\n");
-
+	}
 	ctrlData.ctrlId = WMT_CTRL_SET_STP_DBG_INFO;
 	ctrlData.au4CtrlData[0] = wmt_ic_ops_mt6632.icId;
 	ctrlData.au4CtrlData[1] = (size_t) gp_mt6632_info->cChipVersion;
@@ -1056,10 +1057,11 @@ static INT32 mt6632_aif_ctrl(WMT_IC_PIN_STATE state, UINT32 flag)
 		}
 	}
 
-	if (!ret)
+	if (!ret) {
 		WMT_INFO_FUNC("new state(%d) ok\n", state);
-	else
+	} else {
 		WMT_WARN_FUNC("new state(%d) fail(%d)\n", state, ret);
+	}
 #endif
 	return ret;
 }
@@ -1271,9 +1273,9 @@ static INT32 mt6632_ver_check(VOID)
 
 	iret = wmt_core_ctrl(WMT_CTRL_HWIDVER_SET, &ctrlPa1, &ctrlPa2);
 
-	if (iret)
+	if (iret) {
 		WMT_WARN_FUNC("MT6632: WMT_CTRL_HWIDVER_SET fail(%d)\n", iret);
-
+	}
 	gp_mt6632_info = p_info;
 	return 0;
 }
@@ -1983,10 +1985,11 @@ static INT32 wmt_stp_wifi_lte_coex(VOID)
 		iRet =
 		    wmt_core_init_script(set_wifi_lte_coex_table_0,
 					 ARRAY_SIZE(set_wifi_lte_coex_table_0));
-		if (iRet)
+		if (iRet) {
 			WMT_ERR_FUNC("wmt_core:set_wifi_lte_coex_table_0 fail(%d)\n", iRet);
-		else
+		} else {
 			WMT_DBG_FUNC("wmt_core:set_wifi_lte_coex_table_0 ok\n");
+		}
 	}
 
 	return iRet;

@@ -21,6 +21,13 @@
 #include "inc/mt6370_pmu.h"
 #include "inc/mt6370_pmu_core.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) {}
+#endif
+
 struct mt6370_pmu_core_data {
 	struct mt6370_pmu_chip *chip;
 	struct device *dev;
@@ -149,7 +156,7 @@ static int mt6370_pmu_core_reset(struct mt6370_pmu_core_data *core_data)
 	const u8 pascode[2] = {0xC5, 0x7E};
 	int ret = 0;
 
-	dev_info(core_data->dev, "%s\n", __func__);
+	DBGLOGINFO(core_data->dev, "%s\n", __func__);
 	ret = mt6370_pmu_reg_write(core_data->chip,
 				   MT6370_PMU_REG_RSTPASCODE1, 0xA9);
 	if (ret < 0)
@@ -220,7 +227,7 @@ static int mt6370_pmu_core_probe(struct platform_device *pdev)
 		goto out_init_reg;
 
 	mt6370_pmu_core_irq_register(pdev);
-	dev_info(&pdev->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(&pdev->dev, "%s successfully\n", __func__);
 	return 0;
 out_init_reg:
 out_pdata:
@@ -232,7 +239,7 @@ static int mt6370_pmu_core_remove(struct platform_device *pdev)
 {
 	struct mt6370_pmu_core_data *core_data = platform_get_drvdata(pdev);
 
-	dev_info(core_data->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(core_data->dev, "%s successfully\n", __func__);
 	return 0;
 }
 

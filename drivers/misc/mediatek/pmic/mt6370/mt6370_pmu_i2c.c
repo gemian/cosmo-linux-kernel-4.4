@@ -21,6 +21,13 @@
 
 #include "inc/mt6370_pmu.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) {}
+#endif
+
 /* qzs add on 2018620 for get driver information */
 #define AEON_DEVICE_PROC_MANAGER
 #ifdef AEON_DEVICE_PROC_MANAGER
@@ -358,7 +365,7 @@ static int mt6370_pmu_probe(struct i2c_client *i2c,
 	if (ret < 0)
 		goto out_subdevs;
 	pm_runtime_enable(&i2c->dev);
-	dev_info(&i2c->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(&i2c->dev, "%s successfully\n", __func__);
 	return 0;
 out_subdevs:
 	mt6370_pmu_irq_unregister(chip);
@@ -381,7 +388,7 @@ static int mt6370_pmu_remove(struct i2c_client *i2c)
 	mt6370_pmu_irq_unregister(chip);
 	mt6370_pmu_regmap_unregister(chip);
 	pm_runtime_set_suspended(&i2c->dev);
-	dev_info(chip->dev, "%s successfully\n", __func__);
+	DBGLOGINFO(chip->dev, "%s successfully\n", __func__);
 	return 0;
 }
 

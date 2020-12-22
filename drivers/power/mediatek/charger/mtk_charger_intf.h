@@ -56,6 +56,9 @@ do {									\
 	}								   \
 } while (0)
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+
 #define chr_info(fmt, args...)   \
 do {									\
 	if (chr_get_debug_level() >= CHRLOG_ERROR_LEVEL) {		\
@@ -102,6 +105,18 @@ extern void charger_log_flash(const char *fmt, ...);
 				charger_log(fmt, ##args); \
 			}								   \
 		} while (0)
+#endif
+
+#else
+
+#define chr_info(...) {}
+#define chr_debug(...) {}
+
+#ifdef MTK_CHARGER_EXP
+#define chr_err_batch(...) {}
+#define chr_debug_batch(...) {}
+#endif
+
 #endif
 
 

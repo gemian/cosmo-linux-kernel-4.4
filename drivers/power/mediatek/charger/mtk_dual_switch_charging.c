@@ -178,7 +178,7 @@ static void dual_swchg_select_charging_current_limit(struct charger_manager *inf
 			pdata->charging_current_limit = 500000;
 		}
 
-		chr_err("type-C:%d current:%d\n",
+		chr_info("type-C:%d current:%d\n",
 			info->pd_type, tcpm_inquire_typec_remote_rp_curr(info->tcpc));
 	} else if (mtk_pdc_check_charger(info) == true) {
 		int vbus = 0, cur = 0, idx = 0;
@@ -192,7 +192,7 @@ static void dual_swchg_select_charging_current_limit(struct charger_manager *inf
 			pdata->input_current_limit = info->data.usb_charger_current_configured;
 			pdata->charging_current_limit = info->data.usb_charger_current_configured;
 		}
-		chr_err("[%s]vbus:%d input_cur:%d idx:%d current:%d\n", __func__,
+		chr_info("[%s]vbus:%d input_cur:%d idx:%d current:%d\n", __func__,
 			vbus, cur, idx, info->data.pd_charger_current);
 
 	} else if (info->chr_type == STANDARD_HOST) {
@@ -526,7 +526,7 @@ static void dual_swchg_turn_on_charging(struct charger_manager *info)
 	charger_dev_is_enabled(info->chg2_dev, &chg2_enable);
 	charger_dev_is_chip_enabled(info->chg2_dev, &chg2_chip_enabled);
 
-	chr_err("Chg1:%d chg2:%d chg2_chip_en:%d\n", chg1_enable, chg2_enable,
+	chr_info("Chg1:%d chg2:%d chg2_chip_en:%d\n", chg1_enable, chg2_enable,
 		chg2_chip_enabled);
 }
 
@@ -557,7 +557,7 @@ static int mtk_dual_switch_charging_do_charging(struct charger_manager *info, bo
 {
 	struct dual_switch_charging_alg_data *swchgalg = info->algorithm_data;
 
-	chr_err("mtk_dual_switch_charging_do_charging en:%d %s\n", en, info->algorithm_name);
+	chr_info("mtk_dual_switch_charging_do_charging en:%d %s\n", en, info->algorithm_name);
 	if (en) {
 		swchgalg->disable_charging = false;
 		swchgalg->state = CHR_CC;
@@ -629,7 +629,7 @@ static int mtk_dual_switch_chr_cc(struct charger_manager *info)
 
 	charger_dev_is_enabled(info->chg2_dev, &chg2_en);
 
-	chr_err("safety_check state:%d en:%d thermal:%d",
+	chr_info("safety_check state:%d en:%d thermal:%d",
 		swchgalg->state,
 		chg2_en,
 		pdata->thermal_charging_current_limit);
@@ -655,7 +655,7 @@ static int mtk_dual_switch_chr_cc(struct charger_manager *info)
 	if (chg_done) {
 		swchgalg->state = CHR_BATFULL;
 		charger_dev_do_event(info->chg1_dev, EVENT_EOC, 0);
-		chr_err("battery full!\n");
+		chr_info("battery full!\n");
 	}
 
 	/* If it is not disabled by throttling,
@@ -718,7 +718,7 @@ int mtk_dual_switch_chr_full(struct charger_manager *info)
 		mtk_pe_set_to_check_chr_type(info, true);
 		mtk_pe40_set_is_enable(info, true);
 		info->enable_dynamic_cv = true;
-		chr_err("battery recharging!\n");
+		chr_info("battery recharging!\n");
 		info->polling_interval = CHARGING_INTERVAL;
 	}
 
@@ -738,7 +738,7 @@ static int mtk_dual_switch_charging_run(struct charger_manager *info)
 	int ret = 10;
 	bool chg2_en;
 
-	chr_err("mtk_dual_switch_charging_run [%d]\n", swchgalg->state);
+	chr_info("mtk_dual_switch_charging_run [%d]\n", swchgalg->state);
 
 	if (mtk_is_TA_support_pe30(info) == false &&
 		mtk_pdc_check_charger(info) == false &&
@@ -793,7 +793,7 @@ int dual_charger_dev_event(struct notifier_block *nb, unsigned long event, void 
 
 	charger_dev_is_chip_enabled(info->chg2_dev, &chg2_chip_enabled);
 
-	chr_err("charger_dev_event %ld\n", event);
+	chr_info("charger_dev_event %ld\n", event);
 
 	if (event == CHARGER_DEV_NOTIFY_EOC) {
 		charger_dev_is_enabled(info->chg2_dev, &chg_en);
@@ -808,7 +808,7 @@ int dual_charger_dev_event(struct notifier_block *nb, unsigned long event, void 
 							 &ichg2);
 			charger_dev_get_min_charging_current(info->chg2_dev,
 							 &ichg2_min);
-			chr_err("ichg2:%d, ichg2_min:%d state:%d\n", ichg2, ichg2_min,
+			chr_info("ichg2:%d, ichg2_min:%d state:%d\n", ichg2, ichg2_min,
 				swchgalg->state);
 			if (ichg2 - 500000 < ichg2_min) {
 				if (is_in_pe40_state(info))
@@ -873,15 +873,15 @@ int mtk_dual_switch_charging_init(struct charger_manager *info)
 		return -ENOMEM;
 
 	info->chg1_dev = get_charger_by_name("primary_chg");
-	if (info->chg1_dev)
-		chr_err("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
-	else
+	if (info->chg1_dev) {
+		chr_info("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
+	} else
 		chr_err("*** Error : can't find primary charger [%s]***\n", "primary_chg");
 
 	info->chg2_dev = get_charger_by_name("secondary_chg");
-	if (info->chg2_dev)
-		chr_err("Found secondary charger [%s]\n", info->chg2_dev->props.alias_name);
-	else
+	if (info->chg2_dev) {
+		chr_info("Found secondary charger [%s]\n", info->chg2_dev->props.alias_name);
+	} else
 		chr_err("*** Error : can't find secondary charger\n");
 
 	mutex_init(&swch_alg->ichg_aicr_access_mutex);

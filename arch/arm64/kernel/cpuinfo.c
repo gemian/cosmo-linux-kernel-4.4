@@ -117,7 +117,7 @@ static int c_show(struct seq_file *m, void *v)
 	bool compat = personality(current->personality) == PER_LINUX32;
 
 	/* a hint message to notify that some process reads /proc/cpuinfo */
-	pr_err("Dump cpuinfo\n");
+//	pr_err("Dump cpuinfo\n");
 
 	seq_printf(m, "Processor\t: AArch64 Processor rev %d (%s)\n",
 			read_cpuid_id() & 15, ELF_PLATFORM);

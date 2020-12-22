@@ -115,7 +115,7 @@ done:
 	if (ret != -ENOTSUPP && pdata->charging_current_limit < ichg1_min)
 		pdata->charging_current_limit = 0;
 
-	chr_err("force:%d thermal:%d setting:%d type:%d usb_unlimited:%d usbif:%d usbsm:%d\n",
+	chr_info("force:%d thermal:%d setting:%d type:%d usb_unlimited:%d usbif:%d usbsm:%d\n",
 		pdata->force_charging_current,
 		pdata->thermal_charging_current_limit,
 		pdata->charging_current_limit,
@@ -514,9 +514,9 @@ int mtk_linear_charging_init(struct charger_manager *info)
 		return -ENOMEM;
 
 	info->chg1_dev = get_charger_by_name("primary_chg");
-	if (info->chg1_dev)
-		chr_err("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
-	else
+	if (info->chg1_dev) {
+		chr_info("Found primary charger [%s]\n", info->chg1_dev->props.alias_name);
+	} else
 		chr_err("*** Error : can't find primary charger [%s]***\n", "primary_chg");
 
 	info->algorithm_data = algo_data;

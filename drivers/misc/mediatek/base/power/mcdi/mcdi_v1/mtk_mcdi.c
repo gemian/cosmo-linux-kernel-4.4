@@ -709,7 +709,7 @@ void mcdi_heart_beat_log_dump(void)
 
 	reset_mcdi_buf(buf);
 
-	mcdi_buf_append(buf, "mcdi cpu: ");
+	mcdi_buf_append(buf, "mcdi_v1_cpu: ");
 
 	for (i = 0; i < NF_CPU; i++) {
 		mcdi_cnt = mcdi_cnt_cpu[i] - mcdi_cnt_cpu_last[i];

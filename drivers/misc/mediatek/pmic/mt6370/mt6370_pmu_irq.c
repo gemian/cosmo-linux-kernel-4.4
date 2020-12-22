@@ -24,6 +24,17 @@
 
 #include "inc/mt6370_pmu.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) dev_dbg(##__VA_ARGS__)
+#define DBGLOGINFORATELIMITED(...) dev_info_ratelimited(##__VA_ARGS__)
+#define PRLOGINFORATELIMITED(...) pr_info_ratelimited(##__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) {}
+#define DBGLOGINFORATELIMITED(...) {}
+#define PRLOGINFORATELIMITED(...) {}
+#endif
+
 #define MT6370_PMU_IRQ_EVT_MAX (128)
 
 struct irq_mapping_tbl {
@@ -145,7 +156,7 @@ static void mt6370_pmu_irq_disable(struct irq_data *data)
 {
 	struct mt6370_pmu_chip *chip = data->chip_data;
 
-	dev_dbg(chip->dev, "%s: hwirq = %d, %s\n", __func__, (int)data->hwirq,
+	DBGLOGINFO(chip->dev, "%s: hwirq = %d, %s\n", __func__, (int)data->hwirq,
 		mt6370_pmu_get_hwirq_name(chip, (int)data->hwirq));
 	mt6370_pmu_curr_irqmask[data->hwirq / 8] |= (1 << (data->hwirq % 8));
 }
@@ -154,7 +165,7 @@ static void mt6370_pmu_irq_enable(struct irq_data *data)
 {
 	struct mt6370_pmu_chip *chip = data->chip_data;
 
-	dev_dbg(chip->dev, "%s: hwirq = %d, %s\n", __func__, (int)data->hwirq,
+	DBGLOGINFO(chip->dev, "%s: hwirq = %d, %s\n", __func__, (int)data->hwirq,
 		mt6370_pmu_get_hwirq_name(chip, (int)data->hwirq));
 	mt6370_pmu_curr_irqmask[data->hwirq / 8] &= ~(1 << (data->hwirq % 8));
 }
@@ -206,7 +217,7 @@ static irqreturn_t mt6370_pmu_irq_handler(int irq, void *priv)
 	u8 valid_chg[16] = { 0 };
 	int i = 0, j = 0, ret = 0;
 
-	pr_info_ratelimited("%s\n", __func__);
+	PRLOGINFORATELIMITED("%s\n", __func__);
 	pm_runtime_get_sync(chip->dev);
 	ret = mt6370_pmu_reg_write(chip, MT6370_PMU_REG_IRQMASK, 0xfe);
 	if (ret < 0) {
@@ -267,7 +278,7 @@ static irqreturn_t mt6370_pmu_irq_handler(int irq, void *priv)
 				continue;
 			ret = irq_find_mapping(chip->irq_domain, i * 8 + j);
 			if (ret) {
-				dev_info_ratelimited(chip->dev,
+				DBGLOGINFORATELIMITED(chip->dev,
 						     "%s: handler irq_domain = (%d, %d)\n",
 						     __func__, i, j);
 				handle_nested_irq(ret);
