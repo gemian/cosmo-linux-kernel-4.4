@@ -102,7 +102,7 @@ config PINCTRL_MT6799
 # For EINT multi-trigger design
 config MTK_EINT_MULTI_TRIGGER_DESIGN
 	bool "Mediatek EINT multi-trigger design"
-	depends on PINCTRL_MTK
+	depends on PINCTRL_MTK_COMMON
 	default n
 	help
 	  On MTK EINT design, a GPIO pin is connected to 2 EINT pin in order to
