@@ -1,6 +1,6 @@
 Source: cosmo-linux-kernel
 Section: kernel
-Priority: extra
+Priority: optional
 Maintainer: Adam Boardman <adamboardman@gmail.com>
 Build-Depends:
  python,
