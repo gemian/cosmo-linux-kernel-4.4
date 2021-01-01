@@ -9,7 +9,7 @@ config PROFILE_CPU
 
 config MTK_CPU_HOTPLUG_DEBUG_0
 	bool "MediaTek CPU Hotplug DEBUG 0"
-	default y
+	default n
 	help
 	  This kernel config can be used to enable log message in cpu notify
 	  callback function in register_cpu_notifier. This is useful for CPU
@@ -27,7 +27,7 @@ config MTK_CPU_HOTPLUG_DEBUG_1
 
 config MTK_CPU_HOTPLUG_DEBUG_2
 	bool "MediaTek CPU Hotplug DEBUG 2"
-	default y
+	default n
 	help
 	  This kernel config can be used to enable aee to log cpu notify
 	  callback in notifier_call_chain. This is useful for CPU hotplug
@@ -36,7 +36,7 @@ config MTK_CPU_HOTPLUG_DEBUG_2
 
 config MTK_CPU_HOTPLUG_DEBUG_3
 	bool "MediaTek CPU Hotplug DEBUG 3"
-	default y
+	default n
 	help
 	  This kernel config can be used to enable advanced CPU hot-plug
 	  latency profiling. This information is useful for someone who
