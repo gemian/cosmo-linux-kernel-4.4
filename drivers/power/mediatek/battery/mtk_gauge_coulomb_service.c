@@ -425,10 +425,12 @@ void gauge_coulomb_int_handler(void)
 			mutex_hw_coulomb_lock();
 			gauge_set_coulomb_interrupt1_ht(hw_car);
 			mutex_hw_coulomb_unlock();
-		} else
+		} else {
+			ft_trace("+ list is empty\n");
+		}
+	} else {
 		ft_trace("+ list is empty\n");
-	} else
-		ft_trace("+ list is empty\n");
+	}
 
 
 	if (list_empty(&coulomb_head_minus) != true) {
@@ -472,10 +474,12 @@ void gauge_coulomb_int_handler(void)
 			mutex_hw_coulomb_lock();
 			gauge_set_coulomb_interrupt1_lt(hw_car);
 			mutex_hw_coulomb_unlock();
-		} else
+		} else {
+			ft_trace("- list is empty\n");
+		}
+	} else {
 		ft_trace("- list is empty\n");
-	} else
-		ft_trace("- list is empty\n");
+	}
 
 	pre_coulomb = car;
 	get_monotonic_boottime(&sstart[2]);

@@ -414,7 +414,7 @@ static int shutdown_event_handler(struct shutdown_controller *sdd)
 		}
 
 		polling++;
-			bm_err("[%s][UT] V %d ui_soc %d dur %d [%d:%d:%d:%d:%d] batdata[%d] %d\n",
+		bm_err("[%s][UT] V %d ui_soc %d dur %d [%d:%d:%d:%d:%d] batdata[%d] %d\n",
 				__func__,
 			sdd->avgvbat, current_ui_soc,
 			(int)duraction.tv_sec,
