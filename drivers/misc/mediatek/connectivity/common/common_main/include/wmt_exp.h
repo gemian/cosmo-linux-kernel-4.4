@@ -76,12 +76,12 @@ do { \
 
 #else
 
-#define WMT_LOUD_FUNC(...) {}
-#define WMT_INFO_FUNC(...) {}
-#define WMT_WARN_FUNC(...) {}
-#define WMT_ERR_FUNC(fmt, arg...) {}
-#define WMT_DBG_FUNC(fmt, arg...) {}
-#define WMT_TRC_FUNC(f) {}
+#define WMT_LOUD_FUNC(...) do { } while (false)
+#define WMT_INFO_FUNC(...) do { } while (false)
+#define WMT_WARN_FUNC(...) do { } while (false)
+#define WMT_ERR_FUNC(fmt, arg...) do { } while (false)
+#define WMT_DBG_FUNC(fmt, arg...) do { } while (false)
+#define WMT_TRC_FUNC(f) do { } while (false)
 
 #endif
 

@@ -267,8 +267,8 @@ u8 cf_debug_level = ERR_LOG;
 #define FUNC_ENTRY()  cf_debug(DEBUG_LOG, "entry\n")
 #define FUNC_EXIT()  cf_debug(DEBUG_LOG, "exit\n")
 #else
-#define FUNC_ENTRY()
-#define FUNC_EXIT()
+#define FUNC_ENTRY() do { } while (false)
+#define FUNC_EXIT() do { } while (false)
 #endif
 
 /*************************************************************/

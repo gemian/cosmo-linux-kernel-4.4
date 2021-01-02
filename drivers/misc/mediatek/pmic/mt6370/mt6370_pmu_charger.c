@@ -42,7 +42,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 #define MT6370_PMU_CHARGER_DRV_VERSION	"1.1.24_MTK"
@@ -522,8 +522,9 @@ static int mt6370_get_adc(struct mt6370_pmu_charger_data *chg_data,
 	s64 adc_result = 0;
 	const int max_wait_times = 6;
 
-	if (adc_sel == MT6370_ADC_TEMP_JC)
+	if (adc_sel == MT6370_ADC_TEMP_JC) {
 		DBGLOGINFO(chg_data->dev, "%s: Select ADC channel to TEMP_JC\n", __func__);
+	}
 
 	mutex_lock(&chg_data->adc_access_lock);
 	mt6370_enable_hidden_mode(chg_data, true);
@@ -561,8 +562,9 @@ static int mt6370_get_adc(struct mt6370_pmu_charger_data *chg_data,
 		}
 	}
 
-	if (adc_sel == MT6370_ADC_TEMP_JC)
+	if (adc_sel == MT6370_ADC_TEMP_JC) {
 		DBGLOGINFO(chg_data->dev, "%s: Start ADC conversion\n", __func__);
+	}
 
 	/* Start ADC conversation */
 	ret = mt6370_pmu_reg_set_bit(chg_data->chip, MT6370_PMU_REG_CHGADC,
@@ -624,9 +626,10 @@ static int mt6370_get_adc(struct mt6370_pmu_charger_data *chg_data,
 
 	}
 
-	if (adc_sel == MT6370_ADC_TEMP_JC)
+	if (adc_sel == MT6370_ADC_TEMP_JC) {
 		DBGLOGINFO(chg_data->dev, "%s: wait_times = %d\n", __func__, i);
-
+	}
+	
 	mdelay(1);
 
 	/* Read ADC data */
@@ -736,10 +739,11 @@ static int mt6370_enable_chgdet_flow(struct mt6370_pmu_charger_data *chg_data,
 			}
 			msleep(100);
 		}
-		if (i == max_wait_cnt)
+		if (i == max_wait_cnt) {
 			dev_err(chg_data->dev, "%s: CDP timeout\n", __func__);
-		else
+		} else {
 			DBGLOGINFO(chg_data->dev, "%s: CDP free\n", __func__);
+		}
 	}
 
 	mutex_lock(&chg_data->bc12_access_lock);

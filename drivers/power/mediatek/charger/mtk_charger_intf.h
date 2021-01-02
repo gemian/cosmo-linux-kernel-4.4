@@ -109,12 +109,12 @@ extern void charger_log_flash(const char *fmt, ...);
 
 #else
 
-#define chr_info(...) {}
-#define chr_debug(...) {}
+#define chr_info(...) do { } while (false)
+#define chr_debug(...) do { } while (false)
 
 #ifdef MTK_CHARGER_EXP
-#define chr_err_batch(...) {}
-#define chr_debug_batch(...) {}
+#define chr_err_batch(...) do { } while (false)
+#define chr_debug_batch(...) do { } while (false)
 #endif
 
 #endif

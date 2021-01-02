@@ -40,7 +40,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) pr_notice(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 u16 rtc_read(u16 addr)

@@ -161,24 +161,16 @@ do {			\
 
 #else
 
-#define CMDQ_LOG(...) { \
-}
-#define CMDQ_MSG(...) { \
-}
-#define CMDQ_VERBOSE(...) { \
-}
-#define CMDQ_ERR(...) { \
-}
-#define CMDQ_CHECK_AND_BREAK_STATUS(...) { \
-}
+#define CMDQ_LOG(...) do { } while (false)
+#define CMDQ_MSG(...) do { } while (false)
+#define CMDQ_VERBOSE(...) do { } while (false)
+#define CMDQ_ERR(...) do { } while (false)
+#define CMDQ_CHECK_AND_BREAK_STATUS(...) do { } while (false)
 #ifdef CMDQ_AEE_READY
-#define CMDQ_AEE_EX(...) { \
-}
-#define CMDQ_AEE(...) { \
-}
+#define CMDQ_AEE_EX(...) do { } while (false)
+#define CMDQ_AEE(...) do { } while (false)
 #else
-#define CMDQ_AEE(...) { \
-}
+#define CMDQ_AEE(...) do { } while (false)
 #endif
 
 #endif

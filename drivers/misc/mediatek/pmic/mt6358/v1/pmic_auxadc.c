@@ -59,7 +59,7 @@
 #ifdef DEBUG_LOGGING
 #define PRNOTICELOG(...) pr_notice(##__VA_ARGS__)
 #else
-#define PRNOTICELOG(...) {}
+#define PRNOTICELOG(...) do { } while (false)
 #endif
 
 static unsigned int count_time_out = 100;
@@ -391,8 +391,9 @@ void wake_up_mts_monitor(void)
 	if (mts_thread_handle != NULL) {
 		wake_lock(&mts_monitor_wake_lock);
 		wake_up_process(mts_thread_handle);
-	} else
+	} else {
 		PRNOTICELOG(PMICTAG "[%s] mts_thread_handle not ready\n", __func__);
+	}
 }
 
 /*--Monitor MTS reg--*/

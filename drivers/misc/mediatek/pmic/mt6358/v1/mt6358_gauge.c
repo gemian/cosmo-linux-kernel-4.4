@@ -39,8 +39,8 @@
 #define BMDBGLOG(...) bm_debug(##__VA_ARGS__)
 #define BMTRACELOG(...) bm_trace(##__VA_ARGS__)
 #else
-#define BMDBGLOG(...) {}
-#define BMTRACELOG(...) {}
+#define BMDBGLOG(...) do { } while (false)
+#define BMTRACELOG(...) do { } while (false)
 #endif
 
 /*********************** MT6358 setting *********************/

@@ -10,8 +10,8 @@
 #define DBGLOGCONT(...) pr_cont(##__VA_ARGS__)
 #define DBGLOGINFO(...) pr_info(##__VA_ARGS__)
 #else
-#define DBGLOGCONT(...) {}
-#define DBGLOGINFO(...) {}
+#define DBGLOGCONT(...) do { } while (false)
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 #undef DEBUG

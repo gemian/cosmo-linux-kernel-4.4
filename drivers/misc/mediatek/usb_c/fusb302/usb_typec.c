@@ -334,7 +334,7 @@ void fusb300_eint_work(struct work_struct *data)
 			if (gpio_get_value(hdmi_det_gpio)){
 				printk("===%s hdmi plug in===\n",__func__);
 				if(CCXstate == 0x10){
-					printk("===zhaolong====CC1=======\n",__func__);
+					//printk("%s==zhaolong====CC1=======\n",__func__);
 					aeon_gpio_set("fusb301a_sw_en_low");//GPIO70 low
 					aeon_gpio_set("fusb301a_sw_sel_low");//GPIO71 low
 					//
@@ -343,7 +343,7 @@ void fusb300_eint_work(struct work_struct *data)
 					AudDrv_GPIO_EXTAMP_Select(false, 3);
 					AudDrv_GPIO_EXTAMP2_Select(false,3);
 				}else if(CCXstate == 0x20){
-					printk("%s==zhaolong=====CC2=======\n",__func__);
+					//printk("%s==zhaolong=====CC2=======\n",__func__);
 					aeon_gpio_set("fusb301a_sw_en_low");//GPIO70 low
 					aeon_gpio_set("fusb301a_sw_sel_high");//GPIO71 high
 					//
@@ -366,7 +366,7 @@ void fusb300_eint_work(struct work_struct *data)
 				is_rusb_onotg = 1;
 			}
 		}else{
-			printk("%s==zhaolong=====CCX detect error=======\n",__func__);
+			//printk("%s==zhaolong=====CCX detect error=======\n",__func__);
 			fusb300_gpio_init();
 			hdmi_plug_in_flag = 0;
 			AudDrv_GPIO_EXTAMP_Select(true, 3);
@@ -400,9 +400,9 @@ void fusb300_eint_work(struct work_struct *data)
 	gpio_set_debounce(gpiopin, debounce);	
 	
 	enable_irq(usbid_irqnum);
-	printk("wgx>>>>>>  %s[%d] \n",__func__,__LINE__);
+	//printk("wgx>>>>>>  %s[%d] \n",__func__,__LINE__);
 	//sil9024_test();
-	printk("wgx>>>>>>  %s[%d] \n",__func__,__LINE__);
+	//printk("wgx>>>>>>  %s[%d] \n",__func__,__LINE__);
 	mutex_unlock(&typec_lock);
 }
 EXPORT_SYMBOL(hdmi_plug_in_flag);

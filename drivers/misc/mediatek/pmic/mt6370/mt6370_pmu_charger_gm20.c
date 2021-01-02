@@ -38,7 +38,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 /* ======================= */

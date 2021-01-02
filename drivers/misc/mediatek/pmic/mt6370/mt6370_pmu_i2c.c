@@ -25,7 +25,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 /* qzs add on 2018620 for get driver information */

@@ -56,7 +56,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) pr_info(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 #define UETH__VERSION	"29-May-2008"

@@ -464,10 +464,11 @@ void exec_battery_percent_callback(BATTERY_PERCENT_LEVEL battery_percent_level)
 		}
 #else
 		battery_percent_callback = bpcb_tb[BATTERY_PERCENT_PRIO_FLASHLIGHT].bpcb;
-		if (battery_percent_callback != NULL)
+		if (battery_percent_callback != NULL) {
 			battery_percent_callback(battery_percent_level);
-		else
+		} else {
 			PMICLOG("[exec_battery_percent_callback]BATTERY_PERCENT_PRIO_FLASHLIGHT is null\n");
+		}
 		PMICLOG
 		    ("[exec_battery_percent_callback at DLPT] prio_val=%d,battery_percent_level=%d\n",
 		     BATTERY_PERCENT_PRIO_FLASHLIGHT, battery_percent_level);
@@ -547,10 +548,11 @@ void bat_percent_notify_init(void)
 
 	bat_percent_notify_thread =
 	    kthread_run(bat_percent_notify_handler, 0, "bat_percent_notify_thread");
-	if (IS_ERR(bat_percent_notify_thread))
+	if (IS_ERR(bat_percent_notify_thread)) {
 		pr_err("Failed to create bat_percent_notify_thread\n");
-	else
+	} else {
 		PMICLOG("Create bat_percent_notify_thread : done\n");
+	}
 }
 #endif				/* #ifdef BATTERY_PERCENT_PROTECT */
 
@@ -1409,10 +1411,11 @@ void dlpt_notify_init(void)
 	hrtimer_start(&dlpt_notify_timer, ktime, HRTIMER_MODE_REL);
 
 	dlpt_notify_thread = kthread_run(dlpt_notify_handler, 0, "dlpt_notify_thread");
-	if (IS_ERR(dlpt_notify_thread))
+	if (IS_ERR(dlpt_notify_thread)) {
 		pr_err("Failed to create dlpt_notify_thread\n");
-	else
+	} else {
 		PMICLOG("Create dlpt_notify_thread : done\n");
+	}
 
 	pmic_set_register_value(PMIC_RG_UVLO_VTHL, 0);
 

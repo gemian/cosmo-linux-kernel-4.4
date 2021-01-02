@@ -26,7 +26,7 @@
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
+#define DBGLOGINFO(...) do { } while (false)
 #endif
 
 #define MT6370_PMU_FLED_DRV_VERSION	"1.0.2_MTK"

@@ -1021,9 +1021,9 @@ static ssize_t store_pdc_max_watt_level(struct device *dev, struct device_attrib
 	if (kstrtoint(buf, 10, &temp) == 0) {
 		mtk_pdc_set_max_watt(pinfo, temp);
 		chr_info("[store_pdc_max_watt]:%d\n", temp);
-	} else
+	} else {
 		chr_info("[store_pdc_max_watt]: format error!\n");
-
+	}
 	return size;
 }
 static DEVICE_ATTR(pdc_max_watt, 0664, show_pdc_max_watt_level, store_pdc_max_watt_level);

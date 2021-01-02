@@ -30,9 +30,9 @@
 #define DBGLOGINFORATELIMITED(...) dev_info_ratelimited(##__VA_ARGS__)
 #define PRLOGINFORATELIMITED(...) pr_info_ratelimited(##__VA_ARGS__)
 #else
-#define DBGLOGINFO(...) {}
-#define DBGLOGINFORATELIMITED(...) {}
-#define PRLOGINFORATELIMITED(...) {}
+#define DBGLOGINFO(...) do { } while (false)
+#define DBGLOGINFORATELIMITED(...) do { } while (false)
+#define PRLOGINFORATELIMITED(...) do { } while (false)
 #endif
 
 #define MT6370_PMU_IRQ_EVT_MAX (128)

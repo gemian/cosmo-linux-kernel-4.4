@@ -91,15 +91,15 @@ int usedBytes;
 
 #else
 
-#define pbm_emerg(...) {}
-#define pbm_alert(...) {}
-#define pbm_crit(...) {}
-#define pbm_err(...) {}
-#define pbm_warn(...) {}
-#define pbm_notice(...) {}
-#define pbm_info(...) {}
-#define pbm_warn_limit(...) {}
-#define pbm_debug(...) {}
+#define pbm_emerg(...) do { } while (false)
+#define pbm_alert(...) do { } while (false)
+#define pbm_crit(...) do { } while (false)
+#define pbm_err(...) do { } while (false)
+#define pbm_warn(...) do { } while (false)
+#define pbm_notice(...) do { } while (false)
+#define pbm_info(...) do { } while (false)
+#define pbm_warn_limit(...) do { } while (false)
+#define pbm_debug(...) do { } while (false)
 
 #endif
 

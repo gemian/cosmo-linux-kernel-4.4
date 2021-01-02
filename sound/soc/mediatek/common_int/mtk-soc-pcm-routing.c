@@ -76,7 +76,7 @@
 #ifdef DEBUG_LOGGING
 #define PRWARNLOG(...) pr_warn(##__VA_ARGS__)
 #else
-#define PRWARNLOG(...) {}
+#define PRWARNLOG(...) do { } while (false)
 #endif
 
 #ifdef CONFIG_COMPAT
