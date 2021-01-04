@@ -84,7 +84,7 @@ static void __init rcu_bootup_announce_oddness(void)
 		pr_info("\tRCU torture testing starts during boot.\n");
 	if (RCU_NUM_LVLS >= 4)
 		pr_info("\tFour(or more)-level hierarchy is enabled.\n");
-	if (RCU_FANOUT_LEAF != 16)
+	if (RCU_FANOUT_LEAF != 64) //Ours is 64
 		pr_info("\tBuild-time adjustment of leaf fanout to %d.\n",
 			RCU_FANOUT_LEAF);
 	if (rcu_fanout_leaf != RCU_FANOUT_LEAF)
@@ -109,7 +109,7 @@ static void rcu_report_exp_rnp(struct rcu_state *rsp, struct rcu_node *rnp,
  */
 static void __init rcu_bootup_announce(void)
 {
-	pr_info("Preemptible hierarchical RCU implementation.\n");
+//	pr_info("Preemptible hierarchical RCU implementation.\n");
 	rcu_bootup_announce_oddness();
 }
 

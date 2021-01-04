@@ -972,8 +972,8 @@ static int __init gic_of_init(struct device_node *node, struct device_node *pare
 	if (!is_hyp_mode_available())
 		static_key_slow_dec(&supports_deactivate);
 
-	if (static_key_true(&supports_deactivate))
-		pr_info("GIC: Using split EOI/Deactivate mode\n");
+//	if (static_key_true(&supports_deactivate))
+//		pr_info("GIC: Using split EOI/Deactivate mode\n");
 
 	gic_data.dist_base = dist_base;
 	gic_data.redist_regions = rdist_regs;

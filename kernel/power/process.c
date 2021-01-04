@@ -7,8 +7,8 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define DBGLOGCONT(...) pr_cont(##__VA_ARGS__)
-#define DBGLOGINFO(...) pr_info(##__VA_ARGS__)
+#define DBGLOGCONT(...) pr_cont(__VA_ARGS__)
+#define DBGLOGINFO(...) pr_info(__VA_ARGS__)
 #else
 #define DBGLOGCONT(...) do { } while (false)
 #define DBGLOGINFO(...) do { } while (false)

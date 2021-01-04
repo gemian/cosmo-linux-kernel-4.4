@@ -695,9 +695,9 @@ int __init mt_gic_ext_init(void)
 				&reg_len_pol0))
 		reg_len_pol0 = 0;
 
-	pr_warn("### gic-v3 init done. ###\n");
+//	pr_warn("### gic-v3 init done. ###\n");
 	irq_sw_mode_init();
-	pr_notice("### gic-v3 scheduled pm init done ###\n");
+//	pr_notice("### gic-v3 scheduled pm init done ###\n");
 
 	return 0;
 }

@@ -1455,8 +1455,7 @@ static void __init mtk_infracfg_ao_init(struct device_node *node)
 			__func__, r);
 	infracfg_base = base;
 	clk_writel(INFRA_TOPAXI_SI0_CTL, clk_readl(INFRA_TOPAXI_SI0_CTL) | 0x2);
-	pr_err("%s: infra mfg debug: %08x\n",
-			__func__, clk_readl(INFRA_TOPAXI_SI0_CTL));
+//	pr_err("%s: infra mfg debug: %08x\n", __func__, clk_readl(INFRA_TOPAXI_SI0_CTL));
 	/*mtk_clk_enable_critical();*/
 #if MT_CCF_BRINGUP
 	clk_writel(INFRA_PDN_SET0, INFRA_CG0);

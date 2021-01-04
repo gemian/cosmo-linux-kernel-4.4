@@ -74,7 +74,7 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define PRWARNLOG(...) pr_warn(##__VA_ARGS__)
+#define PRWARNLOG(...) pr_warn(__VA_ARGS__)
 #else
 #define PRWARNLOG(...) do { } while (false)
 #endif

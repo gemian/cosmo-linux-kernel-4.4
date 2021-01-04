@@ -24,8 +24,8 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define DBGLOGDEV(...) dev_dbg(##__VA_ARGS__)
-#define DBGLOGINFO(...) dev_info(##__VA_ARGS__)
+#define DBGLOGDEV(...) dev_dbg(__VA_ARGS__)
+#define DBGLOGINFO(...) dev_info(__VA_ARGS__)
 #else
 #define DBGLOGDEV(...) do { } while (false)
 #define DBGLOGINFO(...) do { } while (false)

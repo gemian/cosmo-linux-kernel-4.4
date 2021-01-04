@@ -236,7 +236,7 @@ static int __init hmp_cpu_mask_setup(void)
 	struct list_head *pos;
 	int dc, cpu;
 
-	pr_warn("Initializing HMP scheduler:\n");
+//	pr_warn("Initializing HMP scheduler:\n");
 
 	/* Initialize hmp_domains using platform code */
 	arch_get_hmp_domains(&hmp_domains);

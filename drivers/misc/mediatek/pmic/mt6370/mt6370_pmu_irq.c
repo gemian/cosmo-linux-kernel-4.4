@@ -26,9 +26,9 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define DBGLOGINFO(...) dev_dbg(##__VA_ARGS__)
-#define DBGLOGINFORATELIMITED(...) dev_info_ratelimited(##__VA_ARGS__)
-#define PRLOGINFORATELIMITED(...) pr_info_ratelimited(##__VA_ARGS__)
+#define DBGLOGINFO(...) dev_dbg(__VA_ARGS__)
+#define DBGLOGINFORATELIMITED(...) dev_info_ratelimited(__VA_ARGS__)
+#define PRLOGINFORATELIMITED(...) pr_info_ratelimited(__VA_ARGS__)
 #else
 #define DBGLOGINFO(...) do { } while (false)
 #define DBGLOGINFORATELIMITED(...) do { } while (false)

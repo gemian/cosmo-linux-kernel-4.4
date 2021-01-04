@@ -36,8 +36,8 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define BMDBGLOG(...) bm_debug(##__VA_ARGS__)
-#define BMTRACELOG(...) bm_trace(##__VA_ARGS__)
+#define BMDBGLOG(...) bm_debug(__VA_ARGS__)
+#define BMTRACELOG(...) bm_trace(__VA_ARGS__)
 #else
 #define BMDBGLOG(...) do { } while (false)
 #define BMTRACELOG(...) do { } while (false)

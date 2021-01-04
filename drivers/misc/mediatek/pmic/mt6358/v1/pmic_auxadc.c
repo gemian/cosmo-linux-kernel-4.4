@@ -57,7 +57,7 @@
 
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
-#define PRNOTICELOG(...) pr_notice(##__VA_ARGS__)
+#define PRNOTICELOG(...) pr_notice(__VA_ARGS__)
 #else
 #define PRNOTICELOG(...) do { } while (false)
 #endif
