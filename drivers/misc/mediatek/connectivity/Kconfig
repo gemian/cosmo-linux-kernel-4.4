@@ -247,6 +247,13 @@ config MTK_WIFI_MCC_SUPPORT
 	  if it is set to TRUE, wlan will support Multi-Channel Concurrency,
 	   otherwise, only support Single Channel Concurrency
 
+config WLAN_DRV_BUILD_IN
+	bool "WLAN_DRV_BUILD_IN"
+	depends on MTK_COMBO_WIFI
+	default n
+	help
+	  if true avoids making a module
+
 config MTK_DHCPV6C_WIFI
 	bool "MTK_DHCPV6C_WIFI"
 	help

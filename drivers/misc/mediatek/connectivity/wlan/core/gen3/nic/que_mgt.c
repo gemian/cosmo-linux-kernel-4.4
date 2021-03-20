@@ -2809,7 +2809,7 @@ VOID qmProcessPktWithReordering(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSwRfb,
 		UINT_8 i = 0;
 		UINT_8 j = RECENT_SSN_CACHE_NUM;
 		PUINT_8 pucEth = (PUINT_8)prSwRfb->pvHeader;
-		PUINT_8 pucEthBody = &pucEth[ETH_HLEN];
+		__attribute__((unused)) PUINT_8 pucEthBody = &pucEth[ETH_HLEN];
 		UINT_16 u2EthType = 0;
 
 		if (prReorderQueParm->fgIsWaitingForPktWithSsn) {
@@ -3689,7 +3689,7 @@ qmAddRxBaEntry(IN P_ADAPTER_T prAdapter,
 
 VOID qmDelRxBaEntry(IN P_ADAPTER_T prAdapter, IN UINT_8 ucStaRecIdx, IN UINT_8 ucTid, IN BOOLEAN fgFlushToHost)
 {
-	P_RX_BA_ENTRY_T prRxBaEntry;
+	P_RX_BA_ENTRY_T prRxBaEntry = NULL;
 	P_STA_RECORD_T prStaRec;
 	P_SW_RFB_T prFlushedPacketList = NULL;
 	P_QUE_MGT_T prQM = &prAdapter->rQM;
@@ -3707,7 +3707,9 @@ VOID qmDelRxBaEntry(IN P_ADAPTER_T prAdapter, IN UINT_8 ucStaRecIdx, IN UINT_8 u
 #endif
 
 	/* Remove the BA entry for the same (STA, TID) tuple if it exists */
-	prRxBaEntry = prStaRec->aprRxReorderParamRefTbl[ucTid];
+	if (ucTid < CFG_RX_MAX_BA_TID_NUM) {
+		prRxBaEntry = prStaRec->aprRxReorderParamRefTbl[ucTid];
+	}
 
 	if (prRxBaEntry) {
 
@@ -4213,6 +4215,12 @@ VOID mqmProcessAssocRsp(IN P_ADAPTER_T prAdapter, IN P_SW_RFB_T prSwRfb, IN PUIN
 				if (IE_LEN(pucIE) == (sizeof(IE_HT_CAP_T) - 2))
 					prStaRec->fgIsQoS = TRUE;
 				break;
+#if DSCP_SUPPORT
+			case ELEM_ID_QOS_MAP_SET:
+				DBGLOG(QM, WARN, "QM: received assoc resp qosmapset ie\n");
+				qosParseQosMapSet(prAdapter, prStaRec, pucIE);
+				break;
+#endif
 			default:
 				break;
 			}

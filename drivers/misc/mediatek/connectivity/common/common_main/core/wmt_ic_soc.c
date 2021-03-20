@@ -1218,6 +1218,10 @@ static INT32 mtk_wcn_soc_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 			return -6;
 		}
 		patch_num = mtk_wcn_soc_get_patch_num();
+		if (patch_num == 0) {
+			WMT_ERR_FUNC("patch_num is 0\n");
+			return -6;
+		}
 	}
 #if CFG_WMT_PATCH_DL_OPTM
 	if (wmt_ic_ops_soc.icId != 0x6765 &&

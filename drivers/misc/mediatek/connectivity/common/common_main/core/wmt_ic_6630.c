@@ -832,11 +832,11 @@ static INT32 mt6630_sw_init(P_WMT_HIF_CONF pWmtHifConf)
 		WMT_SET_CRYSTAL_TRIMING_EVT[4] = 0x2;
 		WMT_SET_CRYSTAL_TRIMING_EVT[5] = 0x0;
 		iRet = wmt_core_init_script(set_crystal_timing_script, ARRAY_SIZE(set_crystal_timing_script));
-		if (iRet == 0)
+		if (iRet == 0) {
 			WMT_INFO_FUNC("set to Xtal mode suceed\n");
-		else
+		} else {
 			WMT_INFO_FUNC("set to Xtal mode failed, iRet:%d.\n", iRet);
-
+		}
 
 	} else
 		WMT_DBG_FUNC("co-clock disabled.\n");
@@ -987,10 +987,11 @@ static INT32 mt6630_aif_ctrl(WMT_IC_PIN_STATE state, UINT32 flag)
 		}
 	}
 
-	if (!ret)
+	if (!ret) {
 		WMT_INFO_FUNC("new state(%d) ok\n", state);
-	else
+	} else {
 		WMT_WARN_FUNC("new state(%d) fail(%d)\n", state, ret);
+	}
 #endif
 	return ret;
 }
@@ -2037,10 +2038,11 @@ static INT32 wmt_stp_wifi_lte_coex(VOID)
 		iRet =
 		    wmt_core_init_script(set_wifi_lte_coex_table_0,
 					 ARRAY_SIZE(set_wifi_lte_coex_table_0));
-		if (iRet)
+		if (iRet) {
 			WMT_ERR_FUNC("wmt_core:set_wifi_lte_coex_table_0 fail(%d)\n", iRet);
-		else
+		} else {
 			WMT_INFO_FUNC("wmt_core:set_wifi_lte_coex_table_0 ok\n");
+		}
 	}
 
 	return iRet;

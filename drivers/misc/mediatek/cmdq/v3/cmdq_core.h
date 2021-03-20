@@ -56,13 +56,14 @@ else							\
 
 #define CMDQ_LONGSTRING_MAX (180)
 #define CMDQ_DELAY_RELEASE_RESOURCE_MS (1000)
+#define CMDQ_MAX_DUMP_REG_COUNT (2048)
 
 #define CMDQ_THREAD_SEC_PRIMARY_DISP	(CMDQ_MIN_SECURE_THREAD_ID)
 #define CMDQ_THREAD_SEC_SUB_DISP	(CMDQ_MIN_SECURE_THREAD_ID + 1)
 #define CMDQ_THREAD_SEC_MDP		(CMDQ_MIN_SECURE_THREAD_ID + 2)
 
 /* max count of regs */
-#define CMDQ_MAX_COMMAND_SIZE		(0x80000000)
+#define CMDQ_MAX_COMMAND_SIZE		(0x4000000)
 #define CMDQ_MAX_DUMP_REG_COUNT		(2048)
 #define CMDQ_MAX_WRITE_ADDR_COUNT	(PAGE_SIZE / sizeof(u32))
 #define CMDQ_MAX_DBG_STR_LEN		1024
@@ -88,6 +89,9 @@ struct DumpFirstErrorStruct {
 #ifdef CMDQ_DISP_DSI_DEBUG
 extern void ddp_dump_and_reset_dsi0(void);
 #endif
+
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
 
 #define CMDQ_LOG(string, args...) \
 do {			\
@@ -155,6 +159,23 @@ do {			\
 } while (0);	\
 }
 #endif
+
+#else
+
+#define CMDQ_LOG(...) do { } while (false)
+#define CMDQ_MSG(...) do { } while (false)
+#define CMDQ_VERBOSE(...) do { } while (false)
+#define CMDQ_ERR(...) do { } while (false)
+#define CMDQ_CHECK_AND_BREAK_STATUS(...) do { } while (false)
+#ifdef CMDQ_AEE_READY
+#define CMDQ_AEE_EX(...) do { } while (false)
+#define CMDQ_AEE(...) do { } while (false)
+#else
+#define CMDQ_AEE(...) do { } while (false)
+#endif
+
+#endif
+
 
 /*#define CMDQ_PROFILE*/
 

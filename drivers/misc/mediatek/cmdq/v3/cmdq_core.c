@@ -896,7 +896,15 @@ static void cmdq_core_copy_v3_struct(struct TaskStruct *pTask, struct cmdqComman
 		pTask->replace_instr.number = 0;
 		return;
 	}
-	memcpy(p_instr_position, CMDQ_U32_PTR(pCommandDesc->replace_instr.position), array_num);
+
+	if (copy_from_user((void *)(unsigned long)p_instr_position,
+			CMDQ_U32_PTR(pCommandDesc->replace_instr.position), array_num)) {
+		kfree(p_instr_position);
+		pTask->replace_instr.position = (cmdqU32Ptr_t)(unsigned long)NULL;
+		pTask->replace_instr.number = 0;
+		return;
+	}
+
 	pTask->replace_instr.position = (cmdqU32Ptr_t) (unsigned long)p_instr_position;
 }
 
@@ -2211,7 +2219,14 @@ static void cmdq_task_init_profile_marker_data(struct cmdqCommandStruct *pComman
 	uint32_t i;
 
 	pTask->profileMarker.count = pCommandDesc->profileMarker.count;
+	if (pTask->profileMarker.count > CMDQ_MAX_PROFILE_MARKER_IN_TASK)
+		pTask->profileMarker.count = CMDQ_MAX_PROFILE_MARKER_IN_TASK;
+
 	pTask->profileMarker.hSlot = pCommandDesc->profileMarker.hSlot;
+	if (pTask->profileMarker.hSlot & 0x3) {
+		CMDQ_ERR("hSlot is not aligned to 4 byte, reset to 0LL\n");
+		pTask->profileMarker.hSlot = 0LL;
+	}
 	for (i = 0; i < CMDQ_MAX_PROFILE_MARKER_IN_TASK; i++)
 		pTask->profileMarker.tag[i] = pCommandDesc->profileMarker.tag[i];
 }
@@ -3426,125 +3441,11 @@ void cmdq_core_append_backup_reg_inst(struct TaskStruct *task,
 		((1 << 31) | (1 << 16)));
 }
 
-static bool cmdq_core_check_gpr_valid(const uint32_t gpr, const bool val)
-{
-	if (val)
-		switch (gpr) {
-		case CMDQ_DATA_REG_JPEG:
-		case CMDQ_DATA_REG_PQ_COLOR:
-		case CMDQ_DATA_REG_2D_SHARPNESS_0:
-		case CMDQ_DATA_REG_2D_SHARPNESS_1:
-		case CMDQ_DATA_REG_DEBUG:
-			return true;
-		default:
-			return false;
-		}
-	else
-		switch (gpr >> 16) {
-		case CMDQ_DATA_REG_JPEG_DST:
-		case CMDQ_DATA_REG_PQ_COLOR_DST:
-		case CMDQ_DATA_REG_2D_SHARPNESS_0:
-		case CMDQ_DATA_REG_2D_SHARPNESS_0_DST:
-		case CMDQ_DATA_REG_2D_SHARPNESS_1_DST:
-		case CMDQ_DATA_REG_DEBUG_DST:
-			return true;
-		default:
-			return false;
-		}
-	return false;
-}
-
-static bool cmdq_core_check_dma_addr_valid(const unsigned long pa)
-{
-	struct WriteAddrStruct *pWriteAddr = NULL;
-	unsigned long flagsWriteAddr = 0L;
-	phys_addr_t start = memblock_start_of_DRAM();
-	bool ret = false;
-
-	spin_lock_irqsave(&gCmdqWriteAddrLock, flagsWriteAddr);
-	list_for_each_entry(pWriteAddr, &gCmdqContext.writeAddrList, list_node)
-		if (pa < start || pa - (unsigned long)pWriteAddr->pa <
-			pWriteAddr->count << 2) {
-			ret = true;
-			break;
-		}
-	spin_unlock_irqrestore(&gCmdqWriteAddrLock, flagsWriteAddr);
-	return ret;
-}
-
-static bool cmdq_core_check_instr_valid(const uint64_t instr)
-{
-	u32 op = instr >> 56, option = (instr >> 53) & 0x7;
-	u32 argA = (instr >> 32) & 0x1FFFFF, argB = instr & 0xFFFFFFFF;
-
-	switch (op) {
-	case CMDQ_CODE_WRITE:
-		if (!option)
-			return true;
-		if (option == 0x4 && cmdq_core_check_gpr_valid(argA, false))
-			return true;
-	case CMDQ_CODE_READ:
-		if (option == 0x2 && cmdq_core_check_gpr_valid(argB, true))
-			return true;
-		if (option == 0x6 && cmdq_core_check_gpr_valid(argA, false) &&
-			cmdq_core_check_gpr_valid(argB, true))
-			return true;
-		break;
-	case CMDQ_CODE_MOVE:
-		if (!option && !argA)
-			return true;
-		if (option == 0x4 && cmdq_core_check_gpr_valid(argA, false) &&
-			cmdq_core_check_dma_addr_valid(argB))
-			return true;
-		break;
-	case CMDQ_CODE_JUMP:
-		if (!argA && argB == 0x8)
-			return true;
-		break;
-	case CMDQ_CODE_READ_S:
-	case CMDQ_CODE_WRITE_S:
-	case CMDQ_CODE_WRITE_S_W_MASK:
-	case CMDQ_CODE_LOGIC:
-	case CMDQ_CODE_JUMP_C_ABSOLUTE:
-	case CMDQ_CODE_JUMP_C_RELATIVE:
-		break;
-	default:
-		return true;
-	}
-	return false;
-}
-
-static bool cmdq_core_check_buffer_valid(void *user_buf, u32 size)
-{
-	void *buf, *va;
-	bool ret = true;
-
-	buf = vzalloc(size);
-	if (!buf)
-		return false;
-
-	if (copy_from_user(buf, user_buf, size)) {
-		CMDQ_ERR("%s copy from user fail size:%u\n", __func__, size);
-		return false;
-	}
-
-	for (va = buf; va < buf + size; va += 8) {
-		if (!cmdq_core_check_instr_valid(*(uint64_t *)va)) {
-			ret = false;
-			break;
-		}
-	}
-
-	vfree(buf);
-	return ret;
-}
-
 static int32_t cmdq_core_insert_read_reg_command(struct TaskStruct *pTask,
 	struct cmdqCommandStruct *pCommandDesc)
 {
 	s32 status = 0;
-	const bool userSpaceRequest = cmdq_core_is_request_from_user_space(
-		pTask->scenario);
+	const bool userSpaceRequest = false;
 	bool postInstruction = false;
 	u32 *copyCmdSrc = NULL;
 	u32 copyCmdSize = 0;
@@ -3572,12 +3473,9 @@ static int32_t cmdq_core_insert_read_reg_command(struct TaskStruct *pTask,
 		copyCmdSize = pCommandDesc->blockSize - 2 * CMDQ_INST_SIZE;
 	else
 		copyCmdSize = pCommandDesc->blockSize;
-	/* check valid before copy */
-	if (userSpaceRequest &&
-		!cmdq_core_check_buffer_valid(copyCmdSrc, copyCmdSize))
-		return -EFAULT;
-	status = cmdq_core_copy_cmd_to_task_impl(pTask, copyCmdSrc,
-		copyCmdSize, userSpaceRequest);
+
+	status = cmdq_core_copy_cmd_to_task_impl(pTask, copyCmdSrc, copyCmdSize,
+		userSpaceRequest);
 	if (status < 0)
 		return status;
 
@@ -3777,9 +3675,12 @@ static struct TaskStruct *cmdq_core_acquire_task(
 		if (pCommandDesc->prop_size && pCommandDesc->prop_addr &&
 			pCommandDesc->prop_size < CMDQ_MAX_USER_PROP_SIZE) {
 			pTask->prop_addr = kzalloc(pCommandDesc->prop_size, GFP_KERNEL);
-			memcpy(pTask->prop_addr, (void *)CMDQ_U32_PTR(pCommandDesc->prop_addr),
+
+			memcpy(pTask->prop_addr,
+				(void *)CMDQ_U32_PTR(pCommandDesc->prop_addr),
 				pCommandDesc->prop_size);
 			pTask->prop_size = pCommandDesc->prop_size;
+
 		} else {
 			pTask->prop_addr = NULL;
 			pTask->prop_size = 0;
@@ -4163,10 +4064,11 @@ static bool cmdq_core_check_engine_conflict_unlocked(
 						   " also occupied by thread %d, secure:%d\n",
 						   pEngine[index].currOwner,
 						   task->secData.is_secure);
-				if (forceLog)
+				if (forceLog) {
 					CMDQ_LOG("%s", long_msg);
-				else
+				} else {
 					CMDQ_VERBOSE("%s", long_msg);
+				}
 
 				isEngineConflict = true;	/* engine conflict! */
 				thread = CMDQ_INVALID_THREAD;
@@ -4585,7 +4487,7 @@ const char *cmdq_core_parse_subsys_from_reg_addr(uint32_t reg_addr)
 int32_t cmdq_core_subsys_from_phys_addr(uint32_t physAddr)
 {
 	int32_t msb;
-	int32_t subsysID = -1;
+	int32_t subsysID = CMDQ_SPECIAL_SUBSYS_ADDR;
 	uint32_t i;
 
 	for (i = 0; i < CMDQ_SUBSYS_MAX_COUNT; i++) {
@@ -4599,20 +4501,6 @@ int32_t cmdq_core_subsys_from_phys_addr(uint32_t physAddr)
 		}
 	}
 
-	if (subsysID == -1 && gAddOnSubsys.subsysID > 0) {
-		msb = physAddr & gAddOnSubsys.mask;
-		if (msb == gAddOnSubsys.msb)
-			subsysID = gAddOnSubsys.subsysID;
-	}
-
-	if (subsysID == -1) {
-		/* if not supported physAddr is GCE base address, then tread as special address */
-		msb = physAddr & GCE_BASE_PA;
-		if (msb == GCE_BASE_PA)
-			subsysID = CMDQ_SPECIAL_SUBSYS_ADDR;
-		else
-			CMDQ_ERR("unrecognized subsys, physAddr:0x%08x\n", physAddr);
-	}
 	return subsysID;
 }
 
@@ -6413,7 +6301,7 @@ static void cmdq_core_attach_engine_error(const struct TaskStruct *task, int32_t
 	bool disp_scn = false;
 	u64 print_eng_flag = 0;
 	struct CmdqCBkStruct *callback = NULL;
-	static const char *const engineGroupName[] = {
+	__attribute__((unused)) static const char *const engineGroupName[] = {
 		CMDQ_FOREACH_GROUP(GENERATE_STRING)
 	};
 
@@ -7244,7 +7132,7 @@ static int32_t cmdq_core_wait_task_done_with_timeout_impl(
 
 			if (delay_id >= 0 && tpr_mask) {
 				/* TODO: add mechanism to detect if current thread is delaying */
-				u32 delay_event = CMDQ_SYNC_TOKEN_DELAY_SET0 + delay_id;
+				__attribute__((unused)) u32 delay_event = CMDQ_SYNC_TOKEN_DELAY_SET0 + delay_id;
 
 				cmdq_core_dump_thread(CMDQ_DELAY_THREAD_ID, "INFO");
 				cmdq_core_dump_thread_pc(CMDQ_DELAY_THREAD_ID);
@@ -7810,7 +7698,7 @@ static inline int32_t cmdq_core_exec_find_task_slot(struct TaskStruct **pLast, s
 		}
 
 		if (loop <= 1) {
-			u32 prev_task_pa = cmdq_core_task_get_first_pa(pPrev);
+			__attribute__((unused)) u32 prev_task_pa = cmdq_core_task_get_first_pa(pPrev);
 
 			task_pa = cmdq_core_task_get_first_pa(pTask);
 
@@ -9227,7 +9115,7 @@ int32_t cmdq_core_get_running_task_by_engine_unlock(uint64_t engineFlag,
 			}
 		}
 		if (!pTargetTask) {
-			uint32_t currPC = CMDQ_AREG_TO_PHYS(CMDQ_REG_GET32(CMDQ_THR_CURR_ADDR(thread)));
+			__attribute__((unused)) uint32_t currPC = CMDQ_AREG_TO_PHYS(CMDQ_REG_GET32(CMDQ_THR_CURR_ADDR(thread)));
 
 			CMDQ_LOG("cannot find pc (0x%08x) at thread (%d)\n", currPC, thread);
 			cmdq_core_dump_task_in_thread(thread, false, true, false);
@@ -10168,7 +10056,7 @@ void cmdqCoreSetResourceCallback(enum CMDQ_EVENT_ENUM resourceEvent,
 void cmdq_core_dump_feature(void)
 {
 	int index;
-	static const char *const FEATURE_STRING[] = {
+	__attribute__((unused)) static const char *const FEATURE_STRING[] = {
 		FOREACH_FEATURE(GENERATE_STRING)
 	};
 

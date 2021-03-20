@@ -1728,7 +1728,7 @@ int mtk_p2p_cfg80211_testmode_cmd(IN struct wiphy *wiphy, IN struct wireless_dev
 #if CFG_SUPPORT_NFC_BEAM_PLUS
 	case 0x11: /* NFC Beam + Indication */
 		if (data && len) {
-			P_NL80211_DRIVER_SET_NFC_PARAMS prParams = (P_NL80211_DRIVER_SET_NFC_PARAMS) data;
+			__attribute__((unused)) P_NL80211_DRIVER_SET_NFC_PARAMS prParams = (P_NL80211_DRIVER_SET_NFC_PARAMS) data;
 
 			DBGLOG(P2P, INFO, "NFC: BEAM[%d]\n", prParams->NFC_Enable);
 		}

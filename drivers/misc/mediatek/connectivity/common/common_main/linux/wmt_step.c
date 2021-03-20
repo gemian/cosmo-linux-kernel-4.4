@@ -596,18 +596,18 @@ static int wmt_step_access_line_state_pd(char *tok,
 	int pd_ms = -1;
 
 	pd_ms = wmt_step_parse_pd_expires(tok);
-	if (pd_ms == -1)
+	if (pd_ms == -1) {
 		WMT_ERR_FUNC("STEP failed: PD ms failed %s\n", tok);
-
-	if (p_parse_info->p_pd_entry != NULL)
+	}
+	if (p_parse_info->p_pd_entry != NULL) {
 		WMT_ERR_FUNC("STEP failed: Please add [PD-] after [PD+], tok = %s\n", tok);
-
+	}
 	p_parse_info->p_pd_entry = wmt_step_get_periodic_dump_entry(pd_ms);
-	if (p_parse_info->p_pd_entry == NULL)
+	if (p_parse_info->p_pd_entry == NULL) {
 		WMT_ERR_FUNC("STEP failed: p_pd_entry create fail\n");
-	else
+	} else {
 		p_parse_info->p_target_list = &(p_parse_info->p_pd_entry->action_list);
-
+	}
 	return STEP_PARSE_LINE_RET_BREAK;
 }
 
@@ -744,10 +744,11 @@ static void wmt_step_print_trigger_time(enum step_trigger_point_id tp_id, char *
 	const char *p_trigger_name = NULL;
 
 	p_trigger_name = STEP_TRIGGER_TIME_NAME[tp_id];
-	if (reason != NULL)
+	if (reason != NULL) {
 		WMT_INFO_FUNC("STEP show: Trigger point: %s reason: %s\n", p_trigger_name, reason);
-	else
+	} else {
 		WMT_INFO_FUNC("STEP show: Trigger point: %s\n", p_trigger_name);
+	}
 }
 
 static VOID wmt_step_do_actions_from_tp(enum step_trigger_point_id tp_id, char *reason)
@@ -937,7 +938,7 @@ static int wmt_step_operator_result_or(int l_val, int r_val)
 	return (l_val || r_val);
 }
 
-static char *wmt_step_save_params_msg(int num, char *params[], char *buf, int buf_size)
+__attribute__((unused)) static char *wmt_step_save_params_msg(int num, char *params[], char *buf, int buf_size)
 {
 	int i, len, temp;
 
@@ -983,7 +984,7 @@ static int _wmt_step_create_emi_action(struct step_emi_info *p_emi_info, int par
 {
 	long write, begin, end;
 	unsigned int reg_id;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 	long mask = 0xFFFFFFFF;
 
 	if (param_num < 3) {
@@ -1068,7 +1069,7 @@ static struct step_action *wmt_step_create_condition_emi_action(int param_num, c
 	struct step_condition_emi_action *p_cond_emi_act = NULL;
 	struct step_emi_info *p_emi_info = NULL;
 	unsigned int reg_id;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 	int ret;
 
 	if (param_num < 1) {
@@ -1145,7 +1146,7 @@ static int _wmt_step_create_register_action(struct step_reigster_info *p_reg_inf
 	struct step_reg_addr_info reg_addr_info;
 	long offset, value;
 	unsigned int reg_id = 0;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 	long mask = 0xFFFFFFFF;
 	long times = 1;
 	long delay_time = 0;
@@ -1277,7 +1278,7 @@ static struct step_action *wmt_step_create_condition_register_action(int param_n
 	struct step_condition_register_action *p_cond_reg_act = NULL;
 	struct step_reigster_info *p_reg_info;
 	unsigned int reg_id;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 	int ret;
 
 	if (param_num < 0) {
@@ -1319,7 +1320,7 @@ static struct step_action *wmt_step_create_gpio_action(int param_num, char *para
 {
 	struct step_gpio_action *p_gpio_act = NULL;
 	long write, symbol;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 
 	if (param_num != 2) {
 		WMT_ERR_FUNC("STEP failed: init gpio param(%d): %s\n", param_num,
@@ -1443,7 +1444,7 @@ static struct step_action *wmt_step_create_periodic_dump_action(int param_num, c
 static struct step_action *wmt_step_create_show_string_action(int param_num, char *params[])
 {
 	struct step_show_string_action *p_show_act = NULL;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 
 	if (param_num != 1) {
 		WMT_ERR_FUNC("STEP failed: init show param(%d): %s\n", param_num,
@@ -1475,7 +1476,7 @@ static struct step_action *wmt_step_create_sleep_action(int param_num, char *par
 {
 	struct step_sleep_action *p_sleep_act = NULL;
 	long ms;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 
 	if (param_num != 1) {
 		WMT_ERR_FUNC("STEP failed: init sleep param(%d): %s\n", param_num,
@@ -1511,7 +1512,7 @@ static struct step_action *wmt_step_create_condition_action(int param_num, char 
 	long value = 0;
 	int mode;
 	enum step_condition_operator_id op_id;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 
 	if (param_num != 4) {
 		WMT_ERR_FUNC("STEP failed: init sleep param(%d): %s\n", param_num,
@@ -1576,7 +1577,7 @@ static struct step_action *wmt_step_create_value_action(int param_num, char *par
 	struct step_value_action *p_val_act = NULL;
 	unsigned int reg_id;
 	long value;
-	char buf[128] = "";
+	__attribute__((unused)) char buf[128] = "";
 
 	if (param_num != 2) {
 		WMT_ERR_FUNC("STEP failed: init sleep param(%d): %s\n", param_num,

@@ -73,6 +73,7 @@ static int fsm_poll_main(void *data)
 			goto next;
 		poller_ctl->poller_state = FSM_POLLER_WAITING_RESPONSE;
 		ret = ccci_port_send_msg_to_md(poller_ctl->md_id, CCCI_STATUS_TX, 0, 0, 1);
+
 		CCCI_NORMAL_LOG(poller_ctl->md_id, FSM, "poll MD status send msg %d\n", ret);
 		ret = wait_event_timeout(poller_ctl->status_rx_wq,
 			poller_ctl->poller_state == FSM_POLLER_RECEIVED_RESPONSE, POLLING_TIMEOUT * HZ);

@@ -577,9 +577,9 @@ INT32 wmt_func_gps_off(P_WMT_IC_OPS pOps, P_WMT_GEN_CONF pConf)
 	}
 	if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_SOC) {
 		if ((co_clock_type) && (pConf->wmt_gps_lna_enable == 0)) {	/* use SOC external LNA */
-			if (osal_test_bit(WMT_FM_ON, &gGpsFmState))
+			if (osal_test_bit(WMT_FM_ON, &gGpsFmState)) {
 				WMT_INFO_FUNC("FM is still on, do not turn off LDO VCN28\n");
-			else {
+			} else {
 				ctrlPa1 = GPS_PALDO;
 				ctrlPa2 = PALDO_OFF;
 				wmt_core_ctrl(WMT_CTRL_SOC_PALDO_CTRL, &ctrlPa1, &ctrlPa2);
@@ -619,8 +619,9 @@ INT32 wmt_func_fm_on(P_WMT_IC_OPS pOps, P_WMT_GEN_CONF pConf)
 			} else {
 				WMT_INFO_FUNC("LDO VCN28 has been turn on by GPS\n");
 			}
-		} else
+		} else {
 			WMT_ERR_FUNC("wmt-func:  co_clock_type is not 1!\n");
+		}
 		iRet = wmt_core_func_ctrl_cmd(WMTDRV_TYPE_FM, MTK_WCN_BOOL_TRUE);
 		if (!iRet) {
 			if (co_clock_type)

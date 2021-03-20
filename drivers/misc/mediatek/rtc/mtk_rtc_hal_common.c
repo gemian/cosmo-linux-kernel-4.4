@@ -36,8 +36,12 @@
 #include <mtk_rtc_hal_common.h>
 #include <mtk_pmic_wrap.h>
 
-#define hal_rtc_xinfo(fmt, args...)		\
-		pr_notice(fmt, ##args)
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) pr_notice(__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) do { } while (false)
+#endif
 
 u16 rtc_read(u16 addr)
 {
@@ -128,7 +132,7 @@ void hal_rtc_set_spare_register(enum rtc_spare_enum cmd, u16 val)
 		tmp_val =
 		    rtc_read(rtc_spare_reg[cmd][RTC_REG]) & ~(rtc_spare_reg[cmd][RTC_MASK] <<
 							      rtc_spare_reg[cmd][RTC_SHIFT]);
-		hal_rtc_xinfo("rtc_spare_reg[%d] = {%x, %d, %d}\n", cmd,
+		DBGLOGINFO("rtc_spare_reg[%d] = {%x, %d, %d}\n", cmd,
 			      rtc_spare_reg[cmd][RTC_REG], rtc_spare_reg[cmd][RTC_MASK],
 			      rtc_spare_reg[cmd][RTC_SHIFT]);
 		rtc_write(rtc_spare_reg[cmd][RTC_REG],
@@ -143,7 +147,7 @@ u16 hal_rtc_get_spare_register(enum rtc_spare_enum cmd)
 	u16 tmp_val;
 
 	if (cmd >= 0 && cmd < RTC_SPAR_NUM) {
-		hal_rtc_xinfo("rtc_spare_reg[%d] = {%x, %d, %d}\n", cmd,
+		DBGLOGINFO("rtc_spare_reg[%d] = {%x, %d, %d}\n", cmd,
 			      rtc_spare_reg[cmd][RTC_REG], rtc_spare_reg[cmd][RTC_MASK],
 			      rtc_spare_reg[cmd][RTC_SHIFT]);
 		tmp_val = rtc_read(rtc_spare_reg[cmd][RTC_REG]);
@@ -203,7 +207,7 @@ void hal_rtc_get_alarm_time(struct rtc_time *tm)
 
 void hal_rtc_set_alarm_time(struct rtc_time *tm)
 {
-	hal_rtc_xinfo("mon = %d, day = %d, hour = %d\n",
+	DBGLOGINFO("mon = %d, day = %d, hour = %d\n",
 		(rtc_read(RTC_AL_MTH) & ~(RTC_AL_MTH_MASK)) | tm->tm_mon,
 		(rtc_read(RTC_AL_DOM) & ~(RTC_AL_DOM_MASK)) | tm->tm_mday,
 		(rtc_read(RTC_AL_HOU) & ~(RTC_AL_HOU_MASK)) | tm->tm_hour);
@@ -270,7 +274,7 @@ void hal_rtc_read_rg(void)
 	irqen = rtc_read(RTC_IRQ_EN);
 	pdn1 = rtc_read(RTC_PDN1);
 
-	hal_rtc_xinfo("RTC_IRQ_EN = 0x%x, RTC_PDN1 = 0x%x\n", irqen, pdn1);
+	DBGLOGINFO("RTC_IRQ_EN = 0x%x, RTC_PDN1 = 0x%x\n", irqen, pdn1);
 }
 
 #ifndef USER_BUILD_KERNEL

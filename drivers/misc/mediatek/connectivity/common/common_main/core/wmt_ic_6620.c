@@ -1121,11 +1121,11 @@ static INT32 mt6620_aif_ctrl(WMT_IC_PIN_STATE state, UINT32 flag)
 		}
 	}
 
-	if (!ret)
+	if (!ret) {
 		WMT_INFO_FUNC("new state(%d) ok\n", state);
-	else
+	} else {
 		WMT_WARN_FUNC("new state(%d) fail(%d)\n", state, ret);
-
+	}
 	return ret;
 }
 
@@ -1216,9 +1216,9 @@ static INT32 mt6620_ver_check(VOID)
 	ctrlPa2 = ((UINT32) (p_info->eWmtHwVer) << 16) | (fw_ver & 0x0000FFFF);
 
 	iret = wmt_core_ctrl(WMT_CTRL_HWIDVER_SET, &ctrlPa1, &ctrlPa2);
-	if (iret)
+	if (iret) {
 		WMT_WARN_FUNC("MT6620: WMT_CTRL_HWIDVER_SET fail(%d)\n", iret);
-
+	}
 	gp_mt6620_info = p_info;
 	return 0;
 }

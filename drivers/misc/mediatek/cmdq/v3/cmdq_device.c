@@ -243,10 +243,11 @@ void cmdq_dev_init_MDP_PA(struct device_node *node)
 
 	module_pa_start = cmdq_dev_get_reference_PA("mm_mutex", 0);
 
-	if (!module_pa_start)
+	if (!module_pa_start) {
 		CMDQ_ERR("DEV: init mm_mutex PA fail!!\n");
-	else
+	} else {
 		pMDPBaseAddress[CMDQ_MDP_PA_BASE_MM_MUTEX] = module_pa_start;
+	}
 	CMDQ_MSG("MM_MUTEX PA: start = 0x%x\n", pMDPBaseAddress[CMDQ_MDP_PA_BASE_MM_MUTEX]);
 }
 
@@ -327,10 +328,11 @@ void cmdq_dev_test_event_correctness_impl(enum CMDQ_EVENT_ENUM event,
 
 	if (eventValue >= 0 && eventValue < CMDQ_SYNC_TOKEN_MAX) {
 		/* print event name from device tree */
-		if (event < CMDQ_MAX_HW_EVENT_COUNT)
+		if (event < CMDQ_MAX_HW_EVENT_COUNT) {
 			CMDQ_LOG("%s = %d\n", dts_name, eventValue);
-		else
+		} else {
 			CMDQ_LOG("%s = %d\n", event_name, eventValue);
+		}
 	}
 }
 

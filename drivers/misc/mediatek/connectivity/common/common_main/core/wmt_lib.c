@@ -1198,10 +1198,10 @@ static INT32 met_thread(void *pvData)
 		read_ptr = CONSYS_REG_READ(emi_met_base + EMI_MET_READ_OFFSET);
 		write_ptr = CONSYS_REG_READ(emi_met_base + EMI_MET_WRITE_OFFSET);
 
-		if (read_ptr == write_ptr)
+		if (read_ptr == write_ptr) {
 			WMT_DBG_FUNC("read_ptr(0x%x) == write_ptr(0x%x) no met data need dump!!!\n",
-					read_ptr, write_ptr);
-		else if (write_ptr > (emi_met_size - EMI_MET_DATA_OFFSET)) {
+						 read_ptr, write_ptr);
+		} else if (write_ptr > (emi_met_size - EMI_MET_DATA_OFFSET)) {
 			WMT_ERR_FUNC("write_ptr(0x%x) overflow!!!\n", write_ptr);
 			wmt_lib_trigger_assert(WMTDRV_TYPE_WMT, 42);
 			goto met_exit;
@@ -1496,11 +1496,11 @@ MTK_WCN_BOOL wmt_lib_put_act_op(P_OSAL_OP pOp)
 		WMT_DBG_FUNC("osal_wait_for_signal_timeout:%d\n", waitRet);
 
 		/* if (unlikely(!wait_ret)) { */
-		if (waitRet == 0)
+		if (waitRet == 0) {
 			WMT_ERR_FUNC("opId(%d) completion timeout\n", pOp->op.opId);
-		else if (pOp->result)
+		} else if (pOp->result) {
 			WMT_WARN_FUNC("opId(%d) result:%d\n", pOp->op.opId, pOp->result);
-
+		}
 		/* op completes, check result */
 		bRet = (pOp->result) ? MTK_WCN_BOOL_FALSE : MTK_WCN_BOOL_TRUE;
 	} while (0);
@@ -1736,11 +1736,11 @@ static INT32 wmt_lib_pin_ctrl(WMT_IC_PIN_ID id, WMT_IC_PIN_STATE stat, UINT32 fl
 
 	bRet = wmt_lib_put_act_op(pOp);
 	ENABLE_PSM_MONITOR();
-	if (bRet == MTK_WCN_BOOL_FALSE)
+	if (bRet == MTK_WCN_BOOL_FALSE) {
 		WMT_WARN_FUNC("PIN_ID(%d) PIN_STATE(%d) flag(%d) fail\n", id, stat, flag);
-	else
+	} else {
 		WMT_DBG_FUNC("OPID(%d) type(%zu) ok\n", pOp->op.opId, pOp->op.au4OpData[0]);
-
+	}
 	return 0;
 }
 
@@ -1976,7 +1976,7 @@ MTK_WCN_BOOL wmt_cdev_rstmsg_snd(ENUM_WMTRSTMSG_TYPE_T msg)
 
 	INT32 i = 0;
 	P_DEV_WMT pDevWmt = &gDevWmt;
-	UINT8 *drv_name[] = {
+	__attribute__((unused)) UINT8 *drv_name[] = {
 		"DRV_TYPE_BT",
 		"DRV_TYPE_FM",
 		"DRV_TYPE_GPS",
@@ -2180,14 +2180,14 @@ ENUM_WMTRSTRET_TYPE_T wmt_lib_cmb_rst(ENUM_WMTRSTSRC_TYPE_T src)
 	INT32 retries = RETRYTIMES;
 	P_DEV_WMT pDevWmt = &gDevWmt;
 	P_OSAL_OP pOp;
-	UINT8 *srcName[] = { "WMTRSTSRC_RESET_BT",
+	__attribute__((unused)) UINT8 *srcName[] = { "WMTRSTSRC_RESET_BT",
 		"WMTRSTSRC_RESET_FM",
 		"WMTRSTSRC_RESET_GPS",
 		"WMTRSTSRC_RESET_WIFI",
 		"WMTRSTSRC_RESET_STP",
 		"WMTRSTSRC_RESET_TEST"
 	};
-	INT32 coredump_mode = mtk_wcn_stp_coredump_flag_get();
+	__attribute__((unused)) INT32 coredump_mode = mtk_wcn_stp_coredump_flag_get();
 
 	WMT_INFO_FUNC("coredump mode == %d. Connsys coredump is %s.",
 			coredump_mode, coredump_mode ? "enabled" : "disabled");

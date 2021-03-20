@@ -32,33 +32,33 @@
 #endif
 
 /* The switch of log message */
-#define TYPEC_INFO_ENABLE	1
-#define TYPEC_INFO2_ENABLE	1
-#define PE_EVENT_DBG_ENABLE	1
-#define PE_STATE_INFO_ENABLE	1
-#define TCPC_INFO_ENABLE	1
+#define TYPEC_INFO_ENABLE	0
+#define TYPEC_INFO2_ENABLE	0
+#define PE_EVENT_DBG_ENABLE	0
+#define PE_STATE_INFO_ENABLE	0
+#define TCPC_INFO_ENABLE	0
 #define TCPC_TIMER_DBG_EN	0
 #define TCPC_TIMER_INFO_EN	0
-#define PE_INFO_ENABLE		1
+#define PE_INFO_ENABLE		0
 #define TCPC_DBG_ENABLE		0
 #define TCPC_DBG2_ENABLE	0
-#define DPM_INFO_ENABLE		1
-#define DPM_INFO2_ENABLE	1
+#define DPM_INFO_ENABLE		0
+#define DPM_INFO2_ENABLE	0
 #define DPM_DBG_ENABLE		0
 #define PD_ERR_ENABLE		1
 #define PE_DBG_ENABLE		0
 #define TYPEC_DBG_ENABLE	0
 
 
-#define DP_INFO_ENABLE		1
-#define DP_DBG_ENABLE		1
+#define DP_INFO_ENABLE		0
+#define DP_DBG_ENABLE		0
 
-#define UVDM_INFO_ENABLE		1
-#define TCPM_DBG_ENABLE		1
+#define UVDM_INFO_ENABLE		0
+#define TCPM_DBG_ENABLE		0
 
 #ifdef CONFIG_USB_PD_ALT_MODE_RTDC
-#define DC_INFO_ENABLE			1
-#define DC_DBG_ENABLE			1
+#define DC_INFO_ENABLE			0
+#define DC_DBG_ENABLE			0
 #endif	/* CONFIG_USB_PD_ALT_MODE_RTDC */
 
 #define TCPC_ENABLE_ANYMSG	\
@@ -75,7 +75,7 @@
 /* Disable VDM DBG Msg */
 #define PE_STATE_INFO_VDM_DIS	0
 #define PE_EVT_INFO_VDM_DIS		0
-#define PE_DBG_RESET_VDM_DIS	1
+#define PE_DBG_RESET_VDM_DIS	0
 
 #define PD_BUG_ON(x)	WARN_ON(x)
 

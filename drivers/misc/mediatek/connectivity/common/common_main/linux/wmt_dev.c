@@ -1086,9 +1086,9 @@ LONG WMT_unlocked_ioctl(struct file *filp, UINT32 cmd, ULONG arg)
 	case 10:
 		if (mtk_wcn_stp_coredump_start_get()) {
 			wmt_lib_host_awake_get();
-			if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_SOC)
+			if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_SOC) {
 				WMT_INFO_FUNC("stp dump start.\n");
-			else {
+			} else {
 				WMT_INFO_FUNC("Trigger kernel api dump.\n");
 				if (wmt_detect_get_chip_type() == WMT_CHIP_TYPE_COMBO ||
 					mtk_wcn_stp_coredump_flag_get() == 2) {
@@ -1616,10 +1616,11 @@ static INT32 WMT_init(VOID)
 #else
 	wmt_fb_notifier.notifier_call = wmt_fb_notifier_callback;
 	ret = fb_register_client(&wmt_fb_notifier);
-	if (ret)
+	if (ret) {
 		WMT_ERR_FUNC("wmt register fb_notifier failed! ret(%d)\n", ret);
-	else
+	} else {
 		WMT_DBG_FUNC("wmt register fb_notifier OK!\n");
+	}
 #endif /* CONFIG_EARLYSUSPEND */
 	WMT_DBG_FUNC("success\n");
 

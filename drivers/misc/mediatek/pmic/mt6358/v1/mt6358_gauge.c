@@ -34,6 +34,14 @@
 #include <mt-plat/mtk_auxadc_intf.h>
 #include "aee.h"
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define BMDBGLOG(...) bm_debug(__VA_ARGS__)
+#define BMTRACELOG(...) bm_trace(__VA_ARGS__)
+#else
+#define BMDBGLOG(...) do { } while (false)
+#define BMTRACELOG(...) do { } while (false)
+#endif
 
 /*********************** MT6358 setting *********************/
 #define UNIT_FGCURRENT     (381470)
@@ -79,7 +87,7 @@ int MV_to_REG_12_value(signed int _reg)
 {
 	int ret = (_reg * 4096) / (VOLTAGE_FULL_RANGES * 10 * R_VAL_TEMP_3);
 
-	bm_trace("[MV_to_REG_12_value] %d => %d\n", _reg, ret);
+	BMTRACELOG("[MV_to_REG_12_value] %d => %d\n", _reg, ret);
 	return ret;
 }
 
@@ -87,7 +95,7 @@ static int MV_to_REG_12_temp_value(signed int _reg)
 {
 	int ret = (_reg * 4096) / (VOLTAGE_FULL_RANGES * 10 * R_VAL_TEMP_2);
 
-	bm_trace("[MV_to_REG_12_temp_value] %d => %d\n", _reg, ret);
+	BMTRACELOG("[MV_to_REG_12_temp_value] %d => %d\n", _reg, ret);
 	return ret;
 }
 
@@ -106,7 +114,7 @@ static signed int REG_to_MV_value(signed int _reg)
 #endif
 	ret = _reg64;
 
-	bm_trace("[REG_to_MV_value] %lld => %d\n", _reg64, ret);
+	BMTRACELOG("[REG_to_MV_value] %lld => %d\n", _reg64, ret);
 	return ret;
 }
 
@@ -130,7 +138,7 @@ static signed int MV_to_REG_value(signed int _mv)
 		return ret;
 	}
 
-	bm_trace("[MV_to_REG_value] mv=%d,%lld => %d,\n", _mv, _reg64, ret);
+	BMTRACELOG("[MV_to_REG_value] mv=%d,%lld => %d,\n", _mv, _reg64, ret);
 	return ret;
 }
 s64 fg_div(s64 dividend, s32 divisor)
@@ -360,11 +368,11 @@ static void read_fg_hw_info_Iavg(
 		is_bat_charging = 0;	/* discharge */
 	}
 
-	bm_debug(
+	BMDBGLOG(
 		"[read_fg_hw_info_Iavg] fg_iavg_reg 0x%llx fg_iavg_reg_tmp 0x%llx 27_16 0x%x 15_00 0x%x\n",
 			fg_iavg_reg, fg_iavg_reg_tmp,
 			fg_iavg_reg_27_16, fg_iavg_reg_15_00);
-	bm_debug(
+	BMDBGLOG(
 		"[read_fg_hw_info_Iavg] is_bat_charging %d fg_iavg_ma 0x%llx\n",
 			is_bat_charging, fg_iavg_ma);
 
@@ -424,29 +432,29 @@ static signed int fg_get_current_iavg(
 		fg_iavg_ma = fg_iavg_reg * UNIT_FG_IAVG *
 			gauge_dev->fg_cust_data->car_tune_value;
 
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld fg_iavg_reg_tmp %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld fg_iavg_reg_tmp %lld\n",
 			fg_iavg_ma, fg_iavg_reg, fg_iavg_reg_tmp);
 
 		do_div(fg_iavg_ma, 1000000);
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld\n",
 			fg_iavg_ma);
 
 		do_div(fg_iavg_ma, gauge_dev->fg_cust_data->r_fg_value);
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld\n",
 			fg_iavg_ma);
 
 
 		if (sign_bit == 1)
 			fg_iavg_ma = 0 - fg_iavg_ma;
 
-		bm_trace(
+		BMTRACELOG(
 			"[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld r_fg_value %d 27_16 0x%x 15_00 0x%x\n",
 			fg_iavg_ma, fg_iavg_reg,
 			gauge_dev->fg_cust_data->r_fg_value,
 			fg_iavg_reg_27_16, fg_iavg_reg_15_00);
 		gauge_dev->fg_hw_info.current_avg = fg_iavg_ma;
 		gauge_dev->fg_hw_info.current_avg_sign = sign_bit;
-		bm_trace("[fg_get_current_iavg] PMIC_FG_IAVG_VLD == 1\n");
+		BMTRACELOG("[fg_get_current_iavg] PMIC_FG_IAVG_VLD == 1\n");
 	} else {
 		read_fg_hw_info_current_1(gauge_dev);
 		gauge_dev->fg_hw_info.current_avg =
@@ -454,7 +462,7 @@ static signed int fg_get_current_iavg(
 
 		if (gauge_dev->fg_hw_info.current_1 < 0)
 			gauge_dev->fg_hw_info.current_avg_sign = 1;
-		bm_debug("[fg_get_current_iavg] PMIC_FG_IAVG_VLD != 1, avg %d, current_1 %d\n",
+		BMDBGLOG("[fg_get_current_iavg] PMIC_FG_IAVG_VLD != 1, avg %d, current_1 %d\n",
 			gauge_dev->fg_hw_info.current_avg,
 			gauge_dev->fg_hw_info.current_1);
 	}
@@ -474,7 +482,7 @@ static signed int fg_get_current_iavg(
 
 	*data = gauge_dev->fg_hw_info.current_avg;
 
-	bm_debug("[fg_get_current_iavg] %d\n", *data);
+	BMDBGLOG("[fg_get_current_iavg] %d\n", *data);
 
 	return 0;
 }
@@ -616,7 +624,7 @@ void iavg_check(struct gauge_device *gauge_dev,
 		*iavg_less = true;
 	else
 		*iavg_less = false;
-	bm_err(
+	BMTRACELOG(
 		"[%s] iavg:%lld cic2:%d offset:%d 0x%x 0x%x %d %d\r\n",
 		__func__,
 		fg_iavg_ma,
@@ -701,11 +709,11 @@ static signed int fg_set_iavg_intr(struct gauge_device *gauge_dev, void *data)
 	else
 		pmic_enable_interrupt(FG_IAVG_L_NO, 0, "GM30");
 
-	bm_debug("[FG_IAVG_INT][fg_set_iavg_intr] iavg %d iavg_gap %d iavg_ht %lld iavg_lt %lld fg_iavg_reg_ht %lld fg_iavg_reg_lt %lld\n",
+	BMDBGLOG("[FG_IAVG_INT][fg_set_iavg_intr] iavg %d iavg_gap %d iavg_ht %lld iavg_lt %lld fg_iavg_reg_ht %lld fg_iavg_reg_lt %lld\n",
 			iavg, iavg_gap, iavg_ht, iavg_lt,
 			fg_iavg_reg_ht, fg_iavg_reg_lt);
 
-	bm_debug("[FG_IAVG_INT][fg_set_iavg_intr] lt_28_16 0x%x lt_15_00 0x%x ht_28_16 0x%x ht_15_00 0x%x\n",
+	BMDBGLOG("[FG_IAVG_INT][fg_set_iavg_intr] lt_28_16 0x%x lt_15_00 0x%x ht_28_16 0x%x ht_15_00 0x%x\n",
 			fg_iavg_lth_28_16, fg_iavg_lth_15_00,
 			fg_iavg_hth_28_16, fg_iavg_hth_15_00);
 
@@ -817,7 +825,7 @@ static void fgauge_read_RTC_boot_status(void)
 		bat_plug_out_time = 31;	/*[12:8], 5 bits*/
 	}
 
-	bm_err(
+	BMTRACELOG(
 	"[fgauge_read_RTC_boot_status] rtc_invalid %d plugout %d plugout_time %d spare3 0x%x spare0 0x%x hw_id 0x%x\n",
 			rtc_invalid, is_bat_plugout, bat_plug_out_time,
 			spare3_reg, spare0_reg, hw_id);
@@ -833,7 +841,7 @@ static int fgauge_initial(struct gauge_device *gauge_dev)
 	temps = pmic_get_register_value(PMIC_RG_FG_OFFSET_SWAP);
 	pmic_set_register_value(PMIC_RG_FG_OFFSET_SWAP, 0);
 
-	bm_err("set RG_FG_OFFSET_SWAP orig %d,new %d\n",
+	BMTRACELOG("set RG_FG_OFFSET_SWAP orig %d,new %d\n",
 		temps, pmic_get_register_value(PMIC_RG_FG_OFFSET_SWAP));
 
 	/* for bat plugout */
@@ -846,7 +854,7 @@ static int fgauge_initial(struct gauge_device *gauge_dev)
 	fgauge_get_info(gauge_dev, GAUGE_BAT_PLUG_STATUS, &bat_flag);
 	fgauge_get_info(gauge_dev, GAUGE_PL_CHARGING_STATUS, &is_charger_exist);
 
-	bm_err("bat_plug:%d chr:%d info:0x%x\n",
+	BMTRACELOG("bat_plug:%d chr:%d info:0x%x\n",
 		bat_flag, is_charger_exist,
 		upmu_get_reg_value(PMIC_RG_SYSTEM_INFO_CON0_ADDR));
 
@@ -902,7 +910,7 @@ static int fgauge_read_current(
 	 */
 	uvalue16 = pmic_get_register_value(PMIC_FG_CURRENT_OUT);
 	/*mt6325_upmu_get_fg_current_out(); */
-	bm_trace("[fgauge_read_current] : FG_CURRENT = %x\r\n", uvalue16);
+	BMTRACELOG("[fgauge_read_current] : FG_CURRENT = %x\r\n", uvalue16);
 	/*
 	 *(5)    (Read other data)
 	 *(6)    Clear status to 0
@@ -943,32 +951,32 @@ static int fgauge_read_current(
 	do_div(Temp_Value, 100000);
 	dvalue = (unsigned int) Temp_Value;
 
-	if (*fg_is_charging == true)
-		bm_trace("[fgauge_read_current]curr(charging) = %d mA\r\n",
-			 dvalue);
-	else
-		bm_trace("[fgauge_read_current]curr(discharging) = %d mA\r\n",
-			 dvalue);
-
+	if (*fg_is_charging == true) {
+		BMTRACELOG("[fgauge_read_current]curr(charging) = %d mA\r\n",
+				   dvalue);
+	} else {
+		BMTRACELOG("[fgauge_read_current]curr(discharging) = %d mA\r\n",
+				   dvalue);
+	}
 		/* Auto adjust value */
 		if (gauge_dev->fg_cust_data->r_fg_value != 100) {
-			bm_trace(
+			BMTRACELOG(
 			"[fgauge_read_current] Auto adjust value due to the Rfg is %d Ori curr=%d\n",
 			gauge_dev->fg_cust_data->r_fg_value, dvalue);
 
 			dvalue = (dvalue * 100) /
 				gauge_dev->fg_cust_data->r_fg_value;
 
-			bm_trace("[fgauge_read_current] new current=%d\n",
+			BMTRACELOG("[fgauge_read_current] new current=%d\n",
 				dvalue);
 		}
 
-		bm_trace("[fgauge_read_current] ori current=%d\n", dvalue);
+		BMTRACELOG("[fgauge_read_current] ori current=%d\n", dvalue);
 
 		dvalue =
 		((dvalue * gauge_dev->fg_cust_data->car_tune_value) / 1000);
 
-		bm_debug("[fgauge_read_current] final current=%d (ratio=%d)\n",
+		BMDBGLOG("[fgauge_read_current] final current=%d (ratio=%d)\n",
 			 dvalue, gauge_dev->fg_cust_data->car_tune_value);
 
 		*data = dvalue;
@@ -1029,22 +1037,22 @@ static int fgauge_get_average_current(
 		fg_iavg_ma = fg_iavg_reg * UNIT_FG_IAVG *
 			gauge_dev->fg_cust_data->car_tune_value;
 
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld fg_iavg_reg_tmp %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld fg_iavg_reg_tmp %lld\n",
 			fg_iavg_ma, fg_iavg_reg, fg_iavg_reg_tmp);
 
 		do_div(fg_iavg_ma, 1000000);
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld\n",
 			fg_iavg_ma);
 
 		do_div(fg_iavg_ma, gauge_dev->fg_cust_data->r_fg_value);
-		bm_trace("[fg_get_current_iavg] fg_iavg_ma %lld\n",
+		BMTRACELOG("[fg_get_current_iavg] fg_iavg_ma %lld\n",
 			fg_iavg_ma);
 
 
 		if (sign_bit == 1)
 			fg_iavg_ma = 0 - fg_iavg_ma;
 
-		bm_trace(
+		BMTRACELOG(
 			"[fg_get_current_iavg] fg_iavg_ma %lld fg_iavg_reg %lld r_fg_value %d 27_16 0x%x 15_00 0x%x\n",
 			fg_iavg_ma, fg_iavg_reg,
 			gauge_dev->fg_cust_data->r_fg_value,
@@ -1052,7 +1060,7 @@ static int fgauge_get_average_current(
 
 		gauge_dev->fg_hw_info.current_avg = fg_iavg_ma;
 		gauge_dev->fg_hw_info.current_avg_sign = sign_bit;
-		bm_trace("[fg_get_current_iavg] PMIC_FG_IAVG_VLD == 1\n");
+		BMTRACELOG("[fg_get_current_iavg] PMIC_FG_IAVG_VLD == 1\n");
 	} else {
 		read_fg_hw_info_current_1(gauge_dev);
 		gauge_dev->fg_hw_info.current_avg =
@@ -1061,7 +1069,7 @@ static int fgauge_get_average_current(
 		if (gauge_dev->fg_hw_info.current_1 < 0)
 			gauge_dev->fg_hw_info.current_avg_sign = 1;
 
-		bm_debug("[fg_get_current_iavg] PMIC_FG_IAVG_VLD != 1, avg %d, current_1 %d\n",
+		BMDBGLOG("[fg_get_current_iavg] PMIC_FG_IAVG_VLD != 1, avg %d, current_1 %d\n",
 			gauge_dev->fg_hw_info.current_avg,
 			gauge_dev->fg_hw_info.current_1);
 	}
@@ -1082,7 +1090,7 @@ static int fgauge_get_average_current(
 	*data = gauge_dev->fg_hw_info.current_avg;
 
 	*valid = pmic_get_register_value(PMIC_FG_IAVG_VLD);
-	bm_debug("[fg_get_current_iavg] %d %d\n", *data, *valid);
+	BMDBGLOG("[fg_get_current_iavg] %d %d\n", *data, *valid);
 
 	return 0;
 }
@@ -1132,12 +1140,12 @@ static int fgauge_get_coulomb(struct gauge_device *gauge_dev, int *data)
 
 	uvalue32_CAR_MSB = (temp_CAR_31_16 & 0x8000) >> 15;
 
-	bm_trace("[fgauge_read_columb_internal] temp_CAR_15_0 = 0x%x temp_CAR_31_16 = 0x%x\n",
+	BMTRACELOG("[fgauge_read_columb_internal] temp_CAR_15_0 = 0x%x temp_CAR_31_16 = 0x%x\n",
 		 temp_CAR_15_0, temp_CAR_31_16);
 
-	bm_trace("[fgauge_read_columb_internal] FG_CAR = 0x%x\r\n",
+	BMTRACELOG("[fgauge_read_columb_internal] FG_CAR = 0x%x\r\n",
 		 uvalue32_CAR);
-	bm_trace(
+	BMTRACELOG(
 		 "[fgauge_read_columb_internal] uvalue32_CAR_MSB = 0x%x\r\n",
 		 uvalue32_CAR_MSB);
 
@@ -1189,27 +1197,27 @@ static int fgauge_get_coulomb(struct gauge_device *gauge_dev, int *data)
 	else
 		dvalue_CAR = (signed int) Temp_Value;
 
-	bm_trace("[fgauge_read_columb_internal] dvalue_CAR = %d\r\n",
+	BMTRACELOG("[fgauge_read_columb_internal] dvalue_CAR = %d\r\n",
 		 dvalue_CAR);
 
 	/*#if (OSR_SELECT_7 == 1) */
 /*Auto adjust value*/
 	if (gauge_dev->fg_cust_data->r_fg_value != 100) {
-		bm_trace(
+		BMTRACELOG(
 			 "[fgauge_read_columb_internal] Auto adjust value deu to the Rfg is %d\n Ori CAR=%d",
 			 gauge_dev->fg_cust_data->r_fg_value, dvalue_CAR);
 
 		dvalue_CAR = (dvalue_CAR * 100) /
 			gauge_dev->fg_cust_data->r_fg_value;
 
-		bm_trace("[fgauge_read_columb_internal] new CAR=%d\n",
+		BMTRACELOG("[fgauge_read_columb_internal] new CAR=%d\n",
 			 dvalue_CAR);
 	}
 
 	dvalue_CAR = ((dvalue_CAR *
 		gauge_dev->fg_cust_data->car_tune_value) / 1000);
 
-	bm_debug("[fgauge_read_columb_internal] CAR=%d r_fg_value=%d car_tune_value=%d\n",
+	BMDBGLOG("[fgauge_read_columb_internal] CAR=%d r_fg_value=%d car_tune_value=%d\n",
 		dvalue_CAR, gauge_dev->fg_cust_data->r_fg_value,
 		gauge_dev->fg_cust_data->car_tune_value);
 
@@ -1225,7 +1233,7 @@ static int fgauge_reset_hw(struct gauge_device *gauge_dev)
 	unsigned int val_car_temp = 1;
 	unsigned int ret = 0;
 
-	bm_trace("[fgauge_hw_reset] : Start \r\n");
+	BMTRACELOG("[fgauge_hw_reset] : Start \r\n");
 
 	while (val_car != 0x0) {
 		ret = pmic_config_interface(
@@ -1236,7 +1244,7 @@ static int fgauge_reset_hw(struct gauge_device *gauge_dev)
 		val_car = val_car_temp;
 	}
 
-	bm_trace("[fgauge_hw_reset] : End \r\n");
+	BMTRACELOG("[fgauge_hw_reset] : End \r\n");
 
 	return 0;
 }
@@ -1252,7 +1260,7 @@ static int read_hw_ocv_6358_plug_in(void)
 	adc_result_reg = pmic_get_register_value(
 		PMIC_AUXADC_ADC_OUT_BAT_PLUGIN_PCHR);
 	adc_result = REG_to_MV_value(adc_result_reg);
-	bm_debug("[oam] read_hw_ocv_6358_plug_in (pchr): adc_result_reg=%d, adc_result=%d, start_sel=%d, rdy=%d\n",
+	BMDBGLOG("[oam] read_hw_ocv_6358_plug_in (pchr): adc_result_reg=%d, adc_result=%d, start_sel=%d, rdy=%d\n",
 		adc_result_reg, adc_result,
 		pmic_get_register_value(PMIC_RG_STRUP_AUXADC_START_SEL),
 		adc_rdy);
@@ -1279,7 +1287,7 @@ static int read_hw_ocv_6358_power_on(void)
 	adc_result_reg = pmic_get_register_value(
 			PMIC_AUXADC_ADC_OUT_PWRON_PCHR);
 	adc_result = REG_to_MV_value(adc_result_reg);
-	bm_debug("[oam] read_hw_ocv_6358_power_on (pchr) : adc_result_reg=%d, adc_result=%d, start_sel=%d, rdy=%d\n",
+	BMDBGLOG("[oam] read_hw_ocv_6358_power_on (pchr) : adc_result_reg=%d, adc_result=%d, start_sel=%d, rdy=%d\n",
 		 adc_result_reg, adc_result,
 		pmic_get_register_value(PMIC_RG_STRUP_AUXADC_START_SEL),
 		adc_result_rdy);
@@ -1299,7 +1307,7 @@ static int read_hw_ocv_6358_power_on_rdy(void)
 	int pon_rdy = 0;
 
 	pon_rdy = pmic_get_register_value(PMIC_AUXADC_ADC_RDY_PWRON_PCHR);
-	bm_err("[read_hw_ocv_6358_power_on_rdy] pwron_PCHR_rdy %d\n", pon_rdy);
+	BMTRACELOG("[read_hw_ocv_6358_power_on_rdy] pwron_PCHR_rdy %d\n", pon_rdy);
 
 	return pon_rdy;
 }
@@ -1448,15 +1456,15 @@ int read_hw_ocv(struct gauge_device *gauge_dev, int *data)
 		zcv_1st_read = true;
 	}
 
-	bm_err("[read_hw_ocv] g_fg_is_charger_exist %d _hw_ocv_chgin_rdy %d pl:%d %d\n",
+	BMTRACELOG("[read_hw_ocv] g_fg_is_charger_exist %d _hw_ocv_chgin_rdy %d pl:%d %d\n",
 		g_fg_is_charger_exist, _hw_ocv_chgin_rdy,
 		pl_charging_status, moniter_plchg_bit);
-	bm_err("[read_hw_ocv] _hw_ocv %d _sw_ocv %d now_thr %d\n",
+	BMTRACELOG("[read_hw_ocv] _hw_ocv %d _sw_ocv %d now_thr %d\n",
 		_prev_hw_ocv, _sw_ocv, now_thr);
-	bm_err("[read_hw_ocv] _hw_ocv %d _hw_ocv_src %d _prev_hw_ocv %d _prev_hw_ocv_src %d _flag_unreliable %d\n",
+	BMTRACELOG("[read_hw_ocv] _hw_ocv %d _hw_ocv_src %d _prev_hw_ocv %d _prev_hw_ocv_src %d _flag_unreliable %d\n",
 		_hw_ocv, _hw_ocv_src, _prev_hw_ocv,
 		_prev_hw_ocv_src, _flag_unreliable);
-	bm_debug("[read_hw_ocv] _hw_ocv_58_pon_rdy %d _hw_ocv_58_pon %d _hw_ocv_58_plugin %d _hw_ocv_chgin %d _sw_ocv %d now_temp %d now_thr %d\n",
+	BMDBGLOG("[read_hw_ocv] _hw_ocv_58_pon_rdy %d _hw_ocv_58_pon %d _hw_ocv_58_plugin %d _hw_ocv_chgin %d _sw_ocv %d now_temp %d now_thr %d\n",
 		_hw_ocv_58_pon_rdy, _hw_ocv_58_pon,
 		_hw_ocv_58_plugin, _hw_ocv_chgin, _sw_ocv,
 		now_temp, now_thr);
@@ -1479,7 +1487,7 @@ int fgauge_set_coulomb_interrupt1_ht(
 	signed int value32_CAR;
 	long long car = car_value;
 
-	bm_trace("fgauge_set_coulomb_interrupt1_ht car=%d\n", car_value);
+	BMTRACELOG("fgauge_set_coulomb_interrupt1_ht car=%d\n", car_value);
 	if (car == 0) {
 		pmic_enable_interrupt(FG_BAT1_INT_H_NO, 0, "GM30");
 		return 0;
@@ -1510,7 +1518,7 @@ int fgauge_set_coulomb_interrupt1_ht(
 	uvalue32_CAR_MSB =
 		(pmic_get_register_value(PMIC_FG_CAR_31_16) & 0x8000) >> 15;
 
-	bm_trace(
+	BMTRACELOG(
 		"[fgauge_set_coulomb_interrupt1_ht] FG_CAR = 0x%x:%d uvalue32_CAR_MSB:0x%x 0x%x 0x%x\r\n",
 		value32_CAR, value32_CAR, uvalue32_CAR_MSB,
 		(pmic_get_register_value(PMIC_FG_CAR_15_00)),
@@ -1552,7 +1560,7 @@ int fgauge_set_coulomb_interrupt1_ht(
 
 	upperbound = value32_CAR;
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_ht] upper = 0x%x:%d diff_car=0x%llx:%lld\r\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_ht] upper = 0x%x:%d diff_car=0x%llx:%lld\r\n",
 		 upperbound, upperbound, car, car);
 
 	upperbound = upperbound + car;
@@ -1561,10 +1569,10 @@ int fgauge_set_coulomb_interrupt1_ht(
 	upperbound_15_00 = (upperbound & 0xffff);
 
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_ht] final upper = 0x%x:%d car=0x%llx:%lld\r\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_ht] final upper = 0x%x:%d car=0x%llx:%lld\r\n",
 		 upperbound, upperbound, car, car);
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_ht] final upper 0x%x 0x%x 0x%x car=0x%llx\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_ht] final upper 0x%x 0x%x 0x%x car=0x%llx\n",
 		 upperbound, upperbound_31_16, upperbound_15_00, car);
 
 	pmic_enable_interrupt(FG_BAT1_INT_H_NO, 0, "GM30");
@@ -1575,7 +1583,7 @@ int fgauge_set_coulomb_interrupt1_ht(
 
 	pmic_enable_interrupt(FG_BAT1_INT_H_NO, 1, "GM30");
 
-	bm_debug(
+	BMDBGLOG(
 		"[fgauge_set_coulomb_interrupt1_ht] high:0x%x 0x%x car_value:%d car:%d\r\n",
 		pmic_get_register_value(PMIC_FG_BAT1_HTH_15_00),
 		pmic_get_register_value(PMIC_FG_BAT1_HTH_31_16),
@@ -1598,7 +1606,7 @@ int fgauge_set_coulomb_interrupt1_lt(
 	signed int value32_CAR;
 	long long car = car_value;
 
-	bm_trace("fgauge_set_coulomb_interrupt1_lt car=%d\n", car_value);
+	BMTRACELOG("fgauge_set_coulomb_interrupt1_lt car=%d\n", car_value);
 	if (car == 0) {
 		pmic_enable_interrupt(FG_BAT1_INT_L_NO, 0, "GM30");
 		return 0;
@@ -1630,7 +1638,7 @@ int fgauge_set_coulomb_interrupt1_lt(
 	uvalue32_CAR_MSB =
 		(pmic_get_register_value(PMIC_FG_CAR_31_16) & 0x8000) >> 15;
 
-	bm_trace(
+	BMTRACELOG(
 		"[fgauge_set_coulomb_interrupt1_lt] FG_CAR = 0x%x:%d uvalue32_CAR_MSB:0x%x 0x%x 0x%x\r\n",
 		value32_CAR, value32_CAR, uvalue32_CAR_MSB,
 		(pmic_get_register_value(PMIC_FG_CAR_15_00)),
@@ -1672,7 +1680,7 @@ int fgauge_set_coulomb_interrupt1_lt(
 
 	lowbound = value32_CAR;
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_lt]low=0x%x:%d diff_car=0x%llx:%lld\r\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_lt]low=0x%x:%d diff_car=0x%llx:%lld\r\n",
 		 lowbound, lowbound, car, car);
 
 	lowbound = lowbound - car;
@@ -1680,10 +1688,10 @@ int fgauge_set_coulomb_interrupt1_lt(
 	lowbound_31_16 = (lowbound & 0xffff0000) >> 16;
 	lowbound_15_00 = (lowbound & 0xffff);
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_lt]final low=0x%x:%d car=0x%llx:%lld\r\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_lt]final low=0x%x:%d car=0x%llx:%lld\r\n",
 		 lowbound, lowbound, car, car);
 
-	bm_trace("[fgauge_set_coulomb_interrupt1_lt] final low 0x%x 0x%x 0x%x car=0x%llx\n",
+	BMTRACELOG("[fgauge_set_coulomb_interrupt1_lt] final low 0x%x 0x%x 0x%x car=0x%llx\n",
 		 lowbound, lowbound_31_16, lowbound_15_00, car);
 
 	pmic_enable_interrupt(FG_BAT1_INT_L_NO, 0, "GM30");
@@ -1693,7 +1701,7 @@ int fgauge_set_coulomb_interrupt1_lt(
 
 	pmic_enable_interrupt(FG_BAT1_INT_L_NO, 1, "GM30");
 
-	bm_debug(
+	BMDBGLOG(
 		"[fgauge_set_coulomb_interrupt1_lt] low:0x%x 0x%x car_value:%d car:%d\r\n",
 		pmic_get_register_value(PMIC_FG_BAT1_LTH_15_00),
 		pmic_get_register_value(PMIC_FG_BAT1_LTH_31_16),
@@ -1709,7 +1717,7 @@ static int fgauge_read_boot_battery_plug_out_status(
 {
 	*is_plugout = is_bat_plugout;
 	*plutout_time = bat_plug_out_time;
-	bm_err(
+	BMTRACELOG(
 		"[read_boot_battery_plug_out_status] rtc_invalid %d plugout %d bat_plug_out_time %d sp3:0x%x pl:%d %d\n",
 		rtc_invalid, is_bat_plugout, bat_plug_out_time,
 		gspare3_reg, moniter_plchg_bit, pl_charging_status);
@@ -1729,7 +1737,7 @@ static int fgauge_get_ptim_current(
 		/*unsigned int ret = 0;*/
 
 		uvalue16 = pmic_get_register_value(PMIC_FG_R_CURR);
-		bm_trace("[fgauge_get_ptim_current] : FG_CURRENT = %x\r\n",
+		BMTRACELOG("[fgauge_get_ptim_current] : FG_CURRENT = %x\r\n",
 			 uvalue16);
 
 		/*calculate the real world data    */
@@ -1751,34 +1759,35 @@ static int fgauge_get_ptim_current(
 		do_div(Temp_Value, 100000);
 		dvalue = (unsigned int) Temp_Value;
 
-		if (*is_charging == true)
-			bm_trace(
-			"[fgauge_read_IM_current]curr(charging)=%dmA\r\n",
-			dvalue);
-		else
-			bm_trace(
-			"[fgauge_read_IM_current]curr(discharging)=%dmA\r\n",
-			dvalue);
+		if (*is_charging == true) {
+			BMTRACELOG(
+					"[fgauge_read_IM_current]curr(charging)=%dmA\r\n",
+					dvalue);
+		} else {
+			BMTRACELOG(
+					"[fgauge_read_IM_current]curr(discharging)=%dmA\r\n",
+					dvalue);
+		}
 
 		/* Auto adjust value */
 		if (gauge_dev->fg_cust_data->r_fg_value != 100) {
-			bm_trace(
+			BMTRACELOG(
 			"[fgauge_read_IM_current] Auto adjust value due to the Rfg is %d\n Ori curr=%d, ",
 			gauge_dev->fg_cust_data->r_fg_value, dvalue);
 
 			dvalue = (dvalue * 100) /
 				gauge_dev->fg_cust_data->r_fg_value;
 
-			bm_trace("[fgauge_read_IM_current] new current=%d\n",
+			BMTRACELOG("[fgauge_read_IM_current] new current=%d\n",
 			dvalue);
 		}
 
-		bm_trace("[fgauge_read_IM_current] ori current=%d\n", dvalue);
+		BMTRACELOG("[fgauge_read_IM_current] ori current=%d\n", dvalue);
 
 		dvalue = ((dvalue *
 			gauge_dev->fg_cust_data->car_tune_value) / 1000);
 
-		bm_debug("[fgauge_read_IM_current] final current=%d (ratio=%d)\n",
+		BMDBGLOG("[fgauge_read_IM_current] final current=%d (ratio=%d)\n",
 			 dvalue, gauge_dev->fg_cust_data->car_tune_value);
 
 		*ptim_current = dvalue;
@@ -1812,21 +1821,21 @@ static int fgauge_get_zcv_current(
 
 	/* Auto adjust value */
 	if (gauge_dev->fg_cust_data->r_fg_value != 100) {
-		bm_trace(
+		BMTRACELOG(
 		"[fgauge_read_current] Auto adjust value due to the Rfg is %d\n Ori curr=%d",
 		gauge_dev->fg_cust_data->r_fg_value, dvalue);
 
 		dvalue = (dvalue * 100) /
 		gauge_dev->fg_cust_data->r_fg_value;
 
-		bm_trace("[fgauge_read_current] new current=%d\n", dvalue);
+		BMTRACELOG("[fgauge_read_current] new current=%d\n", dvalue);
 	}
 
-	bm_trace("[fgauge_read_current] ori current=%d\n", dvalue);
+	BMTRACELOG("[fgauge_read_current] ori current=%d\n", dvalue);
 
 	dvalue = ((dvalue * gauge_dev->fg_cust_data->car_tune_value) / 1000);
 
-	bm_debug("[fgauge_read_current] final current=%d (ratio=%d)\n",
+	BMDBGLOG("[fgauge_read_current] final current=%d (ratio=%d)\n",
 		 dvalue, gauge_dev->fg_cust_data->car_tune_value);
 
 	*zcv_current = dvalue;
@@ -1844,7 +1853,7 @@ static int fgauge_get_zcv(struct gauge_device *gauge_dev, int *zcv)
 	adc_result_reg =
 		pmic_get_register_value(PMIC_AUXADC_ADC_OUT_FGADC_PCHR);
 	adc_result = REG_to_MV_value(adc_result_reg);
-	bm_debug("[oam] fgauge_get_zcv BATSNS  (pchr):adc_result_reg=%d, adc_result=%d\n",
+	BMDBGLOG("[oam] fgauge_get_zcv BATSNS  (pchr):adc_result_reg=%d, adc_result=%d\n",
 		 adc_result_reg, adc_result);
 
 	adc_result += g_hw_ocv_tune_value;
@@ -1920,7 +1929,7 @@ static void fgauge_set_nafg_intr_internal(int _prd, int _zcv_mv, int _thr_mv)
 	pmic_set_register_value(PMIC_AUXADC_NAG_PRD, _prd);
 	pmic_set_register_value(PMIC_AUXADC_NAG_VBAT1_SEL, 0);/* use Batsns */
 
-	bm_debug("[fg_bat_nafg][fgauge_set_nafg_interrupt_internal] time[%d] zcv[%d:%d] thr[%d:%d] 26_16[0x%x] 15_00[0x%x] %d\n",
+	BMDBGLOG("[fg_bat_nafg][fgauge_set_nafg_interrupt_internal] time[%d] zcv[%d:%d] thr[%d:%d] 26_16[0x%x] 15_00[0x%x] %d\n",
 		_prd, _zcv_mv, _zcv_reg, _thr_mv, _thr_reg,
 		NAG_C_DLTV_Threashold_26_16, NAG_C_DLTV_Threashold_15_0,
 		pmic_get_register_value(PMIC_AUXADC_NAG_VBAT1_SEL));
@@ -1967,7 +1976,7 @@ static int fgauge_get_nag_cnt(struct gauge_device *gauge_dev, int *nag_cnt)
 	NAG_C_DLTV_CNT_H = pmic_get_register_value(PMIC_AUXADC_NAG_CNT_25_16);
 	*nag_cnt = (NAG_C_DLTV_CNT & 0xffff) +
 		((NAG_C_DLTV_CNT_H & 0x3ff) << 16);
-	bm_debug("[fg_bat_nafg][fgauge_get_nafg_cnt] %d [25_16 %d 15_0 %d]\n",
+	BMDBGLOG("[fg_bat_nafg][fgauge_get_nafg_cnt] %d [25_16 %d 15_0 %d]\n",
 			*nag_cnt, NAG_C_DLTV_CNT_H, NAG_C_DLTV_CNT);
 
 	return 0;
@@ -1984,7 +1993,7 @@ static int fgauge_get_nag_dltv(struct gauge_device *gauge_dev, int *nag_dltv)
 	NAG_DLTV_mV_value = REG_to_MV_value(NAG_DLTV_reg_value);
 	*nag_dltv = NAG_DLTV_mV_value;
 
-	bm_debug("[fg_bat_nafg][fgauge_get_nafg_dltv] mV:Reg [%d:%d]\n",
+	BMDBGLOG("[fg_bat_nafg][fgauge_get_nafg_dltv] mV:Reg [%d:%d]\n",
 		NAG_DLTV_mV_value, NAG_DLTV_reg_value);
 
 	return 0;
@@ -2020,7 +2029,7 @@ static int fgauge_get_nag_c_dltv(
 	NAG_C_DLTV_mV_value = REG_to_MV_value(NAG_C_DLTV_reg_value);
 	*nag_c_dltv = NAG_C_DLTV_mV_value;
 
-	bm_debug("[fg_bat_nafg][fgauge_get_nafg_c_dltv] mV:Reg[%d:%d] [b10:%d][26_16(0x%04x) 15_00(0x%04x)]\n",
+	BMDBGLOG("[fg_bat_nafg][fgauge_get_nafg_c_dltv] mV:Reg[%d:%d] [b10:%d][26_16(0x%04x) 15_00(0x%04x)]\n",
 		NAG_C_DLTV_mV_value, NAG_C_DLTV_reg_value,
 		bcheckbit10, NAG_C_DLTV_value_H, NAG_C_DLTV_value);
 
@@ -2067,7 +2076,7 @@ static void fgauge_set_zcv_intr_internal(
 	pmic_set_register_value(PMIC_FG_ZCV_CAR_TH_30_16,
 				fg_zcv_car_thr_h_reg);
 
-	bm_debug("[FG_ZCV_INT][fg_set_zcv_intr_internal] det_time %d mv %d reg %lld 30_16 0x%x 15_00 0x%x\n",
+	BMDBGLOG("[FG_ZCV_INT][fg_set_zcv_intr_internal] det_time %d mv %d reg %lld 30_16 0x%x 15_00 0x%x\n",
 		fg_zcv_det_time, fg_zcv_car_th, fg_zcv_car_th_reg,
 		fg_zcv_car_thr_h_reg, fg_zcv_car_thr_l_reg);
 }
@@ -2078,7 +2087,7 @@ static int fgauge_enable_zcv_interrupt(struct gauge_device *gauge_dev, int en)
 		en = 1;
 	pmic_set_register_value(PMIC_FG_ZCV_DET_EN, en);
 	pmic_set_register_value(PMIC_RG_INT_EN_FG_ZCV, en);
-	bm_debug("[FG_ZCV_INT][fg_set_zcv_intr_en] En %d\n", en);
+	BMDBGLOG("[FG_ZCV_INT][fg_set_zcv_intr_en] En %d\n", en);
 
 	return 0;
 }
@@ -2164,7 +2173,9 @@ static int fgauge_get_nag_vbat(struct gauge_device *gauge_dev, int *vbat)
 	vbat_val = nag_vbat_reg & 0x7fff;
 	nag_vbat_mv = REG_to_MV_value(vbat_val);
 	*vbat = nag_vbat_mv;
+#ifdef DEBUG_LOGGING
 	battery_dump_nag();
+#endif
 	return 0;
 }
 
@@ -2200,7 +2211,7 @@ static int fgauge_enable_battery_tmp_lt_interrupt(
 	}
 
 
-	bm_debug("[gauge_enable_battery_tmp_lt_interrupt]en:%d mv:%d reg:%d\n",
+	BMDBGLOG("[gauge_enable_battery_tmp_lt_interrupt]en:%d mv:%d reg:%d\n",
 			en, threshold, tmp_int_lt);
 
 
@@ -2237,7 +2248,7 @@ static int fgauge_enable_battery_tmp_ht_interrupt(
 
 	}
 
-	bm_debug("[gauge_enable_battery_tmp_ht_interrupt]en:%d mv:%d reg:%d\n",
+	BMDBGLOG("[gauge_enable_battery_tmp_ht_interrupt]en:%d mv:%d reg:%d\n",
 			en, threshold, tmp_int_ht);
 
 	return 0;
@@ -2274,7 +2285,7 @@ int fgauge_get_time(struct gauge_device *gauge_dev, unsigned int *ptime)
 #endif
 	ret_time = time;
 
-	bm_trace(
+	BMTRACELOG(
 		 "[fgauge_get_time] low:0x%x high:0x%x rtime:0x%llx 0x%x!\r\n",
 		 time_15_00, time_29_16, time, ret_time);
 
@@ -2337,7 +2348,7 @@ int fgauge_set_time_interrupt(struct gauge_device *gauge_dev, int threshold)
 	time = div_s64(time + offsetTime * 100, UNIT_TIME);
 #endif
 
-	bm_debug("[fgauge_set_time_interrupt] now:%lld time:%lld\r\n",
+	BMDBGLOG("[fgauge_set_time_interrupt] now:%lld time:%lld\r\n",
 		now/2, time/2);
 	ret = pmic_config_interface(MT6358_FGADC_CON1, 0x0008, 0x000F, 0x0);
 
@@ -2379,7 +2390,7 @@ int fgauge_set_time_interrupt(struct gauge_device *gauge_dev, int threshold)
 		time2 = time_15_00;
 		time2 |= time_29_16 << 16;
 
-		bm_debug(
+		BMDBGLOG(
 			 "[fgauge_set_time_interrupt] now:%lld time:%lld\r\n",
 			 time2/2, time/2);
 		ret = pmic_config_interface(
@@ -2398,7 +2409,7 @@ int fgauge_set_time_interrupt(struct gauge_device *gauge_dev, int threshold)
 		ret = pmic_config_interface(
 			MT6358_FGADC_CON1, 0x0000, 0x000F, 0x0);
 
-		bm_trace(
+		BMTRACELOG(
 			 "[fgauge_set_time_interrupt] low:0x%x high:0x%x time:%lld %lld\r\n",
 			 pmic_get_register_value(PMIC_FG_TIME_HTH_15_00),
 			 pmic_get_register_value(PMIC_FG_TIME_HTH_29_16),
@@ -2557,7 +2568,7 @@ int fgauge_get_hw_status(
 	/* Iavg */
 	read_fg_hw_info_Iavg(gauge_dev, &is_iavg_valid);
 	if ((is_iavg_valid == 1) && (gauge_status->iavg_intr_flag == 0)) {
-		bm_trace("[read_fg_hw_info]set first fg_set_iavg_intr %d %d\n",
+		BMTRACELOG("[read_fg_hw_info]set first fg_set_iavg_intr %d %d\n",
 			is_iavg_valid, gauge_status->iavg_intr_flag);
 		gauge_status->iavg_intr_flag = 1;
 		iavg_th = gauge_dev->fg_cust_data->diff_iavg_th;
@@ -2568,10 +2579,10 @@ int fgauge_get_hw_status(
 		pmic_set_register_value(PMIC_RG_INT_EN_FG_IAVG_L, 0);
 		pmic_enable_interrupt(FG_IAVG_H_NO, 0, "GM30");
 		pmic_enable_interrupt(FG_IAVG_L_NO, 0, "GM30");
-		bm_trace("[read_fg_hw_info] doublecheck first fg_set_iavg_intr %d %d\n",
+		BMTRACELOG("[read_fg_hw_info] doublecheck first fg_set_iavg_intr %d %d\n",
 			is_iavg_valid, gauge_status->iavg_intr_flag);
 	}
-	bm_trace("[read_fg_hw_info] thirdcheck first fg_set_iavg_intr %d %d\n",
+	BMTRACELOG("[read_fg_hw_info] thirdcheck first fg_set_iavg_intr %d %d\n",
 		is_iavg_valid, gauge_status->iavg_intr_flag);
 
 	/* Ncar */
@@ -2595,7 +2606,7 @@ int fgauge_get_hw_status(
 	fgauge_get_time(gauge_dev, &time);
 	gauge_dev->fg_hw_info.time = time;
 
-	bm_err("[FGADC_intr_end][%s][read_fg_hw_info] curr_1 %d curr_2 %d Iavg %d sign %d car %d ncar %d time %d\n",
+	BMTRACELOG("[FGADC_intr_end][%s][read_fg_hw_info] curr_1 %d curr_2 %d Iavg %d sign %d car %d ncar %d time %d\n",
 		intr_name, gauge_dev->fg_hw_info.current_1,
 		gauge_dev->fg_hw_info.current_2,
 		gauge_dev->fg_hw_info.current_avg,
@@ -2673,7 +2684,7 @@ int fgauge_set_vbat_low_threshold(
 		PMIC_AUXADC_LBAT2_DET_PRD_19_16, vbat2_det_time_19_16);
 	pmic_set_register_value(PMIC_AUXADC_LBAT2_DEBT_MIN, vbat2_det_counter);
 
-	bm_debug("[fg_set_vbat2_l_th] set [0x%x 0x%x 0x%x 0x%x] get [0x%x 0x%x 0x%x 0x%x]\n",
+	BMDBGLOG("[fg_set_vbat2_l_th] set [0x%x 0x%x 0x%x 0x%x] get [0x%x 0x%x 0x%x 0x%x]\n",
 		vbat2_l_th_reg, vbat2_det_time_15_0,
 		vbat2_det_time_19_16, vbat2_det_counter,
 		pmic_get_register_value(PMIC_AUXADC_LBAT2_VOLT_MIN),
@@ -2704,7 +2715,7 @@ int fgauge_set_vbat_high_threshold(
 		PMIC_AUXADC_LBAT2_DET_PRD_19_16, vbat2_det_time_19_16);
 	pmic_set_register_value(PMIC_AUXADC_LBAT2_DEBT_MAX, vbat2_det_counter);
 
-	bm_debug("[fg_set_vbat2_h_th] set %d [0x%x 0x%x 0x%x 0x%x] get [0x%x 0x%x 0x%x 0x%x]\n",
+	BMDBGLOG("[fg_set_vbat2_h_th] set %d [0x%x 0x%x 0x%x 0x%x] get [0x%x 0x%x 0x%x 0x%x]\n",
 		threshold, vbat2_h_th_reg, vbat2_det_time_15_0,
 		vbat2_det_time_19_16, vbat2_det_counter,
 		pmic_get_register_value(PMIC_AUXADC_LBAT2_VOLT_MAX),
@@ -2781,20 +2792,20 @@ static int fgauge_enable_car_tune_value_calibration(
 				uvalue32 = (unsigned int) uvalue16;
 				if (uvalue32 <= 0x8000) {
 					Temp_Value1 = (long long)uvalue32;
-					bm_err("[111]uvalue16 %d uvalue32 %d Temp_Value1 %lld\n",
+					BMTRACELOG("[111]uvalue16 %d uvalue32 %d Temp_Value1 %lld\n",
 						uvalue16, uvalue32,
 						Temp_Value1);
 				} else if (uvalue32 > 0x8000) {
 					Temp_Value1 =
 						(long long) (65535 - uvalue32);
-					bm_err("[222]uvalue16 %d uvalue32 %d Temp_Value1 %lld\n",
+					BMTRACELOG("[222]uvalue16 %d uvalue32 %d Temp_Value1 %lld\n",
 						uvalue16, uvalue32,
 						Temp_Value1);
 				}
 				sum_all += Temp_Value1;
 				avg_cnt++;
 				/*****************/
-				bm_err("[333]uvalue16 %d uvalue32 %d Temp_Value1 %lld sum_all %lld\n",
+				BMTRACELOG("[333]uvalue16 %d uvalue32 %d Temp_Value1 %lld sum_all %lld\n",
 					uvalue16, uvalue32,
 					Temp_Value1, sum_all);
 				/*****************/
@@ -2804,7 +2815,7 @@ static int fgauge_enable_car_tune_value_calibration(
 		/*calculate the real world data    */
 		/*current_from_ADC = sum_all / avg_cnt;*/
 		temp_sum = sum_all;
-		bm_err("[444]sum_all %lld temp_sum %lld avg_cnt %d current_from_ADC %lld\n",
+		BMTRACELOG("[444]sum_all %lld temp_sum %lld avg_cnt %d current_from_ADC %lld\n",
 			sum_all, temp_sum, avg_cnt, current_from_ADC);
 
 		if (avg_cnt != 0)
@@ -2812,19 +2823,19 @@ static int fgauge_enable_car_tune_value_calibration(
 
 		current_from_ADC = temp_sum;
 
-		bm_err("[555]sum_all %lld temp_sum %lld avg_cnt %d current_from_ADC %lld\n",
+		BMTRACELOG("[555]sum_all %lld temp_sum %lld avg_cnt %d current_from_ADC %lld\n",
 			sum_all, temp_sum, avg_cnt, current_from_ADC);
 
 		Temp_Value2 = current_from_ADC * UNIT_FGCURRENT;
 
-		bm_err("[555]Temp_Value2 %lld current_from_ADC %lld UNIT_FGCURRENT %d\n",
+		BMTRACELOG("[555]Temp_Value2 %lld current_from_ADC %lld UNIT_FGCURRENT %d\n",
 			Temp_Value2, current_from_ADC, UNIT_FGCURRENT);
 
 		/* Move 100 from denominator to cali_car_tune's numerator */
 		/*do_div(Temp_Value2, 1000000);*/
 		do_div(Temp_Value2, 10000);
 
-		bm_err("[666]Temp_Value2 %lld current_from_ADC %lld UNIT_FGCURRENT %d\n",
+		BMTRACELOG("[666]Temp_Value2 %lld current_from_ADC %lld UNIT_FGCURRENT %d\n",
 			Temp_Value2, current_from_ADC, UNIT_FGCURRENT);
 
 		dvalue = (unsigned int) Temp_Value2;
@@ -2834,7 +2845,7 @@ static int fgauge_enable_car_tune_value_calibration(
 			dvalue = (dvalue * 100) /
 				gauge_dev->fg_cust_data->r_fg_value;
 
-		bm_err("[666]dvalue %d fg_cust_data.r_fg_value %d\n",
+		BMTRACELOG("[666]dvalue %d fg_cust_data.r_fg_value %d\n",
 			dvalue, gauge_dev->fg_cust_data->r_fg_value);
 
 		/* Move 100 from denominator to cali_car_tune's numerator */
@@ -2844,13 +2855,13 @@ static int fgauge_enable_car_tune_value_calibration(
 			cali_car_tune =
 				meta_input_cali_current * 1000 * 100 / dvalue;
 
-		bm_err("[777]dvalue %d fg_cust_data.r_fg_value %d cali_car_tune %d\n",
+			BMTRACELOG("[777]dvalue %d fg_cust_data.r_fg_value %d cali_car_tune %d\n",
 			dvalue, gauge_dev->fg_cust_data->r_fg_value,
 			cali_car_tune);
 
-		*car_tune_value = cali_car_tune;
+			*car_tune_value = cali_car_tune;
 
-		bm_err(
+			BMTRACELOG(
 			"[fgauge_meta_cali_car_tune_value][%d] meta:%d, adc:%lld, UNI_FGCUR:%d, r_fg_value:%d\n",
 			cali_car_tune, meta_input_cali_current,
 			current_from_ADC, UNIT_FGCURRENT,
@@ -2948,7 +2959,7 @@ int fgauge_set_reset_status(struct gauge_device *gauge_dev, int reset)
 	/* read spare3 again */
 	after_rst_spare3_reg = get_rtc_spare_fg_value();
 
-	bm_err("[fgauge_read_RTC_boot_status] spare0 0x%x 0x%x, spare3 0x%x 0x%x\n",
+	BMTRACELOG("[fgauge_read_RTC_boot_status] spare0 0x%x 0x%x, spare3 0x%x 0x%x\n",
 		spare0_reg, after_rst_spare0_reg, spare3_reg,
 		after_rst_spare3_reg);
 
@@ -3051,12 +3062,12 @@ static int fgauge_dump(struct gauge_device *gauge_dev, struct seq_file *m)
 		vbif28
 	);
 
-	bm_debug(
+	BMDBGLOG(
 		"1st chr_zcv:%d pmic_zcv:%d %d pmic_in_zcv:%d swocv:%d zcv_from:%d tmp:%d\n",
 		charger_zcv_1st, pmic_rdy_1st, pmic_zcv_1st, pmic_in_zcv_1st,
 		swocv_1st, zcv_from_1st, zcv_tmp_1st);
 
-	bm_debug(
+	BMDBGLOG(
 		"chr_zcv:%d pmic_zcv:%d %d pmic_in_zcv:%d swocv:%d zcv_from:%d tmp:%d\n",
 		charger_zcv, pmic_rdy, pmic_zcv, pmic_in_zcv,
 		swocv, zcv_from, zcv_tmp);
@@ -3101,7 +3112,7 @@ int fgauge_set_battery_cycle_interrupt(
 	pmic_set_register_value(
 		PMIC_FG_N_CHARGE_LTH_31_16, (carReg & 0xffff0000) >> 16);
 
-	bm_debug("car:%d carR:%lld r:%lld current:low:0x%x high:0x%x target:low:0x%x high:0x%x",
+	BMDBGLOG("car:%d carR:%lld r:%lld current:low:0x%x high:0x%x target:low:0x%x high:0x%x",
 		threshold, car, carReg,
 		pmic_get_register_value(PMIC_FG_NCAR_15_00),
 		pmic_get_register_value(PMIC_FG_NCAR_31_16),
@@ -3130,7 +3141,7 @@ void iavg_workaround(struct gauge_device *gauge_dev,
 				enable_dwa(true);
 		}
 	}
-	bm_err(
+	BMTRACELOG(
 		"[%s]type:%d 0x%x 0x%x!\n",
 		__func__,
 		evt,
@@ -3206,7 +3217,7 @@ static int mt6358_parse_dt(struct mt6358_gauge *info, struct device *dev)
 {
 	struct device_node *np = dev->of_node;
 
-	bm_err("%s: starts\n", __func__);
+	BMTRACELOG("%s: starts\n", __func__);
 
 	if (!np) {
 		bm_err("%s: no device node\n", __func__);
@@ -3228,7 +3239,7 @@ static int mt6358_gauge_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct mt6358_gauge *info;
 
-	bm_err("%s: starts\n", __func__);
+	BMTRACELOG("%s: starts\n", __func__);
 
 	info = devm_kzalloc(
 		&pdev->dev, sizeof(struct mt6358_gauge), GFP_KERNEL);

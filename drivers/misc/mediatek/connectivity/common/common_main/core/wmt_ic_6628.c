@@ -1076,11 +1076,11 @@ static INT32 mt6628_aif_ctrl(WMT_IC_PIN_STATE state, UINT32 flag)
 #endif
 	}
 
-	if (!ret)
+	if (!ret) {
 		WMT_INFO_FUNC("new state(%d) ok\n", state);
-	else
+	} else {
 		WMT_WARN_FUNC("new state(%d) fail(%d)\n", state, ret);
-
+	}
 	return ret;
 }
 
@@ -1094,8 +1094,9 @@ static INT32 mt6628_gps_sync_ctrl(WMT_IC_PIN_STATE state, UINT32 flag)
 	else
 		uVal = 0x5 << 28;
 	ret = wmt_core_reg_rw_raw(1, 0x80050078, &uVal, 0x7 << 28);
-	if (ret != 0)
+	if (ret != 0) {
 		WMT_ERR_FUNC("gps_sync pin ctrl failed, ret(%d)\n", ret);
+	}
 	/* anyway, we return 0 */
 	return 0;
 }

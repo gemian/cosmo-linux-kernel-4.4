@@ -3388,6 +3388,11 @@ static int btmtk_fops_open(struct inode *inode, struct file *file)
 		return -ENOENT;
 	}
 
+	if (g_priv->adapter->fops_mode == true) {
+		pr_info("%s fops_mode is true\n", __func__);
+		return -ENOENT;
+	}
+
 	if (g_card) {
 		if (is_support_unify_woble(g_card))
 			btmtk_sdio_send_apcf_reserved();
@@ -3411,6 +3416,21 @@ static int btmtk_fops_close(struct inode *inode, struct file *file)
 		pr_err("%s probe_ready is %d return\n",
 			__func__, probe_ready);
 		return -EFAULT;
+	}
+
+	if (g_priv == NULL) {
+		pr_info("%s g_priv is NULL\n", __func__);
+		return -ENOENT;
+	}
+
+	if (g_priv->adapter == NULL) {
+		pr_info("%s g_priv->adapter is NULL\n", __func__);
+		return -ENOENT;
+	}
+
+	if (g_priv->adapter->fops_mode == false) {
+		pr_info("%s fops_mode is false\n", __func__);
+		return -ENOENT;
 	}
 
 	if (g_priv)
@@ -3447,107 +3467,49 @@ ssize_t btmtk_fops_write(struct file *filp, const char __user *buf,
 		pr_info("%s fops_mode is 0\n", __func__);
 		return -EFAULT;
 	}
-#if 0
-	pr_info("%s : (%d) %02X %02X %02X %02X "
-			%"02X %02X %02X %02X\n",
-			__func__, (int)count,
-			buf[0], buf[1], buf[2], buf[3],
-			buf[4], buf[5], buf[6], buf[7]);
 
-	pr_info("%s print write data", __func__);
-	if (count > 10)
-		pr_info("  %02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-				buf[0], buf[1], buf[2], buf[3], buf[4],
-				buf[5], buf[6], buf[7], buf[8], buf[9]);
-	else {
-		for (i = 0; i < count; i++)
-			pr_info("%d %02X", i, buf[i]);
+	if (waiting_for_hci_without_packet_type == 1 && count == 1) {
+		pr_info("%s: Waiting for hci_without_packet_type, but receive data count is 1!", __func__);
+		pr_info("%s: Treat this packet as packet_type", __func__);
+		retval = copy_from_user(&hci_packet_type, &buf[0], 1);
+		waiting_for_hci_without_packet_type = 1;
+		retval = 1;
+		goto OUT;
 	}
-#endif
-	if (buf[0] == 0x7) {
-		/* write CR */
-		if (count < 15) {
-			pr_info("%s count=%zd less than 15, error\n",
-				__func__, count);
-			return -EFAULT;
-		}
 
-		crAddr = (buf[3]&0xff) + ((buf[4]&0xff)<<8)
-			+ ((buf[5]&0xff)<<16) + ((buf[6]&0xff)<<24);
-		crValue = (buf[7]&0xff) + ((buf[8]&0xff)<<8)
-			+ ((buf[9]&0xff)<<16) + ((buf[10]&0xff)<<24);
-		crMask = (buf[11]&0xff) + ((buf[12]&0xff)<<8)
-			+ ((buf[13]&0xff)<<16) + ((buf[14]&0xff)<<24);
-
-		pr_info("%s crAddr=0x%08x crValue=0x%08x crMask=0x%08x\n",
-			__func__, crAddr, crValue, crMask);
-		crValue &= crMask;
-
-		pr_info("%s write crAddr=0x%08x crValue=0x%08x\n", __func__,
-			crAddr, crValue);
-		btmtk_sdio_writel(crAddr, crValue);
-		retval = count;
-	} else if (buf[0] == 0x8) {
-		/* read CR */
-		if (count < 16) {
-			pr_info("%s count=%zd less than 15, error\n",
-				__func__, count);
-			return -EFAULT;
-		}
-
-		crAddr = (buf[3]&0xff) + ((buf[4]&0xff)<<8) +
-			((buf[5]&0xff)<<16) + ((buf[6]&0xff)<<24);
-		crMask = (buf[11]&0xff) + ((buf[12]&0xff)<<8) +
-			((buf[13]&0xff)<<16) + ((buf[14]&0xff)<<24);
-
-		btmtk_sdio_readl(crAddr, &crValue);
-		pr_info("%s read crAddr=0x%08x crValue=0x%08x crMask=0x%08x\n",
-				__func__, crAddr, crValue, crMask);
-		retval = count;
-	} else {
-		if (waiting_for_hci_without_packet_type == 1 && count == 1) {
-			pr_warn("%s: Waiting for hci_without_packet_type, but receive data count is 1!", __func__);
-			pr_warn("%s: Treat this packet as packet_type", __func__);
+	if (waiting_for_hci_without_packet_type == 0) {
+		if (count == 1) {
 			retval = copy_from_user(&hci_packet_type, &buf[0], 1);
 			waiting_for_hci_without_packet_type = 1;
 			retval = 1;
 			goto OUT;
 		}
+	}
 
-		if (waiting_for_hci_without_packet_type == 0) {
-			if (count == 1) {
-				retval = copy_from_user(&hci_packet_type, &buf[0], 1);
-				waiting_for_hci_without_packet_type = 1;
-				retval = 1;
-				goto OUT;
-			}
-		}
-
-		if (waiting_for_hci_without_packet_type) {
-			copy_size = count + 1;
-			skb = bt_skb_alloc(copy_size-1, GFP_ATOMIC);
-			bt_cb(skb)->pkt_type = hci_packet_type;
-			memcpy(&skb->data[0], &buf[0], copy_size-1);
-		} else {
-			copy_size = count;
-			skb = bt_skb_alloc(copy_size-1, GFP_ATOMIC);
-			bt_cb(skb)->pkt_type = buf[0];
-			memcpy(&skb->data[0], &buf[1], copy_size-1);
-		}
+	if (waiting_for_hci_without_packet_type) {
+		copy_size = count + 1;
+		skb = bt_skb_alloc(copy_size-1, GFP_ATOMIC);
+		bt_cb(skb)->pkt_type = hci_packet_type;
+		retval = copy_from_user(&skb->data[0], &buf[0], copy_size-1);
+	} else {
+		copy_size = count;
+		skb = bt_skb_alloc(copy_size-1, GFP_ATOMIC);
+		bt_cb(skb)->pkt_type = buf[0];
+		retval = copy_from_user(&skb->data[0], &buf[1], copy_size-1);
+	}
 
 
-		skb->len = copy_size-1;
-		skb_queue_tail(&g_priv->adapter->tx_queue, skb);
-		wake_up_interruptible(&g_priv->main_thread.wait_q);
+	skb->len = copy_size-1;
+	skb_queue_tail(&g_priv->adapter->tx_queue, skb);
+	wake_up_interruptible(&g_priv->main_thread.wait_q);
 
-		retval = copy_size;
+	retval = copy_size;
 
-		if (waiting_for_hci_without_packet_type) {
-			hci_packet_type = 0xff;
-			waiting_for_hci_without_packet_type = 0;
-			if (retval > 0)
-				retval -= 1;
-		}
+	if (waiting_for_hci_without_packet_type) {
+		hci_packet_type = 0xff;
+		waiting_for_hci_without_packet_type = 0;
+		if (retval > 0)
+			retval -= 1;
 	}
 
 OUT:
@@ -3842,6 +3804,14 @@ static ssize_t btmtk_fops_writefwlog(
 	pr_debug("%s: hci buff is %02x%02x%02x%02x%02x\n",
 		__func__, o_fwlog_buf[0], o_fwlog_buf[1],
 		o_fwlog_buf[2], o_fwlog_buf[3], o_fwlog_buf[4]);
+
+	if (o_fwlog_buf[0] != HCI_COMMAND_PKT
+		&& o_fwlog_buf[0] != HCI_ACLDATA_PKT
+		&& o_fwlog_buf[0] != HCI_SCODATA_PKT) {
+		pr_info("invalid type(%d)\n", o_fwlog_buf[0]);
+		count = -EFAULT;
+		goto exit;
+	}
 
 	/*
 	 * Receive command from stpbtfwlog, then Sent hci command

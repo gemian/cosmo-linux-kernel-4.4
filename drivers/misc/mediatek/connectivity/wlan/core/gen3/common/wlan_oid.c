@@ -7286,7 +7286,7 @@ wlanoidSet802dot11PowerSaveProfile(IN P_ADAPTER_T prAdapter,
 	P_PARAM_POWER_MODE_T prPowerMode;
 	P_BSS_INFO_T prBssInfo;
 
-	const PUINT_8 apucPsMode[Param_PowerModeMax] = {
+	__attribute__((unused)) const PUINT_8 apucPsMode[Param_PowerModeMax] = {
 		(PUINT_8) "CAM",
 		(PUINT_8) "MAX PS",
 		(PUINT_8) "FAST PS"

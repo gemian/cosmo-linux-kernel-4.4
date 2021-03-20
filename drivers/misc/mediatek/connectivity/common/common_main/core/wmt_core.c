@@ -634,18 +634,19 @@ INT32 wmt_core_reg_rw_raw(UINT32 isWrite, UINT32 offset, PUINT32 pVal, UINT32 ma
 	iRet = wmt_core_rx(evtBuf, evtLen, &u4Res);
 	if ((iRet) || (u4Res != evtLen)) {
 		WMT_ERR_FUNC("Rx REG_EVT fail!(%d) len(%d, %d)\n", iRet, u4Res, evtLen);
-		if (isWrite)
+		if (isWrite) {
 			WMT_INFO_FUNC("buf:[%2X,%2X,%2X,%2X,%2X] evt:[%2X,%2X,%2X,%2X,%2X]\n",
-					evtBuf[0], evtBuf[1], evtBuf[2], evtBuf[3], evtBuf[4],
-					WMT_SET_REG_WR_EVT[0], WMT_SET_REG_WR_EVT[1],
-					WMT_SET_REG_WR_EVT[2], WMT_SET_REG_WR_EVT[3],
-					WMT_SET_REG_WR_EVT[4]);
-		else
+						  evtBuf[0], evtBuf[1], evtBuf[2], evtBuf[3], evtBuf[4],
+						  WMT_SET_REG_WR_EVT[0], WMT_SET_REG_WR_EVT[1],
+						  WMT_SET_REG_WR_EVT[2], WMT_SET_REG_WR_EVT[3],
+						  WMT_SET_REG_WR_EVT[4]);
+		} else {
 			WMT_INFO_FUNC("buf:[%2X,%2X,%2X,%2X,%2X] evt:[%2X,%2X,%2X,%2X,%2X]\n",
-					evtBuf[0], evtBuf[1], evtBuf[2], evtBuf[3], evtBuf[4],
-					WMT_SET_REG_RD_EVT[0], WMT_SET_REG_RD_EVT[1],
-					WMT_SET_REG_RD_EVT[2], WMT_SET_REG_RD_EVT[3],
-					WMT_SET_REG_RD_EVT[4]);
+						  evtBuf[0], evtBuf[1], evtBuf[2], evtBuf[3], evtBuf[4],
+						  WMT_SET_REG_RD_EVT[0], WMT_SET_REG_RD_EVT[1],
+						  WMT_SET_REG_RD_EVT[2], WMT_SET_REG_RD_EVT[3],
+						  WMT_SET_REG_RD_EVT[4]);
+		}
 		mtk_wcn_stp_dbg_dump_package();
 		wmt_core_trigger_assert();
 		return -3;
@@ -1228,10 +1229,11 @@ static INT32 opfunc_pwr_off(P_WMT_OP pWmtOp)
 	ctrlPa1 = 0;
 	ctrlPa2 = 0;
 	iRet = wmt_core_ctrl(WMT_CTRL_HW_PWR_OFF, &ctrlPa1, &ctrlPa2);
-	if (iRet)
+	if (iRet) {
 		WMT_WARN_FUNC("HW_PWR_OFF fail (%d)\n", iRet);
-	else
+	} else {
 		WMT_DBG_FUNC("HW_PWR_OFF ok\n");
+	}
 
 	/*anyway, set to POWER_OFF state */
 	gMtkWmtCtx.eDrvStatus[WMTDRV_TYPE_WMT] = DRV_STS_POWER_OFF;
@@ -2046,10 +2048,11 @@ static INT32 opfunc_hw_rst(P_WMT_OP pWmtOp)
 
     /*-->PesetCombo chip*/
 	iRet = wmt_core_ctrl(WMT_CTRL_HW_RST, &ctrlPa1, &ctrlPa2);
-	if (iRet)
+	if (iRet) {
 		WMT_ERR_FUNC("WMT-CORE: -->[HW RST] fail iRet(%d)\n", iRet);
-	else
+	} else {
 		WMT_INFO_FUNC("WMT-CORE: -->[HW RST] ok\n");
+	}
 
 	/* 4  close stp */
 	ctrlPa1 = 0;
@@ -2344,7 +2347,7 @@ static INT32 wmt_core_gen2_set_mcu_clk(UINT32 kind)
 	UINT32 u4ReadSize = 0;
 	UINT8 evt_buffer[12] = { 0 };
 	MTK_WCN_BOOL fgFail;
-	PUINT8 set_mcu_clk_str[] = {
+	__attribute__((unused)) PUINT8 set_mcu_clk_str[] = {
 		"Enable GEN2 MCU PLL",
 		"SET GEN2 MCU CLK to 26M",
 		"SET GEN2 MCU CLK to 37M",
@@ -2439,11 +2442,11 @@ static INT32 wmt_core_gen2_set_mcu_clk(UINT32 kind)
 
 	} while (0);
 
-	if (fgFail == MTK_WCN_BOOL_FALSE)
+	if (fgFail == MTK_WCN_BOOL_FALSE) {
 		WMT_INFO_FUNC("wmt-core:%s: ok!\n", set_mcu_clk_str[kind]);
-	else
+	} else {
 		WMT_INFO_FUNC("wmt-core:%s: fail!\n", set_mcu_clk_str[kind]);
-
+	}
 	return fgFail;
 }
 
@@ -2454,7 +2457,7 @@ static INT32 wmt_core_gen3_set_mcu_clk(UINT32 kind)
 	UINT32 u4ReadSize = 0;
 	UINT8 evt_buffer[12] = { 0 };
 	MTK_WCN_BOOL fgFail;
-	PUINT8 set_mcu_clk_str[] = {
+	__attribute__((unused)) PUINT8 set_mcu_clk_str[] = {
 		"SET GEN3 MCU CLK to 26M",
 		"SET GEN3 MCU CLK to 46M",
 		"SET GEN3 MCU CLK to 97M",
@@ -2511,11 +2514,11 @@ static INT32 wmt_core_gen3_set_mcu_clk(UINT32 kind)
 
 	} while (0);
 
-	if (fgFail == MTK_WCN_BOOL_FALSE)
+	if (fgFail == MTK_WCN_BOOL_FALSE) {
 		WMT_INFO_FUNC("wmt-core:%s: ok!\n", set_mcu_clk_str[kind]);
-	else
+	} else {
 		WMT_INFO_FUNC("wmt-core:%s: fail!\n", set_mcu_clk_str[kind]);
-
+	}
 	return fgFail;
 }
 
@@ -2563,11 +2566,11 @@ static INT32 wmt_core_set_mcu_clk(UINT32 kind)
 
 	} while (0);
 
-	if (fgFail == MTK_WCN_BOOL_FALSE)
+	if (fgFail == MTK_WCN_BOOL_FALSE) {
 		WMT_INFO_FUNC("wmt-core:set mcu clock ok!\n");
-	else
+	} else {
 		WMT_INFO_FUNC("wmt-core:set mcu clock fail!\n");
-
+	}
 	return fgFail;
 }
 
@@ -3401,7 +3404,7 @@ done:
 static INT32 opfunc_try_pwr_off(P_WMT_OP pWmtOp)
 {
 	INT32 iRet = 0;
-	UINT32 drvType = pWmtOp->au4OpData[0];
+	__attribute__((unused)) UINT32 drvType = pWmtOp->au4OpData[0];
 
 	if (atomic_read(&g_wifi_on_off_ready) == 1) {
 		WMT_INFO_FUNC("wlan on/off procedure will be started, do not power off now.\n");

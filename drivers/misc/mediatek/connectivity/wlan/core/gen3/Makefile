@@ -12,16 +12,11 @@ KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 # ---------------------------------------------------
 # Compile Options
 # ---------------------------------------------------
-MTK_PLATFORM := $(subst ",,$(CONFIG_MTK_PLATFORM))
 ifneq ($(filter "CONSYS_6797" "CONSYS_6759" "CONSYS_6758" "CONSYS_6775" "CONSYS_6771", $(CONFIG_MTK_COMBO_CHIP)),)
 WLAN_CHIP_ID=MT6631
 else
 WLAN_CHIP_ID=MT6630
 endif
-
-$(info $$MTK_PLATFORM is [${MTK_PLATFORM}])
-$(info $$WLAN_CHIP_ID is [${WLAN_CHIP_ID}])
-
 DRIVER_BUILD_DATE=$(shell date +%Y%m%d%H%M%S)
 ccflags-y += -DDRIVER_BUILD_DATE='"$(DRIVER_BUILD_DATE)"'
 
@@ -115,7 +110,13 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/connectivity/common/
 ccflags-y += -D MTK_WCN_WMT_STP_EXP_SYMBOL_ABSTRACT
 
 MODULE_NAME := wlan_drv_gen3
+ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
+$(warning $(MODULE_NAME) build-in boot.img)
+obj-y += $(MODULE_NAME).o
+else
+$(warning $(MODULE_NAME) is kernel module)
 obj-m += $(MODULE_NAME).o
+endif
 
 # ---------------------------------------------------
 # Directory List
@@ -192,6 +193,7 @@ MGMT_OBJS := $(MGMT_DIR)ais_fsm.o \
 	     $(MGMT_DIR)hs20.o \
 	     $(MGMT_DIR)tdls.o \
 	     $(MGMT_DIR)wnm.o \
+	     $(MGMT_DIR)qosmap.o \
 	     $(MGMT_DIR)wmm.o
 # ---------------------------------------------------
 # STATS Objects List

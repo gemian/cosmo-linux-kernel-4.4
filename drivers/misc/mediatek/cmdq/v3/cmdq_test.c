@@ -6390,8 +6390,9 @@ static int _testcase_gen_task_thread(void *data)
 		cmdqCoreSetEvent(CMDQ_SYNC_TOKEN_USER_1);
 
 		msleep_interruptible(500);
+		wait_count++;
 		CMDQ_ERR("%s wait for all task done: %u\n",
-			__func__, wait_count++);
+			__func__, wait_count);
 	}
 
 	CMDQ_LOG("%s END\n", __func__);

@@ -293,7 +293,7 @@ statsParsePktInfo(P_ADAPTER_T prAdapter, PUINT_8 pucPkt, struct sk_buff *skb, UI
 	{
 		UINT_8 ucIpProto = pucEthBody[9]; /* IP header without options */
 		UINT_8 ucIpVersion = (pucEthBody[0] & IPVH_VERSION_MASK) >> IPVH_VERSION_OFFSET;
-		UINT_16 u2IpId = *(UINT_16 *) &pucEthBody[4];
+		__attribute__((unused)) UINT_16 u2IpId = *(UINT_16 *) &pucEthBody[4];
 
 #if (CFG_SUPPORT_DEBUG_STATISTICS == 1)
 		wlanPktStatusDebugTraceInfoIP(status, eventType, ucIpProto, u2IpId, pucPkt);
@@ -351,7 +351,7 @@ statsParsePktInfo(P_ADAPTER_T prAdapter, PUINT_8 pucPkt, struct sk_buff *skb, UI
 				break;
 				}
 			} else if (u2UdpSrcPort == UDP_PORT_DNS) { /* tx dns */
-				UINT_16 u2TransId = (pucBootp[0] << 8) | pucBootp[1];
+				__attribute__((unused)) UINT_16 u2TransId = (pucBootp[0] << 8) | pucBootp[1];
 
 				if (eventType == EVENT_RX) {
 					DBGLOG(RX, TRACE,
@@ -470,9 +470,9 @@ statsParsePktInfo(P_ADAPTER_T prAdapter, PUINT_8 pucPkt, struct sk_buff *skb, UI
 	}
 	case ETH_WPI_1X:
 	{
-		UINT_8 ucSubType = pucEthBody[3]; /* sub type filed*/
-		UINT_16 u2Length = *(PUINT_16)&pucEthBody[6];
-		UINT_16 u2Seq = *(PUINT_16)&pucEthBody[8];
+		__attribute__((unused)) UINT_8 ucSubType = pucEthBody[3]; /* sub type filed*/
+		__attribute__((unused)) UINT_16 u2Length = *(PUINT_16)&pucEthBody[6];
+		__attribute__((unused)) UINT_16 u2Seq = *(PUINT_16)&pucEthBody[8];
 
 		switch (eventType) {
 		case EVENT_RX:

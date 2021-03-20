@@ -1024,11 +1024,11 @@ INT32 wmt_dbg_ut_test(INT32 par1, INT32 par2, INT32 par3)
 		if (iRet == MTK_WCN_BOOL_FALSE)
 			break;
 	}
-	if (iRet == MTK_WCN_BOOL_FALSE)
+	if (iRet == MTK_WCN_BOOL_FALSE) {
 		WMT_INFO_FUNC("#### UT FAIL!!\n");
-	else
+	} else {
 		WMT_INFO_FUNC("#### UT PASS!!\n");
-
+	}
 	return iRet;
 }
 

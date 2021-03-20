@@ -40,6 +40,9 @@
 #define DFT_TAG         "[WMT-DFT]"
 #endif
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+
 #define WMT_LOUD_FUNC(fmt, arg...) \
 do { \
 	if (gWmtDbgLvl >= WMT_LOG_LOUD) \
@@ -70,6 +73,17 @@ do { \
 	if (gWmtDbgLvl >= WMT_LOG_DBG) \
 		osal_warn_print(DFT_TAG "<%s> <%d>\n", __func__, __LINE__); \
 } while (0)
+
+#else
+
+#define WMT_LOUD_FUNC(...) do { } while (false)
+#define WMT_INFO_FUNC(...) do { } while (false)
+#define WMT_WARN_FUNC(...) do { } while (false)
+#define WMT_ERR_FUNC(fmt, arg...) do { } while (false)
+#define WMT_DBG_FUNC(fmt, arg...) do { } while (false)
+#define WMT_TRC_FUNC(f) do { } while (false)
+
+#endif
 
 #endif
 

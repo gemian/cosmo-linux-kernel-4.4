@@ -756,7 +756,6 @@
 #endif
 
 #define WNM_UNIT_TEST CFG_SUPPORT_802_11V
-
 #define CFG_DRIVER_COMPOSE_ASSOC_REQ        1
 #define CFG_SUPPORT_802_11AC                1
 #define CFG_STRICT_CHECK_CAPINFO_PRIVACY    0

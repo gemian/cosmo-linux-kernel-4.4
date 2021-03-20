@@ -101,9 +101,9 @@ INT32 mtk_wcn_consys_stp_btif_close(VOID)
 {
 	INT32 iRet = 0;
 
-	if (!g_stp_btif.stpBtifId)
+	if (!g_stp_btif.stpBtifId) {
 		WMT_WARN_FUNC("NULL BTIF ID reference!\n");
-	else {
+	} else {
 		iRet = mtk_wcn_btif_close(g_stp_btif.stpBtifId);
 		if (iRet) {
 			WMT_WARN_FUNC("STP close btif fail(%d)\n", iRet);

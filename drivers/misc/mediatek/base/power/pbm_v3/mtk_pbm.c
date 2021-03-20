@@ -70,6 +70,9 @@ char log_buffer[128];
 int usedBytes;
 #endif
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+
 #define pbm_emerg(fmt, args...)		pr_emerg(fmt, ##args)
 #define pbm_alert(fmt, args...)		pr_alert(fmt, ##args)
 #define pbm_crit(fmt, args...)		pr_crit(fmt, ##args)
@@ -85,6 +88,20 @@ int usedBytes;
 		if (mt_pbm_debug)		\
 			pr_crit(fmt, ##args);	\
 	} while (0)
+
+#else
+
+#define pbm_emerg(...) do { } while (false)
+#define pbm_alert(...) do { } while (false)
+#define pbm_crit(...) do { } while (false)
+#define pbm_err(...) do { } while (false)
+#define pbm_warn(...) do { } while (false)
+#define pbm_notice(...) do { } while (false)
+#define pbm_info(...) do { } while (false)
+#define pbm_warn_limit(...) do { } while (false)
+#define pbm_debug(...) do { } while (false)
+
+#endif
 
 #define BIT_CHECK(a, b) ((a) & (1<<(b)))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -338,7 +355,7 @@ unsigned int ma_to_mw(unsigned int val)
 
 void dump_kicker_info(void)
 {
-	struct hpf *hpfmgr = &hpf_ctrl;
+	__attribute__((unused)) struct hpf *hpfmgr = &hpf_ctrl;
 
 #if 1
 	pbm_debug("(M1/F/G)=%d,%d,%d;(C/G)=%ld,%ld\n",

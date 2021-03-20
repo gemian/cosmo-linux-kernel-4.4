@@ -201,7 +201,7 @@ P_CMD_INFO_T cmdBufAllocateCmdInfo(IN P_ADAPTER_T prAdapter, IN UINT_32 u4Length
 		P_GLUE_INFO_T prGlueInfo = prAdapter->prGlueInfo;
 		P_QUE_T prCmdQue = &prGlueInfo->rCmdQueue;
 		P_QUE_T prPendingCmdQue = &prAdapter->rPendingCmdQueue;
-		P_TX_TCQ_STATUS_T prTc = &prAdapter->rTxCtrl.rTc;
+		__attribute__((unused)) P_TX_TCQ_STATUS_T prTc = &prAdapter->rTxCtrl.rTc;
 
 		fgCmdDumpIsDone = TRUE;
 		cmdBufDumpCmdQueue(prCmdQue, "waiting Tx CMD queue");

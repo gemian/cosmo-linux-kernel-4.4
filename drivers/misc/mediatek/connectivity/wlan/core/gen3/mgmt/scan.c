@@ -1827,7 +1827,7 @@ VOID scanLogEssResult(P_ADAPTER_T prAdapter)
 	if ((u4ResultNum % NUMBER_SSID_PER_LINE) != 0)
 		u4ResultNum++;
 	for (; u4Index < u4ResultNum; u4Index++) {
-		struct ESS_SCAN_RESULT_T *prEss = &prEssResult[NUMBER_SSID_PER_LINE*u4Index];
+		__attribute__((unused)) struct ESS_SCAN_RESULT_T *prEss = &prEssResult[NUMBER_SSID_PER_LINE*u4Index];
 
 		DBGLOG(SCN, INFO,
 			"%s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s; %s\n",

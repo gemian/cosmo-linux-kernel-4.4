@@ -933,7 +933,7 @@ static inline void print_state(
 	 * Vconn Source (Y/N)
 	 */
 
-	bool vdm_evt = pd_curr_is_vdm_evt(pd_port);
+	__attribute__((unused)) bool vdm_evt = pd_curr_is_vdm_evt(pd_port);
 
 #if PE_DBG_ENABLE
 	PE_DBG("%s -> %s (%c%c%c)\r\n",

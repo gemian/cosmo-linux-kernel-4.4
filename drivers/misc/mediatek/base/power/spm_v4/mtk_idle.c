@@ -1355,8 +1355,8 @@ int rgidle_enter(int cpu)
 	int ret = CPUIDLE_STATE_RG;
 
 #ifdef CONFIG_MTK_ACAO_SUPPORT
-	mtk_idle_dump_cnt_in_interval();
-	mcdi_heart_beat_log_dump();
+//	mtk_idle_dump_cnt_in_interval();
+//	mcdi_heart_beat_log_dump();
 #endif
 
 	remove_cpu_from_prefer_schedule_domain(cpu);

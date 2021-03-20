@@ -131,6 +131,7 @@ static int fts_rw_iic_drv_RDWR(struct i2c_client *client, unsigned long arg)
 	u8 __user **data_ptrs;
 	int ret = 0;
 	int i;
+	int j;
 
 	if (!access_ok(VERIFY_READ, (struct fts_rw_i2c_queue *)arg, sizeof(struct fts_rw_i2c_queue)))
 		return -EFAULT;
@@ -184,8 +185,6 @@ static int fts_rw_iic_drv_RDWR(struct i2c_client *client, unsigned long arg)
 	}
 
 	if (ret < 0) {
-		int j;
-
 		for (j = 0; j < i; ++j)
 			kfree(i2c_rw_msg[j].buf);
 		kfree(data_ptrs);
@@ -204,6 +203,11 @@ static int fts_rw_iic_drv_RDWR(struct i2c_client *client, unsigned long arg)
 						     i2c_rw_msg[i].buf, i2c_rw_msg[i].length);
 		}
 	}
+
+	for (j = 0; j < i; ++j)
+		kfree(i2c_rw_msg[j].buf);
+	kfree(data_ptrs);
+	kfree(i2c_rw_msg);
 
 	return ret;
 

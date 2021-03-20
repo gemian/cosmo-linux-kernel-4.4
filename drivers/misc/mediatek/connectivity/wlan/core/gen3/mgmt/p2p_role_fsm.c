@@ -17,7 +17,7 @@
 
 #if 1
 /*lint -save -e64 Type mismatch */
-static PUINT_8 apucDebugP2pRoleState[P2P_ROLE_STATE_NUM] = {
+__attribute__((unused)) static PUINT_8 apucDebugP2pRoleState[P2P_ROLE_STATE_NUM] = {
 	(PUINT_8) DISP_STRING("P2P_ROLE_STATE_IDLE"),
 	(PUINT_8) DISP_STRING("P2P_ROLE_STATE_SCAN"),
 	(PUINT_8) DISP_STRING("P2P_ROLE_STATE_REQING_CHANNEL"),

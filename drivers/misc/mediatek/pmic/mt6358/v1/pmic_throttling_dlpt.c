@@ -1020,9 +1020,9 @@ int dlpt_notify_handler(void *unused)
 		{
 
 			PMICLOG("[DLPT] is running\n");
-			if (ptim_rac_val_avg == 0)
+			if (ptim_rac_val_avg == 0) {
 				pr_info("[DLPT] ptim_rac_val_avg=0 , skip\n");
-			else {
+			} else {
 				if (upmu_get_rgs_chrdet())
 					g_imix_val = get_dlpt_imix_charging();
 				else
@@ -1034,7 +1034,7 @@ int dlpt_notify_handler(void *unused)
 				exec_dlpt_callback(g_imix_val);
 				pre_ui_soc = cur_ui_soc;
 
-				pr_info("[DLPT_final] %d,%d,%d,%d,%d\n",
+				PMICLOG("[DLPT_final] %d,%d,%d,%d,%d\n",
 					g_imix_val, pre_ui_soc, cur_ui_soc,
 					diff_ui_soc, IMAX_MAX_VALUE);
 			}
