@@ -15,6 +15,7 @@
 #define __CMDQ_RECORD_H__
 
 #include <linux/types.h>
+#include <linux/uaccess.h>
 #include "cmdq_def.h"
 #include "cmdq_core.h"
 
@@ -52,6 +53,12 @@ struct cmdq_sub_function {
 	CMDQ_VARIABLE *out_arg;
 };
 
+struct task_private {
+	void *node_private_data;
+	bool internal;		/* internal used only task */
+	bool ignore_timeout;	/* timeout is expected */
+};
+
 struct cmdqRecStruct {
 	u64 engineFlag;
 	s32 scenario;
@@ -76,6 +83,16 @@ struct cmdqRecStruct {
 
 	/* profile marker */
 	struct cmdqProfileMarkerStruct profileMarker;
+
+	/* register backup at end of task */
+	u32 reg_count;
+	u32 *reg_values;
+	dma_addr_t reg_values_pa;
+	/* user space data */
+	u32 user_reg_count;
+	u32 user_token;
+	struct TaskStruct *mdp_meta_task;
+	bool get_meta_task;
 
 	/* task property */
 	void *prop_addr;
@@ -956,7 +973,40 @@ extern "C" {
  */
 	s32 cmdq_task_update_property(struct cmdqRecStruct *handle, void *prop_addr, u32 prop_size);
 
+/* MDP META use */
+	struct op_meta;
+	struct mdp_submit;
 
+	s32 cmdq_op_write_reg_ex(struct cmdqRecStruct *handle, u32 addr,
+		CMDQ_VARIABLE argument, u32 mask);
+	s32 cmdq_op_acquire(struct cmdqRecStruct *handle,
+		enum CMDQ_EVENT_ENUM event);
+	s32 cmdq_op_write_from_reg(struct cmdqRecStruct *handle,
+		u32 write_reg, u32 from_reg);
+	s32 cmdq_alloc_write_addr(u32 count, dma_addr_t *paStart,
+		u32 clt, void *fp);
+	s32 cmdq_free_write_addr(dma_addr_t paStart, u32 clt);
+	s32 cmdq_free_write_addr_by_node(u32 clt, void *fp);
+	s32 cmdq_mdp_handle_create(struct cmdqRecStruct **handle_out);
+	s32 cmdq_mdp_handle_flush(struct cmdqRecStruct *handle);
+	s32 cmdq_mdp_wait(struct cmdqRecStruct *handle, void *temp);
+	s32 cmdq_mdp_handle_sec_setup(struct cmdqSecDataStruct *secData,
+		struct cmdqRecStruct *handle);
+	void cmdq_mdp_release_task_by_file_node(void *file_node);
+	s32 cmdq_mdp_update_sec_addr_index(struct cmdqRecStruct *handle,
+		u32 sec_handle, u32 index, u32 instr_index);
+	u32 cmdq_mdp_handle_get_instr_count(struct cmdqRecStruct *handle);
+	void cmdq_mdp_meta_replace_sec_addr(struct op_meta *metas,
+		struct mdp_submit *user_job, struct cmdqRecStruct *handle);
+
+#define CMDQ_CLT_MDP 0
+#define CMDQ_MAX_USER_PROP_SIZE		(1024)
+#define MDP_META_IN_LEGACY_V2
+#define CMDQ_SYSTRACE_BEGIN(fmt, args...) do { \
+} while (0)
+
+#define CMDQ_SYSTRACE_END() do { \
+} while (0)
 
 #ifdef __cplusplus
 }

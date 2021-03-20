@@ -596,7 +596,7 @@ static int Audio_ModemPcm_ASRC_Set(struct snd_kcontrol *kcontrol,
 {
 	PRWARNLOG("+%s()\n", __func__);
 	if (ucontrol->value.enumerated.item[0] > ARRAY_SIZE(InterModemPcm_ASRC_Switch)) {
-		pr_err("return -EINVAL\n");
+		pr_warn("return -EINVAL\n");
 		return -EINVAL;
 	}
 	mModemPcm_ASRC_on = (bool) ucontrol->value.integer.value[0];
@@ -842,7 +842,7 @@ static int mtk_routing_pcm_open(struct snd_pcm_substream *substream)
 	ret = snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 					 &constraints_sample_rates);
 	if (ret < 0)
-		pr_err("snd_pcm_hw_constraint_integer failed\n");
+		pr_warn("snd_pcm_hw_constraint_integer failed\n");
 
 	/* print for hw pcm information */
 	PRWARNLOG("mtk_routing_pcm_open runtime rate = %d channels = %d\n", runtime->rate,

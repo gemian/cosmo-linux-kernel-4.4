@@ -51,6 +51,7 @@ dma_addr_t wrDMABuf_pa = 0;
 #endif
 #endif
 
+#define AEON_RESUME
 
 int st_trigger = 0;
 u16 g_st_results[6];
@@ -4399,7 +4400,8 @@ static int solomon_probe(struct i2c_client *client,
 		SOLOMON_WARNNING("Create workqueue failed");
 		goto create_workqueue_failed;
 	}
-
+	
+	i2c_set_clientdata(client, ftdev);
 	ftdev->touch_mode = TOUCH_POINT_MODE;
 	misc_dev = ftdev;
 
@@ -4664,6 +4666,7 @@ static void solomon_suspend(struct device *dev)
 static void solomon_resume(struct device *dev)
 {
 	struct solomon_device *ftdev = NULL;
+	
 #if defined(SUPPORT_LPM) && defined(SUPPORT_SELF_TEST)
 	u16	st_val;
 	int err1 = 0;
@@ -4673,10 +4676,18 @@ static void solomon_resume(struct device *dev)
 	int err = 0;
 #endif	/* SUPPORT_LPM */
 
+	#ifdef AEON_RESUME
+	ftdev = misc_dev;
+	if (!ftdev) {
+		pr_err("solomon_resume null pointer!!\n");
+		return ;
+	}
+	#else
 	if (dev != NULL)
 		ftdev = dev_get_drvdata(dev);
 	else
 		ftdev = misc_dev;
+	#endif
 
 	SOLOMON_WARNNING(">>>> %s solomon resume start!!!", __func__);
 

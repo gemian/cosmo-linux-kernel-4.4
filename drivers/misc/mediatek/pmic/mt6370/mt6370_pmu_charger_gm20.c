@@ -289,7 +289,8 @@ static int mt6370_set_aicr(struct mtk_charger_info *mchr_info, void *data);
 static int mt6370_get_aicr(struct mtk_charger_info *mchr_info, void *data);
 static int mt6370_set_ichg(struct mtk_charger_info *mchr_info, void *data);
 static int mt6370_get_ichg(struct mtk_charger_info *mchr_info, void *data);
-static int mt6370_enable_charging(struct mtk_charger_info *mchr_info, void *data);
+static int mt6370_enable_charging(struct mtk_charger_info *mchr_info,
+	void *data);
 
 static inline void mt6370_chg_irq_set_flag(
 	struct mt6370_pmu_charger_data *chg_data, u8 *irq, u8 mask)
@@ -516,7 +517,8 @@ static int mt6370_chg_sw_workaround(struct mt6370_pmu_charger_data *chg_data)
 		chg_data->zcv = 5000 * (zcv_data[0] * 256 + zcv_data[1]);
 
 		DBGLOGINFO(chg_data->dev, "%s: zcv = (0x%02X, 0x%02X, %dmV)\n",
-			__func__, zcv_data[0], zcv_data[1], chg_data->zcv / 1000);
+			__func__, zcv_data[0], zcv_data[1],
+			chg_data->zcv / 1000);
 	}
 
 	/* Trigger any ADC before disabling ZCV */
@@ -636,18 +638,24 @@ static int mt6370_get_adc(struct mt6370_pmu_charger_data *chg_data,
 
 		/* Add for debug */
 		/* ZCV, reg0x10 */
-		ret = mt6370_pmu_reg_read(chg_data->chip, MT6370_PMU_REG_OSCCTRL);
+		ret = mt6370_pmu_reg_read(chg_data->chip,
+						MT6370_PMU_REG_OSCCTRL);
 		if (ret < 0)
-			dev_err(chg_data->dev, "%s: read reg0x10 failed\n", __func__);
+			dev_err(chg_data->dev, "%s: read reg0x10 failed\n",
+						__func__);
 		else
-			dev_err(chg_data->dev, "%s: reg0x10 = 0x%02X\n", __func__, ret);
+			dev_err(chg_data->dev, "%s: reg0x10 = 0x%02X\n",
+						__func__, ret);
 
 		/* TS auto sensing */
-		ret = mt6370_pmu_reg_read(chg_data->chip, MT6370_PMU_REG_CHGHIDDENCTRL15);
+		ret = mt6370_pmu_reg_read(chg_data->chip,
+						MT6370_PMU_REG_CHGHIDDENCTRL15);
 		if (ret < 0)
-			dev_err(chg_data->dev, "%s: read reg0x3E failed\n", __func__);
+			dev_err(chg_data->dev, "%s: read reg0x3E failed\n",
+						__func__);
 		else
-			dev_err(chg_data->dev, "%s: reg0x3E = 0x%02X\n", __func__, ret);
+			dev_err(chg_data->dev, "%s: reg0x3E = 0x%02X\n",
+						__func__, ret);
 
 	}
 	mdelay(1);
@@ -666,11 +674,12 @@ static int mt6370_get_adc(struct mt6370_pmu_charger_data *chg_data,
 		__func__, adc_sel, adc_data[0], adc_data[1]);
 
 	dev_dbg(chg_data->dev,
-		"%s: 0x4e~51 = (0x%02X, 0x%02X, 0x%02X, 0x%02X)\n", __func__,
+		"%s: 0x4E~51 = (0x%02X, 0x%02X, 0x%02X, 0x%02X)\n", __func__,
 		adc_data[2], adc_data[3], adc_data[4], adc_data[5]);
 
 	/* Calculate ADC value */
-	adc_result = (adc_data[0] * 256 + adc_data[1]) * mt6370_adc_unit[adc_sel]
+	adc_result = (adc_data[0] * 256
+		+ adc_data[1]) * mt6370_adc_unit[adc_sel]
 		+ mt6370_adc_offset[adc_sel];
 
 out_unlock_all:
@@ -1043,7 +1052,7 @@ static int _mt6370_set_ichg(struct mt6370_pmu_charger_data *chg_data, u32 uA)
 		reg_ichg << MT6370_SHIFT_ICHG
 	);
 
-	if (chg_data->chip->chip_vid == 0xf0)
+	if (chg_data->chip->chip_vid == 0xF0)
 		goto bypass_ieoc_workaround;
 	/* Workaround to make IEOC accurate */
 	if (uA < 900000) /* 900mA */
@@ -1224,14 +1233,16 @@ static int mt6370_run_aicl(struct mtk_charger_info *mchr_info, void *data)
 		(struct mt6370_pmu_charger_data *)mchr_info;
 
 	/* Check whether MIVR loop is active */
-	if (!(chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1] & MT6370_MASK_CHG_MIVR)) {
+	if (!(chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1]
+					& MT6370_MASK_CHG_MIVR)) {
 		DBGLOGINFO(chg_data->dev, "%s: mivr loop is not active\n", __func__);
 		return 0;
 	}
 	DBGLOGINFO(chg_data->dev, "%s: mivr loop is active\n", __func__);
 
 	/* Clear chg mivr event */
-	mt6370_chg_irq_clr_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1],
+	mt6370_chg_irq_clr_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1],
 		MT6370_MASK_CHG_MIVR);
 
 	ret = mt6370_get_mivr(chg_data, &mivr);
@@ -1251,7 +1262,8 @@ static int mt6370_run_aicl(struct mtk_charger_info *mchr_info, void *data)
 		goto out;
 
 	/* Clear AICL measurement IRQ */
-	mt6370_chg_irq_clr_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ5],
+	mt6370_chg_irq_clr_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ5],
 		MT6370_MASK_CHG_AICLMEASI);
 
 	ret = mt6370_pmu_reg_set_bit(chg_data->chip, MT6370_PMU_REG_CHGCTRL14,
@@ -1287,7 +1299,8 @@ en_mivrirq:
 	return ret;
 }
 
-static int mt6370_set_ircmp_resistor(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_set_ircmp_resistor(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	u32 uV = 0;
@@ -1301,7 +1314,8 @@ static int mt6370_set_ircmp_resistor(struct mtk_charger_info *mchr_info, void *d
 	return ret;
 }
 
-static int mt6370_set_ircmp_vclamp(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_set_ircmp_vclamp(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	u32 uV = 0;
@@ -1315,7 +1329,8 @@ static int mt6370_set_ircmp_vclamp(struct mtk_charger_info *mchr_info, void *dat
 	return ret;
 }
 
-static int mt6370_set_error_state(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_set_error_state(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	struct mt6370_pmu_charger_data *chg_data =
@@ -1327,7 +1342,8 @@ static int mt6370_set_error_state(struct mtk_charger_info *mchr_info, void *data
 	return ret;
 }
 
-static int mt6370_get_charger_type(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_get_charger_type(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	struct mt6370_pmu_charger_data *chg_data =
@@ -1339,7 +1355,8 @@ static int mt6370_get_charger_type(struct mtk_charger_info *mchr_info, void *dat
 	mt6370_set_usbsw_state(chg_data, MT6370_USBSW_CHG);
 
 	/* Clear attachi event */
-	mt6370_chg_irq_clr_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_QCIRQ],
+	mt6370_chg_irq_clr_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_QCIRQ],
 		MT6370_MASK_ATTACHI);
 
 	/* Turn off/on USB charger detection to retrigger bc1.2 */
@@ -1360,7 +1377,7 @@ static int mt6370_get_charger_type(struct mtk_charger_info *mchr_info, void *dat
 		chg_data->chg_type = CHARGER_UNKNOWN;
 	}
 
-	*(enum charger_type *)data = chg_data->chg_type;
+	*(CHARGER_TYPE *)data = chg_data->chg_type;
 	pr_info("%s: chg_type = %d\n", __func__, chg_data->chg_type);
 	return ret;
 }
@@ -1664,7 +1681,8 @@ static int mt6370_enable_otg(struct mtk_charger_info *mchr_info, void *data)
 
 	if (en) {
 		ret = mt6370_pmu_reg_test_bit(chg_data->chip,
-			MT6370_PMU_REG_CHGCTRL1, MT6370_SHIFT_OPA_MODE, &en_otg);
+			MT6370_PMU_REG_CHGCTRL1,
+			MT6370_SHIFT_OPA_MODE, &en_otg);
 		if (ret < 0 || !en_otg) {
 			dev_err(chg_data->dev, "%s: failed, ret = %d\n",
 				__func__, ret);
@@ -1725,7 +1743,8 @@ static int mt6370_enable_otg(struct mtk_charger_info *mchr_info, void *data)
 }
 
 #if 0
-static int mt6370_enable_discharge(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_enable_discharge(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0, i = 0;
 	const u32 check_dischg_max = 3;
@@ -1797,7 +1816,8 @@ static int mt6370_set_pep_current_pattern(struct mtk_charger_info *mchr_info,
 	return ret;
 }
 
-static int mt6370_set_pep20_reset(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_set_pep20_reset(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	u32 mivr = 4500;	/* mA */
@@ -1871,7 +1891,8 @@ static int mt6370_set_pep20_current_pattern(struct mtk_charger_info *mchr_info,
 	return ret;
 }
 
-static int mt6370_set_pep20_efficiency_table(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_set_pep20_efficiency_table(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	pep20_profile_t *profile = (pep20_profile_t *)data;
@@ -1967,7 +1988,8 @@ static int mt6370_kick_wdt(struct mtk_charger_info *mchr_info, void *data)
 	return ret;
 }
 
-static int mt6370_enable_direct_charge(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_enable_direct_charge(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	bool en = *((bool *)data);
@@ -2127,7 +2149,8 @@ static int mt6370_set_dc_ibusoc(struct mtk_charger_info *mchr_info,
 	return ret;
 }
 
-static int mt6370_enable_dc_vbatov(struct mtk_charger_info *mchr_info, void *data)
+static int mt6370_enable_dc_vbatov(struct mtk_charger_info *mchr_info,
+	void *data)
 {
 	int ret = 0;
 	bool en = *((bool *)data);
@@ -2175,8 +2198,8 @@ static int mt6370_set_dc_vbatov(struct mtk_charger_info *mchr_info,
 	if (i == ARRAY_SIZE(mt6370_dc_vbatov_lvl))
 		reg_vbatov = i;
 
-	DBGLOGINFO(chg_data->dev, "%s: vbatov = %dmV (0x%02X)\n", __func__, uV / 1000,
-		reg_vbatov);
+	DBGLOGINFO(chg_data->dev, "%s: vbatov = %dmV (0x%02X)\n", __func__,
+		uV / 1000, reg_vbatov);
 
 	ret = mt6370_pmu_reg_update_bits(
 		chg_data->chip,
@@ -2306,16 +2329,18 @@ static int mt6370_dump_register(struct mtk_charger_info *mchr_info,
 		}
 	}
 
-	DBGLOGINFO(chg_data->dev,
-		"%s: ICHG = %dmA, AICR = %dmA, MIVR = %dmV, IEOC = %dmA, CV = %dmV\n",
-		__func__, ichg / 100, aicr / 100, mivr / 1000, ieoc / 1000, cv / 1000);
+	DBGLOGINFO(chg_data->dev,	"%s: ICHG = %dmA, AICR = %dmA, MIVR = %dmV,
+		IEOC = %dmA, CV = %dmV\n", __func__, ichg / 100, aicr / 100,
+		mivr / 1000, ieoc / 1000, cv / 1000);
 
 	DBGLOGINFO(chg_data->dev,
 		"%s: VSYS = %dmV, VBAT = %dmV, IBAT = %dmA, IBUS = %dmA\n",
-		__func__, adc_vsys / 1000, adc_vbat / 1000, adc_ibat / 1000, adc_ibus / 1000);
+		__func__, adc_vsys / 1000, adc_vbat / 1000, adc_ibat / 1000,
+		adc_ibus / 1000);
 
-	DBGLOGINFO(chg_data->dev, "%s: CHG_EN = %d, CHG_STATUS = %s, CHG_STAT = 0x%02X\n",
-		__func__, chg_en, mt6370_chg_status_name[chg_status], chg_stat);
+	DBGLOGINFO(chg_data->dev, "%s: CHG_EN = %d, CHG_STATUS = %s,
+		CHG_STAT = 0x%02X\n", __func__, chg_en,
+		mt6370_chg_status_name[chg_status], chg_stat);
 
 	ret = 0;
 	return ret;
@@ -2525,7 +2550,8 @@ static irqreturn_t mt6370_pmu_chg_mivr_irq_handler(int irq, void *data)
 		goto out;
 	}
 
-	mt6370_chg_irq_set_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1],
+	mt6370_chg_irq_set_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ1],
 		MT6370_MASK_CHG_MIVR);
 
 out:
@@ -2688,7 +2714,8 @@ static irqreturn_t mt6370_pmu_chg_aiclmeasi_irq_handler(int irq, void *data)
 		(struct mt6370_pmu_charger_data *)data;
 
 	DBGLOGINFO(chg_data->dev, "%s\n", __func__);
-	mt6370_chg_irq_set_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ5],
+	mt6370_chg_irq_set_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_CHGIRQ5],
 		MT6370_MASK_CHG_AICLMEASI);
 
 	wake_up_interruptible(&chg_data->wait_queue);
@@ -2870,7 +2897,8 @@ static irqreturn_t mt6370_pmu_attachi_irq_handler(int irq, void *data)
 			"%s: detect apple/samsung ta failed, ret = %d\n",
 			__func__, ret);
 #endif
-	mt6370_chg_irq_set_flag(chg_data, &chg_data->irq_flag[MT6370_CHG_IRQIDX_QCIRQ],
+	mt6370_chg_irq_set_flag(chg_data,
+		&chg_data->irq_flag[MT6370_CHG_IRQIDX_QCIRQ],
 		MT6370_MASK_ATTACHI);
 
 	wake_up_interruptible(&chg_data->wait_queue);
@@ -3309,14 +3337,16 @@ static const mtk_charger_intf mt6370_mchr_intf[CHARGING_CMD_NUMBER] = {
 	[CHARGING_CMD_SET_BOOST_CURRENT_LIMIT] = mt6370_set_otg_current_limit,
 	[CHARGING_CMD_SET_TA_CURRENT_PATTERN] = mt6370_set_pep_current_pattern,
 	[CHARGING_CMD_SET_TA20_RESET] = mt6370_set_pep20_reset,
-	[CHARGING_CMD_SET_TA20_CURRENT_PATTERN] = mt6370_set_pep20_current_pattern,
+	[CHARGING_CMD_SET_TA20_CURRENT_PATTERN] =
+		mt6370_set_pep20_current_pattern,
 	[CHARGING_CMD_SET_ERROR_STATE] = mt6370_set_error_state,
 	[CHARGING_CMD_GET_CURRENT] = mt6370_get_ichg,
 	[CHARGING_CMD_GET_INPUT_CURRENT] = mt6370_get_aicr,
 	[CHARGING_CMD_GET_CHARGER_TEMPERATURE] = mt6370_get_tchg,
 	[CHARGING_CMD_GET_CHARGING_STATUS] = mt6370_is_charging_done,
 	[CHARGING_CMD_GET_IS_POWER_PATH_ENABLE] = mt6370_is_power_path_enable,
-	[CHARGING_CMD_GET_IS_SAFETY_TIMER_ENABLE] = mt6370_is_safety_timer_enable,
+	[CHARGING_CMD_GET_IS_SAFETY_TIMER_ENABLE] =
+		mt6370_is_safety_timer_enable,
 	[CHARGING_CMD_RESET_WATCH_DOG_TIMER] = mt6370_kick_wdt,
 	[CHARGING_CMD_GET_IBUS] = mt6370_get_ibus,
 	[CHARGING_CMD_GET_VBUS] = mt6370_get_vbus,
@@ -3331,7 +3361,8 @@ static const mtk_charger_intf mt6370_mchr_intf[CHARGING_CMD_NUMBER] = {
 	[CHARGING_CMD_GET_IS_DC_ENABLE] = mt6370_is_dc_enable,
 	[CHARGING_CMD_SET_IRCMP_RESISTOR] = mt6370_set_ircmp_resistor,
 	[CHARGING_CMD_SET_IRCMP_VOLT_CLAMP] = mt6370_set_ircmp_vclamp,
-	[CHARGING_CMD_SET_PEP20_EFFICIENCY_TABLE] = mt6370_set_pep20_efficiency_table,
+	[CHARGING_CMD_SET_PEP20_EFFICIENCY_TABLE] =
+		mt6370_set_pep20_efficiency_table,
 	[CHARGING_CMD_GET_CHARGER_TYPE] = mt6370_get_charger_type,
 	[CHARGING_CMD_ENABLE_CHR_TYPE_DET] = mt6370_enable_chg_type_det,
 
@@ -3343,10 +3374,13 @@ static const mtk_charger_intf mt6370_mchr_intf[CHARGING_CMD_NUMBER] = {
 	[CHARGING_CMD_SET_HV_THRESHOLD] = mtk_charger_set_hv_threshold,
 	[CHARGING_CMD_GET_HV_STATUS] = mtk_charger_get_hv_status,
 	[CHARGING_CMD_GET_BATTERY_STATUS] = mtk_charger_get_battery_status,
-	[CHARGING_CMD_GET_CHARGER_DET_STATUS] = mtk_charger_get_charger_det_status,
-	[CHARGING_CMD_GET_IS_PCM_TIMER_TRIGGER] = mtk_charger_get_is_pcm_timer_trigger,
+	[CHARGING_CMD_GET_CHARGER_DET_STATUS] =
+		mtk_charger_get_charger_det_status,
+	[CHARGING_CMD_GET_IS_PCM_TIMER_TRIGGER] =
+		mtk_charger_get_is_pcm_timer_trigger,
 	[CHARGING_CMD_SET_PLATFORM_RESET] = mtk_charger_set_platform_reset,
-	[CHARGING_CMD_GET_PLATFORM_BOOT_MODE] = mtk_charger_get_platform_boot_mode,
+	[CHARGING_CMD_GET_PLATFORM_BOOT_MODE] =
+		mtk_charger_get_platform_boot_mode,
 	[CHARGING_CMD_SET_POWER_OFF] = mtk_charger_set_power_off,
 	[CHARGING_CMD_GET_POWER_SOURCE] = mtk_charger_get_power_source,
 	[CHARGING_CMD_GET_CSDAC_FALL_FLAG] = mtk_charger_get_csdac_full_flag,
@@ -3480,7 +3514,7 @@ MODULE_DESCRIPTION("MediaTek MT6370 PMU Charger");
 MODULE_VERSION(MT6370_PMU_CHARGER_DRV_VERSION);
 
 /*
- * Version Note
+ * Release Note
  * 1.1.12_MTK
  * (1) Enable charger before sending PE+/PE+20 pattern
  * (2) Select to use reg AICR as input limit -> disable HW limit

@@ -21,6 +21,8 @@
 #include <linux/of.h>
 #include "inc/mt6370_pmu.h"
 
+#define MT6370_PMU_LDO_DRV_VERSION	"1.0.1_MTK"
+
 //#define DEBUG_LOGGING
 #ifdef DEBUG_LOGGING
 #define DBGLOGINFO(...) dev_info(__VA_ARGS__)
@@ -97,7 +99,7 @@ static void mt6370_pmu_ldo_irq_register(struct platform_device *pdev)
 }
 
 static int mt6370_ldo_list_voltage(struct regulator_dev *rdev,
-		unsigned selector)
+		unsigned int selector)
 {
 	int vout = 0;
 
@@ -108,7 +110,7 @@ static int mt6370_ldo_list_voltage(struct regulator_dev *rdev,
 }
 
 static int mt6370_ldo_set_voltage_sel(
-		struct regulator_dev *rdev, unsigned selector)
+		struct regulator_dev *rdev, unsigned int selector)
 {
 	struct mt6370_pmu_ldo_data *info = rdev_get_drvdata(rdev);
 	const int count = rdev->desc->n_voltages;
@@ -267,6 +269,8 @@ static int mt6370_pmu_ldo_probe(struct platform_device *pdev)
 	struct mt6370_pmu_ldo_platform_data pdata, mask;
 	int ret;
 
+	DBGLOGINFO("%s: (%s)\n", __func__, MT6370_PMU_LDO_DRV_VERSION);
+
 	ldo_data = devm_kzalloc(&pdev->dev, sizeof(*ldo_data), GFP_KERNEL);
 	if (!ldo_data)
 		return -ENOMEM;
@@ -302,9 +306,9 @@ static int mt6370_pmu_ldo_probe(struct platform_device *pdev)
 	mt6370_pmu_ldo_irq_register(pdev);
 
 	DBGLOGINFO(&pdev->dev, "%s successfully\n", __func__);
-	return ret;
+	return 0;
 probe_err:
-	dev_err(&pdev->dev, "%s: register mtk regulator failed\n", __func__);
+	dev_info(&pdev->dev, "%s: register mtk regulator failed\n", __func__);
 	return ret;
 }
 
@@ -342,13 +346,13 @@ module_platform_driver(mt6370_pmu_ldo);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek MT6370 PMU Vib LDO");
-MODULE_VERSION("1.0.1_G");
+MODULE_VERSION(MT6370_PMU_LDO_DRV_VERSION);
 
 /*
- * Revision Note
- * 1.0.1
+ * Release Note
+ * 1.0.1_MTK
  * (1) Remove force OSC on/off for enable/disable LDO
  *
- * 1.0.0
+ * 1.0.0_MTK
  * Initial release
  */

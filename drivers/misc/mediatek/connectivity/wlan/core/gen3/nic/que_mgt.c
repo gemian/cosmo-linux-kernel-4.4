@@ -3689,7 +3689,7 @@ qmAddRxBaEntry(IN P_ADAPTER_T prAdapter,
 
 VOID qmDelRxBaEntry(IN P_ADAPTER_T prAdapter, IN UINT_8 ucStaRecIdx, IN UINT_8 ucTid, IN BOOLEAN fgFlushToHost)
 {
-	P_RX_BA_ENTRY_T prRxBaEntry;
+	P_RX_BA_ENTRY_T prRxBaEntry = NULL;
 	P_STA_RECORD_T prStaRec;
 	P_SW_RFB_T prFlushedPacketList = NULL;
 	P_QUE_MGT_T prQM = &prAdapter->rQM;
@@ -3707,7 +3707,9 @@ VOID qmDelRxBaEntry(IN P_ADAPTER_T prAdapter, IN UINT_8 ucStaRecIdx, IN UINT_8 u
 #endif
 
 	/* Remove the BA entry for the same (STA, TID) tuple if it exists */
-	prRxBaEntry = prStaRec->aprRxReorderParamRefTbl[ucTid];
+	if (ucTid < CFG_RX_MAX_BA_TID_NUM) {
+		prRxBaEntry = prStaRec->aprRxReorderParamRefTbl[ucTid];
+	}
 
 	if (prRxBaEntry) {
 

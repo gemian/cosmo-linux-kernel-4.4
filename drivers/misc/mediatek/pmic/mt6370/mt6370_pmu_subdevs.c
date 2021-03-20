@@ -133,7 +133,7 @@ static inline int mt6370_pmu_init_nonof_subdevs(struct mt6370_pmu_chip *chip)
 			return -ENOMEM;
 		for (j = 0; j < pdata->num_irq_enable[i]; j++) {
 			ret = mt6370_pmu_get_virq_number(chip,
-							 pdata->irq_enable[i][j]);
+						pdata->irq_enable[i][j]);
 			res[j].name = pdata->irq_enable[i][j];
 			res[j].start = res[j].end = ret;
 		}
