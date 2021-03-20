@@ -123,7 +123,7 @@
 #define MATRIX_SCAN_NANO_SECONDS_FAST 1000000
 
 KEY_STATE key_map[] = {
-//	name		code				val	row		col
+//      name        code          val        row        col
         {"1",       KEY_1,          0, KROW_P0_0, KROW_P1_0},
         {"U",       KEY_U,          0, KROW_P0_1, KROW_P1_0},
         {"S",       KEY_S,          0, KROW_P0_2, KROW_P1_0},
