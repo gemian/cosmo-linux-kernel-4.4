@@ -646,7 +646,7 @@ void arch_reset(char mode, const char *cmd)
 	console_unlock();
 	if (cmd && !strcmp(cmd, "charger")) {
 		/* do nothing */
-	} else if (cmd && !strcmp(cmd, "recovery")) {
+	} else if (cmd && !strcmp(cmd, "android-recovery")) {
 		rtc_mark_recovery();
 	} else if (cmd && !strcmp(cmd, "bootloader")) {
 		rtc_mark_fast();
