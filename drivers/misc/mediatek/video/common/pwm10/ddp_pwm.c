@@ -171,6 +171,7 @@ static void disp_pwm_backlight_status(enum disp_pwm_id_t id, bool is_power_on)
 
 	if (g_pwm_led_mode == MT65XX_LED_MODE_CUST_BLS_PWM) {
 		/* Read PWM value from register */
+		PWM_NOTICE("pwm10 disp_pwm_backlight_status(%d) en_off:%d, con_1_off:%d", id, DISP_REG_GET(reg_base + DISP_PWM_EN_OFF), DISP_REG_GET(reg_base + DISP_PWM_CON_1_OFF));
 		if (DISP_REG_GET(reg_base + DISP_PWM_EN_OFF) > 0)
 			high_width = DISP_REG_GET(reg_base + DISP_PWM_CON_1_OFF) >> 16;
 		else
@@ -182,14 +183,15 @@ static void disp_pwm_backlight_status(enum disp_pwm_id_t id, bool is_power_on)
 		else
 			high_width = 0;
 	}
+	PWM_NOTICE("pwm10 disp_pwm_backlight_status(%p) mode:%d, h_w:%d", reg_base, g_pwm_led_mode, high_width);
 
 	if (is_power_on == true && high_width > 0) {
-		PWM_NOTICE("backlight is on (%d), ddp_pwm power:(%d), pwm id: (%d)",
+		PWM_NOTICE("pwm10 backlight is on (%d), ddp_pwm power:(%d), pwm id: (%d)",
 			high_width, is_power_on, index);
 		/* Change status when backlight turns on */
 		atomic_set(&g_pwm_is_power_on[index], 1);
 	} else if (is_power_on == false) {
-		PWM_NOTICE("backlight is off, ddp_pwm power:(%d), pwm id: (%d)",
+		PWM_NOTICE("pwm10 backlight is off, ddp_pwm power:(%d), pwm id: (%d)",
 			is_power_on, index);
 		/* Save vlaue before clock off */
 		atomic_set(&g_pwm_value_before_power_off[index], high_width);
@@ -269,7 +271,7 @@ static int disp_pwm_config_init(enum DISP_MODULE_ENUM module, struct disp_ddp_pa
 	atomic_set(&g_pwm_is_change_state[index], 1);
 
 	if (config_instantly == true) {
-		/* Set PWM clock division instantly to avoid frequency change dramaticly */
+		/* Set PWM clock division instantly to avoid frequency change dramatically */
 		DISP_REG_MASK(NULL, reg_base + DISP_PWM_DEBUG, 0x3, 0x3);
 		DISP_REG_MASK(NULL, reg_base + DISP_PWM_CON_0_OFF, pwm_div << 16, (0x3ff << 16));
 		udelay(40);
@@ -345,7 +347,11 @@ static void disp_pwm_set_drverIC_en(enum disp_pwm_id_t id, int enabled)
 			mt_set_gpio_out(GPIO_LCM_LED_EN, GPIO_OUT_ONE);
 		else
 			mt_set_gpio_out(GPIO_LCM_LED_EN, GPIO_OUT_ZERO);
+
+		PWM_NOTICE("pwm10 disp_pwm_set_drverIC_en %d",enabled);
 	}
+#else
+	PWM_NOTICE("pwm10 disp_pwm_set_drverIC_en empty");
 #endif
 }
 
@@ -363,7 +369,7 @@ static void disp_pwm_set_enabled(struct cmdqRecStruct *cmdq, enum disp_pwm_id_t 
 #endif
 			/* Always use CPU to config DISP_PWM EN to avoid race condition */
 			DISP_REG_MASK(NULL, reg_base + DISP_PWM_EN_OFF, 0x1, 0x1);
-			PWM_MSG("disp_pwm_set_enabled: PWN_EN (by CPU) = 0x1");
+			PWM_NOTICE("pwm10 disp_pwm_set_enabled: PWN_EN (by CPU) = 0x1");
 
 			disp_pwm_set_drverIC_en(id, enabled);
 		} else {
@@ -377,7 +383,7 @@ static void disp_pwm_set_enabled(struct cmdqRecStruct *cmdq, enum disp_pwm_id_t 
 			/* Always use CPU to config DISP_PWM EN to avoid race condition */
 			DISP_REG_MASK(NULL, reg_base + DISP_PWM_EN_OFF, 0x0, 0x1);
 #endif
-			PWM_MSG("disp_pwm_set_enabled: PWN_EN (by CPU) = 0x0");
+			PWM_NOTICE("pwm10 disp_pwm_set_enabled: PWN_EN (by CPU) = 0x0");
 
 			disp_pwm_set_drverIC_en(id, enabled);
 		}
@@ -539,7 +545,7 @@ int disp_pwm_set_backlight_cmdq(enum disp_pwm_id_t id, int level_1024, void *cmd
 			disp_pwm_log(level_1024, MSG_LOG);
 			if (old_pwm != level_1024) {
 				/* Print information if backlight is changed */
-				PWM_NOTICE("disp_pwm_set_backlight_cmdq(id = 0x%x, level_1024 = %d), old = %d",
+				PWM_NOTICE("pwm10 disp_pwm_set_backlight_cmdq(id = 0x%x, level_1024 = %d), old = %d",
 					id, level_1024, old_pwm);
 			}
 		} else {

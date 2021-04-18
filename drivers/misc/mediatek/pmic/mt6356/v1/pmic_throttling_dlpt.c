@@ -1069,7 +1069,7 @@ int get_dlpt_imix_spm(void)
 	if (ui_soc != pre_ui_soc) {
 		pre_ui_soc = ui_soc;
 	} else {
-		pmic_spm_crit2("[dlpt_R] pre_SOC=%d SOC=%d skip\n", pre_ui_soc, ui_soc);
+		pmic_spm_crit2("[dlpt_R.6356] pre_SOC=%d SOC=%d skip\n", pre_ui_soc, ui_soc);
 		return 0;
 	}
 

@@ -72,7 +72,7 @@ static void ppm_lcmoff_status_change_cb(bool enable)
 {
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_ver("@%s: lcmoff policy status changed to %d\n", __func__, enable);
+	ppm_ver("ppmv3 @%s: lcmoff policy status changed to %d\n", __func__, enable);
 
 	FUNC_EXIT(FUNC_LV_POLICY);
 }
@@ -83,7 +83,7 @@ static void ppm_lcmoff_switch(int onoff)
 
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_info("@%s: onoff = %d\n", __func__, onoff);
+	ppm_info("ppmv3 @%s: onoff = %d\n", __func__, onoff);
 
 	ppm_lock(&lcmoff_policy.lock);
 
@@ -121,7 +121,7 @@ static int ppm_lcmoff_fb_notifier_callback(struct notifier_block *self, unsigned
 		return 0;
 
 	blank = *(int *)evdata->data;
-	ppm_ver("@%s: blank = %d, event = %lu\n", __func__, blank, event);
+	ppm_ver("ppmv3 @%s: blank = %d, event = %lu\n", __func__, blank, event);
 
 	switch (blank) {
 	/* LCM ON */
@@ -147,7 +147,7 @@ static struct notifier_block ppm_lcmoff_fb_notifier = {
 
 static int ppm_lcmoff_min_freq_proc_show(struct seq_file *m, void *v)
 {
-	seq_printf(m, "lcmoff_min_freq = %d KHz\n", lcmoff_min_freq);
+	seq_printf(m, "ppmv3 lcmoff_min_freq = %d KHz\n", lcmoff_min_freq);
 
 	return 0;
 }
@@ -165,7 +165,7 @@ static ssize_t ppm_lcmoff_min_freq_proc_write(struct file *file, const char __us
 	if (!kstrtouint(buf, 10, &freq))
 		lcmoff_min_freq = freq;
 	else
-		ppm_err("@%s: Invalid input!\n", __func__);
+		ppm_err("ppmv3 @%s: Invalid input!\n", __func__);
 
 	free_page((unsigned long)buf);
 	return count;
@@ -191,20 +191,20 @@ static int __init ppm_lcmoff_policy_init(void)
 	/* create procfs */
 	for (i = 0; i < ARRAY_SIZE(entries); i++) {
 		if (!proc_create(entries[i].name, S_IRUGO | S_IWUSR | S_IWGRP, policy_dir, entries[i].fops)) {
-			ppm_err("%s(), create /proc/ppm/policy/%s failed\n", __func__, entries[i].name);
+			ppm_err("ppmv3 %s(), create /proc/ppm/policy/%s failed\n", __func__, entries[i].name);
 			ret = -EINVAL;
 			goto out;
 		}
 	}
 
 	if (fb_register_client(&ppm_lcmoff_fb_notifier)) {
-		ppm_err("@%s: lcmoff policy register FB client failed!\n", __func__);
+		ppm_err("ppmv3 @%s: lcmoff policy register FB client failed!\n", __func__);
 		ret = -EINVAL;
 		goto out;
 	}
 
 	if (ppm_main_register_policy(&lcmoff_policy)) {
-		ppm_err("@%s: lcmoff policy register failed\n", __func__);
+		ppm_err("ppmv3 @%s: lcmoff policy register failed\n", __func__);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -215,7 +215,7 @@ static int __init ppm_lcmoff_policy_init(void)
 	lcmoff_policy.is_enabled = false;
 #endif
 
-	ppm_info("@%s: register %s done!\n", __func__, lcmoff_policy.name);
+	ppm_info("ppmv3 @%s: register %s done!\n", __func__, lcmoff_policy.name);
 
 out:
 	FUNC_EXIT(FUNC_LV_POLICY);

@@ -405,7 +405,7 @@ static struct notifier_block tpd_fb_notifier;
 /* use fb_notifier */
 static void touch_resume_workqueue_callback(struct work_struct *work)
 {
-	TPD_DEBUG("GTP touch_resume_workqueue_callback\n");
+	TPD_DMESG("GTP touch_resume_workqueue_callback\n");
 	g_tpd_drv->resume(NULL);
 	tpd_suspend_flag = 0;
 }
@@ -426,7 +426,7 @@ static int tpd_fb_notifier_callback(struct notifier_block *self, unsigned long e
 	TPD_DMESG("fb_notify(blank=%d)\n", blank);
 	switch (blank) {
 	case FB_BLANK_UNBLANK:
-		TPD_DMESG("LCD ON Notify\n");
+		TPD_DMESG("LCD ON Notify drv: %d, sflag: %d\n", g_tpd_drv, tpd_suspend_flag);
 		if (g_tpd_drv && tpd_suspend_flag) {
 			err = queue_work(touch_resume_workqueue, &touch_resume_work);
 			if (!err) {

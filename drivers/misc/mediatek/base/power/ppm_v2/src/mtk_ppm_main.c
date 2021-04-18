@@ -126,7 +126,7 @@ int ppm_main_freq_to_idx(unsigned int cluster_id,
 	FUNC_ENTER(FUNC_LV_MAIN);
 
 	if (!ppm_main_info.cluster_info[cluster_id].dvfs_tbl) {
-		ppm_err("@%s: DVFS table of cluster %d is not exist!\n", __func__, cluster_id);
+		ppm_err("ppmv2 @%s: DVFS table of cluster %d is not exist!\n", __func__, cluster_id);
 		idx = (relation == CPUFREQ_RELATION_L)
 			? get_cluster_min_cpufreq_idx(cluster_id) : get_cluster_max_cpufreq_idx(cluster_id);
 		return idx;
@@ -159,12 +159,12 @@ int ppm_main_freq_to_idx(unsigned int cluster_id,
 	}
 
 	if (idx == -1) {
-		ppm_err("@%s: freq %d KHz not found in DVFS table of cluster %d\n", __func__, freq, cluster_id);
+		ppm_err("ppmv2 @%s: freq %d KHz not found in DVFS table of cluster %d\n", __func__, freq, cluster_id);
 		idx = (relation == CPUFREQ_RELATION_L)
 			? get_cluster_min_cpufreq_idx(cluster_id)
 			: get_cluster_max_cpufreq_idx(cluster_id);
 	} else
-		ppm_ver("@%s: The idx of %d KHz in cluster %d is %d\n", __func__, freq, cluster_id, idx);
+		ppm_ver("ppmv2 @%s: The idx of %d KHz in cluster %d is %d\n", __func__, freq, cluster_id, idx);
 
 	FUNC_EXIT(FUNC_LV_MAIN);
 
@@ -258,9 +258,9 @@ static void ppm_main_update_limit(struct ppm_policy_data *p,
 {
 	FUNC_ENTER(FUNC_LV_MAIN);
 
-	ppm_ver("Policy --> (%d)(%d)(%d)(%d)\n", p_limit->min_cpufreq_idx,
+	ppm_ver("ppmv2 Policy --> (%d)(%d)(%d)(%d)\n", p_limit->min_cpufreq_idx,
 		p_limit->max_cpufreq_idx, p_limit->min_cpu_core, p_limit->max_cpu_core);
-	ppm_ver("Original --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
+	ppm_ver("ppmv2 Original --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
 		c_limit->min_cpufreq_idx, c_limit->max_cpufreq_idx, c_limit->min_cpu_core,
 		c_limit->max_cpu_core, c_limit->has_advise_freq, c_limit->advise_cpufreq_idx,
 		c_limit->has_advise_core, c_limit->advise_cpu_core);
@@ -344,7 +344,7 @@ static void ppm_main_update_limit(struct ppm_policy_data *p,
 	if (c_limit->min_cpufreq_idx < c_limit->max_cpufreq_idx)
 		c_limit->min_cpufreq_idx = c_limit->max_cpufreq_idx;
 
-	ppm_ver("Result --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
+	ppm_ver("ppmv2 Result --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
 		c_limit->min_cpufreq_idx, c_limit->max_cpufreq_idx, c_limit->min_cpu_core,
 		c_limit->max_cpu_core, c_limit->has_advise_freq, c_limit->advise_cpufreq_idx,
 		c_limit->has_advise_core, c_limit->advise_cpu_core);
@@ -371,7 +371,7 @@ static void ppm_main_calc_new_limit(void)
 			pos->is_limit_updated = false;
 
 			for_each_ppm_clusters(i) {
-				ppm_ver("@%s: applying policy %s cluster %d limit...\n", __func__, pos->name, i);
+				ppm_ver("ppmv2 @%s: applying policy %s cluster %d limit...\n", __func__, pos->name, i);
 				ppm_main_update_limit(pos,
 					&c_req->cpu_limit[i], &pos->req.limit[i]);
 			}
@@ -416,7 +416,7 @@ static void ppm_main_calc_new_limit(void)
 		ppm_cobra_update_core_limit(i, c_req->cpu_limit[i].max_cpu_core);
 #endif
 
-		ppm_ver("Final Result: [%d] --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
+		ppm_ver("ppmv2 Final Result: [%d] --> (%d)(%d)(%d)(%d) (%d)(%d)(%d)(%d)\n",
 			i,
 			c_req->cpu_limit[i].min_cpufreq_idx,
 			c_req->cpu_limit[i].max_cpufreq_idx,
@@ -484,18 +484,18 @@ static void ppm_main_calc_new_limit(void)
 		struct ppm_policy_data *pos;
 		unsigned int i = 0;
 
-		ppm_err("all cluster max core limit are 0, dump all active policy data...\n");
+		ppm_err("ppmv2 all cluster max core limit are 0, dump all active policy data...\n");
 
 		/* dump all policy data for debugging */
-		ppm_info("Current state = %s\n", ppm_get_power_state_name(ppm_main_info.cur_power_state));
+		ppm_info("ppmv2 Current state = %s\n", ppm_get_power_state_name(ppm_main_info.cur_power_state));
 
 		list_for_each_entry(pos, &ppm_main_info.policy_list, link) {
 			ppm_lock(&pos->lock);
 			if (pos->is_activated) {
-				ppm_info("[%d] %s: perf_idx = %d, pwr_bdgt = %d\n",
+				ppm_info("ppmv2 [%d] %s: perf_idx = %d, pwr_bdgt = %d\n",
 						pos->policy, pos->name, pos->req.perf_idx, pos->req.power_budget);
 				for_each_ppm_clusters(i) {
-					ppm_info("cluster %d: (%d)(%d)(%d)(%d)\n", i,
+					ppm_info("ppmv2 cluster %d: (%d)(%d)(%d)(%d)\n", i,
 						pos->req.limit[i].min_cpufreq_idx, pos->req.limit[i].max_cpufreq_idx,
 						pos->req.limit[i].min_cpu_core, pos->req.limit[i].max_cpu_core);
 				}
@@ -519,7 +519,7 @@ static enum ppm_power_state ppm_main_hica_state_decision(void)
 
 	FUNC_ENTER(FUNC_LV_MAIN);
 
-	ppm_ver("@%s: Current state = %s\n", __func__, ppm_get_power_state_name(cur_hica_state));
+	ppm_ver("ppmv2 @%s: Current state = %s\n", __func__, ppm_get_power_state_name(cur_hica_state));
 
 	final_state = cur_hica_state;
 
@@ -587,7 +587,7 @@ static enum ppm_power_state ppm_main_hica_state_decision(void)
 		ppm_unlock(&pos->lock);
 	}
 
-	ppm_ver("@%s: final state (before) = %s, min_power_budget = %d\n",
+	ppm_ver("ppmv2 @%s: final state (before) = %s, min_power_budget = %d\n",
 		__func__, ppm_get_power_state_name(final_state), ppm_main_info.min_power_budget);
 
 	/* decide final state */
@@ -598,7 +598,7 @@ static enum ppm_power_state ppm_main_hica_state_decision(void)
 	}
 
 skip_pwr_check:
-	ppm_ver("@%s: final state (after) = %s\n", __func__, ppm_get_power_state_name(final_state));
+	ppm_ver("ppmv2 @%s: final state (after) = %s\n", __func__, ppm_get_power_state_name(final_state));
 
 	FUNC_EXIT(FUNC_LV_MAIN);
 
@@ -620,7 +620,7 @@ static void ppm_main_log_print(unsigned int policy_mask, unsigned int min_power_
 		filter_log = false;
 		log_cnt = 1;
 		if (filter_cnt) {
-			ppm_info("Shrink %d PPM logs from last %lld ms!\n", filter_cnt, delta1);
+			ppm_info("ppmv2 Shrink %d PPM logs from last %lld ms!\n", filter_cnt, delta1);
 			filter_cnt = 0;
 		}
 	} else if (log_cnt < LOG_MAX_CNT) {
@@ -633,9 +633,9 @@ static void ppm_main_log_print(unsigned int policy_mask, unsigned int min_power_
 	}
 
 	if (!filter_log)
-		ppm_info("(0x%x)(%d)(%d)%s\n", policy_mask, min_power_budget, root_cluster, msg);
+		ppm_info("ppmv2 (0x%x)(%d)(%d)%s\n", policy_mask, min_power_budget, root_cluster, msg);
 	else
-		ppm_ver("(0x%x)(%d)(%d)%s\n", policy_mask, min_power_budget, root_cluster, msg);
+		ppm_ver("ppmv2 (0x%x)(%d)(%d)%s\n", policy_mask, min_power_budget, root_cluster, msg);
 
 	prev_log_time = cur_time;
 }
@@ -754,7 +754,7 @@ int mt_ppm_main(void)
 					(idx > c_req->cpu_limit[PPM_CLUSTER_LL].max_cpufreq_idx)
 					? idx : c_req->cpu_limit[PPM_CLUSTER_LL].max_cpufreq_idx;
 
-				ppm_ver("boost LL freq = %dKHz(idx = %d) when 1LL only!\n",
+				ppm_ver("ppmv2 boost LL freq = %dKHz(idx = %d) when 1LL only!\n",
 					ppm_main_info.min_freq_1LL, idx);
 			}
 		}
@@ -783,11 +783,11 @@ int mt_ppm_main(void)
 
 		/* print debug message */
 		if (prev_state != next_state)
-			ptr += snprintf(ptr, LOG_BUF_SIZE, "[%s]->[%s]: ",
+			ptr += snprintf(ptr, LOG_BUF_SIZE, "ppmv2 [%s]->[%s]: ",
 						ppm_get_power_state_name(prev_state),
 						ppm_get_power_state_name(next_state));
 		else
-			ptr += snprintf(ptr, LOG_BUF_SIZE, "[%s]: ", ppm_get_power_state_name(next_state));
+			ptr += snprintf(ptr, LOG_BUF_SIZE, "ppmv2 [%s]: ", ppm_get_power_state_name(next_state));
 
 		for (i = 0; i < c_req->cluster_num; i++) {
 			ptr += snprintf(ptr, LOG_BUF_SIZE, "(%d)(%d)(%d)(%d) ",
@@ -881,7 +881,7 @@ int mt_ppm_main(void)
 					ppm_main_info.client_info[PPM_CLIENT_DVFS].limit_cb(*c_req);
 				delta = ktime_to_us(ktime_sub(ktime_get(), now));
 				ppm_profile_update_client_exec_time(PPM_CLIENT_DVFS, delta);
-				ppm_dbg(TIME_PROFILE, "Done! notify dvfs only! time = %lld us\n", delta);
+				ppm_dbg(TIME_PROFILE, "ppmv2 Done! notify dvfs only! time = %lld us\n", delta);
 				goto nofity_end;
 			} else if (notify_hps && !notify_dvfs) {
 				if (log_print)
@@ -895,7 +895,7 @@ int mt_ppm_main(void)
 					force_update_to_hps = 1;
 				delta = ktime_to_us(ktime_sub(ktime_get(), now));
 				ppm_profile_update_client_exec_time(PPM_CLIENT_HOTPLUG, delta);
-				ppm_dbg(TIME_PROFILE, "Done! notify hps only! time = %lld us\n", delta);
+				ppm_dbg(TIME_PROFILE, "ppmv2 Done! notify hps only! time = %lld us\n", delta);
 				goto nofity_end;
 			}
 		}
@@ -916,7 +916,7 @@ int mt_ppm_main(void)
 				(c_req->cpu_limit[i].max_cpufreq_idx < last_req->cpu_limit[i].max_cpufreq_idx) &&
 				(c_req->cpu_limit[i].max_cpu_core < last_req->cpu_limit[i].max_cpu_core)) {
 					notify_hps_first = 1;
-					ppm_ver("notify hps first for cluster %d: F(%d)->(%d) C(%d)->(%d)\n",
+					ppm_ver("ppmv2 notify hps first for cluster %d: F(%d)->(%d) C(%d)->(%d)\n",
 						i,
 						last_req->cpu_limit[i].max_cpufreq_idx,
 						c_req->cpu_limit[i].max_cpufreq_idx,
@@ -938,7 +938,7 @@ int mt_ppm_main(void)
 					force_update_to_hps = 1;
 				delta = ktime_to_us(ktime_sub(ktime_get(), now));
 				ppm_profile_update_client_exec_time(i, delta);
-				ppm_dbg(TIME_PROFILE, "%s callback done! time = %lld us\n",
+				ppm_dbg(TIME_PROFILE, "ppmv2 %s callback done! time = %lld us\n",
 					(i == PPM_CLIENT_DVFS) ? "DVFS" : "HPS", delta);
 			}
 		} else {
@@ -950,7 +950,7 @@ int mt_ppm_main(void)
 					force_update_to_hps = 1;
 				delta = ktime_to_us(ktime_sub(ktime_get(), now));
 				ppm_profile_update_client_exec_time(i, delta);
-				ppm_dbg(TIME_PROFILE, "%s callback done! time = %lld us\n",
+				ppm_dbg(TIME_PROFILE, "ppmv2 %s callback done! time = %lld us\n",
 					(i == PPM_CLIENT_DVFS) ? "DVFS" : "HPS", delta);
 			}
 		}
@@ -1026,7 +1026,7 @@ static int ppm_main_suspend(struct device *dev)
 {
 	FUNC_ENTER(FUNC_LV_MODULE);
 
-	ppm_info("%s: suspend callback in\n", __func__);
+	ppm_info("ppmv2 %s: suspend callback in\n", __func__);
 
 	ppm_lock(&ppm_main_info.lock);
 	ppm_main_send_request_for_suspend();
@@ -1042,7 +1042,7 @@ static int ppm_main_resume(struct device *dev)
 {
 	FUNC_ENTER(FUNC_LV_MODULE);
 
-	ppm_info("%s: resume callback in\n", __func__);
+	ppm_info("ppmv2 %s: resume callback in\n", __func__);
 
 	ppm_lock(&ppm_main_info.lock);
 	ppm_main_info.is_in_suspend = false;
@@ -1063,13 +1063,13 @@ static int ppm_main_data_init(void)
 
 	/* get cluster num */
 	ppm_main_info.cluster_num = (unsigned int)arch_get_nr_clusters();
-	ppm_info("@%s: cluster_num = %d\n", __func__, ppm_main_info.cluster_num);
+	ppm_info("ppmv2 @%s: cluster_num = %d\n", __func__, ppm_main_info.cluster_num);
 
 	/* init cluster info (DVFS table will be updated after DVFS driver registered) */
 	ppm_main_info.cluster_info =
 		kzalloc(ppm_main_info.cluster_num * sizeof(*ppm_main_info.cluster_info), GFP_KERNEL);
 	if (!ppm_main_info.cluster_info) {
-		ppm_err("@%s: fail to allocate memory for cluster_info!\n", __func__);
+		ppm_err("ppmv2 @%s: fail to allocate memory for cluster_info!\n", __func__);
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -1082,7 +1082,7 @@ static int ppm_main_data_init(void)
 		arch_get_cluster_cpus(&cpu_mask, i);
 		ppm_main_info.cluster_info[i].core_num = cpumask_weight(&cpu_mask);
 		ppm_main_info.cluster_info[i].cpu_id = cpumask_first(&cpu_mask);
-		ppm_info("@%s: ppm cluster %d -> core_num = %d, cpu_id = %d\n",
+		ppm_info("ppmv2 @%s: ppm cluster %d -> core_num = %d, cpu_id = %d\n",
 				__func__,
 				ppm_main_info.cluster_info[i].cluster_id,
 				ppm_main_info.cluster_info[i].core_num,
@@ -1094,7 +1094,7 @@ static int ppm_main_data_init(void)
 	ppm_main_info.client_req.cpu_limit =
 		kzalloc(ppm_main_info.cluster_num * sizeof(*ppm_main_info.client_req.cpu_limit), GFP_KERNEL);
 	if (!ppm_main_info.client_req.cpu_limit) {
-		ppm_err("@%s: fail to allocate memory client_req!\n", __func__);
+		ppm_err("ppmv2 @%s: fail to allocate memory client_req!\n", __func__);
 		ret = -ENOMEM;
 		goto allocate_req_mem_fail;
 	}
@@ -1102,7 +1102,7 @@ static int ppm_main_data_init(void)
 	ppm_main_info.last_req.cpu_limit =
 		kzalloc(ppm_main_info.cluster_num * sizeof(*ppm_main_info.last_req.cpu_limit), GFP_KERNEL);
 	if (!ppm_main_info.last_req.cpu_limit) {
-		ppm_err("@%s: fail to allocate memory for last_req!\n", __func__);
+		ppm_err("ppmv2 @%s: fail to allocate memory for last_req!\n", __func__);
 		ret = -ENOMEM;
 		goto allocate_last_req_mem_fail;
 	}
@@ -1155,7 +1155,7 @@ static int ppm_main_data_init(void)
 	}
 #endif
 
-	ppm_info("@%s: done!\n", __func__);
+	ppm_info("ppmv2 @%s: done!\n", __func__);
 
 	FUNC_EXIT(FUNC_LV_MAIN);
 
@@ -1199,7 +1199,7 @@ static int ppm_main_pdrv_probe(struct platform_device *pdev)
 {
 	FUNC_ENTER(FUNC_LV_MODULE);
 
-	ppm_info("@%s: ppm probe done!\n", __func__);
+	ppm_info("ppmv2 @%s: ppm probe done!\n", __func__);
 
 	FUNC_EXIT(FUNC_LV_MODULE);
 
@@ -1224,7 +1224,7 @@ static int __init ppm_main_init(void)
 	/* ppm data init */
 	ret = ppm_main_data_init();
 	if (ret) {
-		ppm_err("fail to init ppm data @ %s()\n", __func__);
+		ppm_err("ppmv2 fail to init ppm data @ %s()\n", __func__);
 		goto fail;
 	}
 
@@ -1240,23 +1240,23 @@ static int __init ppm_main_init(void)
 	/* register platform device/driver */
 	ret = platform_device_register(&ppm_main_info.ppm_pdev);
 	if (ret) {
-		ppm_err("fail to register ppm device @ %s()\n", __func__);
+		ppm_err("ppmv2 fail to register ppm device @ %s()\n", __func__);
 		goto fail;
 	}
 
 	ret = platform_driver_register(&ppm_main_info.ppm_pdrv);
 	if (ret) {
-		ppm_err("fail to register ppm driver @ %s()\n", __func__);
+		ppm_err("ppmv2 fail to register ppm driver @ %s()\n", __func__);
 		goto reg_platform_driver_fail;
 	}
 
 	if (ppm_profile_init()) {
-		ppm_err("@%s: ppm_profile_init fail!\n", __func__);
+		ppm_err("ppmv2 @%s: ppm_profile_init fail!\n", __func__);
 		ret = -EFAULT;
 		goto profile_init_fail;
 	}
 
-	ppm_info("ppm driver init done!\n");
+	ppm_info("ppmv2 driver init done!\n");
 
 	return ret;
 
@@ -1268,7 +1268,7 @@ reg_platform_driver_fail:
 
 fail:
 	ppm_main_info.is_enabled = false;
-	ppm_err("ppm driver init fail!\n");
+	ppm_err("ppmv2 driver init fail!\n");
 
 	FUNC_EXIT(FUNC_LV_MODULE);
 

@@ -60,7 +60,7 @@ static void ppm_lcmoff_update_limit_cb(enum ppm_power_state new_state)
 
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_ver("@%s: lcmoff policy update limit for new state = %s\n",
+	ppm_ver("ppmv2 @%s: lcmoff policy update limit for new state = %s\n",
 		__func__, ppm_get_power_state_name(new_state));
 
 	ppm_hica_set_default_limit_by_state(new_state, &lcmoff_policy);
@@ -81,7 +81,7 @@ static void ppm_lcmoff_status_change_cb(bool enable)
 {
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_ver("@%s: lcmoff policy status changed to %d\n", __func__, enable);
+	ppm_ver("ppmv2 @%s: lcmoff policy status changed to %d\n", __func__, enable);
 
 	FUNC_EXIT(FUNC_LV_POLICY);
 }
@@ -90,7 +90,7 @@ static void ppm_lcmoff_mode_change_cb(enum ppm_mode mode)
 {
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_ver("@%s: ppm mode changed to %d\n", __func__, mode);
+	ppm_ver("ppmv2 @%s: ppm mode changed to %d\n", __func__, mode);
 
 	FUNC_EXIT(FUNC_LV_POLICY);
 }
@@ -101,7 +101,7 @@ static void ppm_lcmoff_switch(int onoff)
 
 	FUNC_ENTER(FUNC_LV_POLICY);
 
-	ppm_info("@%s: onoff = %d\n", __func__, onoff);
+	ppm_info("ppmv2 @%s: onoff = %d\n", __func__, onoff);
 
 	ppm_lock(&lcmoff_policy.lock);
 
@@ -141,7 +141,7 @@ static int ppm_lcmoff_fb_notifier_callback(struct notifier_block *self, unsigned
 		return 0;
 
 	blank = *(int *)evdata->data;
-	ppm_ver("@%s: blank = %d, event = %lu\n", __func__, blank, event);
+	ppm_ver("ppmv2 @%s: blank = %d, event = %lu\n", __func__, blank, event);
 
 	switch (blank) {
 	/* LCM ON */
@@ -172,18 +172,18 @@ static int __init ppm_lcmoff_policy_init(void)
 	FUNC_ENTER(FUNC_LV_POLICY);
 
 	if (fb_register_client(&ppm_lcmoff_fb_notifier)) {
-		ppm_err("@%s: lcmoff policy register FB client failed!\n", __func__);
+		ppm_err("ppmv2 @%s: lcmoff policy register FB client failed!\n", __func__);
 		ret = -EINVAL;
 		goto out;
 	}
 
 	if (ppm_main_register_policy(&lcmoff_policy)) {
-		ppm_err("@%s: lcmoff policy register failed\n", __func__);
+		ppm_err("ppmv2 @%s: lcmoff policy register failed\n", __func__);
 		ret = -EINVAL;
 		goto out;
 	}
 
-	ppm_info("@%s: register %s done!\n", __func__, lcmoff_policy.name);
+	ppm_info("ppmv2 @%s: register %s done!\n", __func__, lcmoff_policy.name);
 
 out:
 	FUNC_EXIT(FUNC_LV_POLICY);

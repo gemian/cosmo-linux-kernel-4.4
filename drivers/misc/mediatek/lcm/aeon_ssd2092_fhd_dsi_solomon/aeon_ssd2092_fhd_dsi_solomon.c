@@ -571,23 +571,26 @@ static int lp3101_write_byte(kal_uint8 addr, kal_uint8 value)
 
 static void lcm_init_power(void)
 {
+	printk("SSD2092 lcm_init_power\n");
 	display_bias_enable();
 }
 
 static void lcm_suspend_power(void)
 {
+	printk("SSD2092 lcm_suspend_power\n");
 	display_bias_disable();
 }
 
 static void lcm_resume_power(void)
 {
+	printk("SSD2092 lcm_resume_power\n");
 	SET_RESET_PIN(0);
 	display_bias_enable();
 }
  
 static void lcm_poweron(void)
 {
-	printk("====wys===lcm_poweron=start====\n");
+	printk("SSD2092 lcm_poweron=start====\n");
 	SET_RESET_PIN(0);
 	//aeon_gpio_set("aeon_lcd_bias_enp1");
 	//aeon_gpio_set("aeon_lcd_bias_enn1");
@@ -602,17 +605,19 @@ static void lcm_poweron(void)
 
 	SET_RESET_PIN(1);
 	MDELAY(20);	
-	printk("====wys===lcm_poweron==end====\n");
+	printk("SSD2092 lcm_poweron==end====\n");
 }
 
 static void lcm_init(void)
 {
+	printk("SSD2092 lcm_init enter!\n");
 	push_table(0,init_setting, sizeof(init_setting) / sizeof(struct LCM_setting_table), 1);
+	printk("SSD2092 lcm_init end!\n");
 }
 
 static void lcm_suspend(void)
 {
-	printk(" SSD2092 lcm_suspend enter!\n");
+	printk("SSD2092 lcm_suspend enter!\n");
 
 	push_table(0, lcm_suspend_setting, sizeof(lcm_suspend_setting) / sizeof(struct LCM_setting_table), 1);
 	MDELAY(10);
@@ -620,21 +625,19 @@ static void lcm_suspend(void)
 	SET_RESET_PIN(0);
 	//aeon_gpio_set("aeon_lcd_bias_enn0");
 	//aeon_gpio_set("aeon_lcd_bias_enp0");
-	printk(" SSD2092 lcm_suspend end!\n");
+	printk("SSD2092 lcm_suspend end!\n");
 }
 
 static void lcm_resume(void)
 {
 	lcm_poweron();
 	lcm_init();
-	printk("====wys===lcm_resume==end====\n");
+	printk("SSD2092 lcm_resume\n");
 }
 
 
 static unsigned int lcm_compare_id(void)
 {
-
-
 
 #ifdef BUILD_LK
 	unsigned int id0,id1,id2,id3;

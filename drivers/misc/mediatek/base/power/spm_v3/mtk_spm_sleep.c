@@ -802,7 +802,7 @@ unsigned int spm_go_to_sleep(u32 spm_flags, u32 spm_data)
 	mt_cirq_enable();
 #endif
 
-	spm_crit2("sec = %u, wakesrc = 0x%x (%u)(%u)\n",
+	spm_crit2("v3 sec = %u, wakesrc = 0x%x (%u)(%u)\n",
 		  sec, pwrctrl->wake_src, is_cpu_pdn(pwrctrl->pcm_flags),
 		  is_infra_pdn(pwrctrl->pcm_flags));
 

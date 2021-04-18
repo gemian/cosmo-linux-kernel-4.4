@@ -1280,7 +1280,7 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 			*/
 			/*ret = primary_display_suspend();*/
 			if (ret < 0)
-				DDPPR_ERR("primary display suspend failed\n");
+				DDPPR_ERR("primary display suspend failed - mt71vx1283\n");
 			DISPDBG("[FB Driver] leave MTKFB_POWEROFF\n");
 
 			is_early_suspended = TRUE;	/* no care */
@@ -2891,7 +2891,7 @@ static void mtkfb_early_suspend(void)
 	ret = primary_display_suspend();
 
 	if (ret < 0) {
-		DDPPR_ERR("primary display suspend failed\n");
+		DDPPR_ERR("primary display suspend failed - mt71vx2894\n");
 		return;
 	}
 

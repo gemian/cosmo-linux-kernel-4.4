@@ -534,7 +534,7 @@ static void lcm_get_params(LCM_PARAMS *params)
 #else
 	params->dsi.mode = BURST_VDO_MODE;//BURST_VDO_MODE;
 #endif
-	LCM_LOGI("lcm_get_params lcm_dsi_mode %d\n", lcm_dsi_mode);
+	LCM_LOGI("NT36672 lcm_get_params lcm_dsi_mode %d\n", lcm_dsi_mode);
 	params->dsi.switch_mode_enable = 0;
 
 	/* DSI */
@@ -603,7 +603,7 @@ static void lcm_resume_power(void)
 static void lcm_poweron(void)
 {
 
-	printk("====wys===lcm_poweron=start====\n");
+	printk("NT36672 lcm_poweron=start====\n");
 
 
 	SET_RESET_PIN(0);
@@ -620,31 +620,33 @@ static void lcm_poweron(void)
 
 	SET_RESET_PIN(1);
 	MDELAY(20);	
-	printk("====wys===lcm_poweron==end====\n");
+	printk("NT36672 lcm_poweron==end====\n");
 }
 
 static void lcm_init(void)
 {
+	printk("NT36672 lcm_init enter!\n");
 	push_table(0,init_setting, sizeof(init_setting) / sizeof(struct LCM_setting_table), 1);
+	printk("NT36672 lcm_init end!\n");
 }
 
 static void lcm_suspend(void)
 {
-	printk(" NT36672 lcm_suspend enter!\n");
+	printk("NT36672 lcm_suspend enter!\n");
 
 	push_table(0, lcm_suspend_setting, sizeof(lcm_suspend_setting) / sizeof(struct LCM_setting_table), 1);
 	MDELAY(10);
 	
   //aeon_gpio_set("aeon_lcd_bias_enn0");
   //aeon_gpio_set("aeon_lcd_bias_enp0");
-	printk(" SSD2092 lcm_suspend end!\n");
+	printk("NT36672 lcm_suspend end!\n");
 }
 
 static void lcm_resume(void)
 {
 	lcm_poweron();
 	lcm_init();
-	printk("====wys===lcm_resume==end====\n");
+	printk("NT36672 lcm_resume==end====\n");
 }
 
 
@@ -656,7 +658,7 @@ static unsigned int lcm_compare_id(void)
 	unsigned int id=0;
 	unsigned int id1=0;
 	unsigned int lcm_id=0;   
-        printk("nt36672,%s().\n", __func__); 
+        printk("NT36672 %s().\n", __func__);
 		
 	array[0]=0x00043902;
 	array[1]=0x9983FFB9;// page enable

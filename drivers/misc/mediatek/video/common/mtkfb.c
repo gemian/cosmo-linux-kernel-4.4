@@ -1024,7 +1024,7 @@ static int mtkfb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg
 		/* cci400_sel_for_ddp(); */
 		ret = primary_display_suspend();
 		if (ret < 0)
-			DISPERR("primary display suspend failed\n");
+			DISPERR("primary display suspend failed - vcmtkfb1027\n");
 
 		pr_debug("[FB Driver] leave MTKFB_POWEROFF\n");
 
@@ -2549,7 +2549,7 @@ static int mtkfb_blank_suspend(void)
 	ret = primary_display_suspend();
 
 	if (ret < 0) {
-		DISPERR("primary display suspend failed\n");
+		DISPERR("primary display suspend failed - vcmtkfb2552\n");
 		return ret;
 	}
 	pr_debug("[FB Driver] leave early_suspend\n");
