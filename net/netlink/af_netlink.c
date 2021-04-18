@@ -87,6 +87,13 @@ struct listeners {
 #define NETLINK_F_LISTEN_ALL_NSID	0x10
 #define NETLINK_F_CAP_ACK		0x20
 
+//#define DEBUG_LOGGING
+#ifdef DEBUG_LOGGING
+#define DBGLOGINFO(...) pr_notice(__VA_ARGS__)
+#else
+#define DBGLOGINFO(...) do { } while (false)
+#endif
+
 static inline int netlink_is_kernel(struct sock *sk)
 {
 	return nlk_sk(sk)->flags & NETLINK_F_KERNEL_SOCKET;
@@ -1284,6 +1291,14 @@ int netlink_unicast(struct sock *ssk, struct sk_buff *skb,
 	struct sock *sk;
 	int err;
 	long timeo;
+
+	// prevent null pointer access from crashing kernel
+	// - this is not needed by mainline LTS so presumably the real bug is elsewhere?
+	if (ssk == NULL) {
+		DBGLOGINFO("netlink_unicast: warning: ssk is null in %s:%s line %d\n",
+			__FILE__, __FUNCTION__, __LINE__);
+		return PTR_ERR(ssk);
+	}
 
 	skb = netlink_trim(skb, gfp_any());
 
