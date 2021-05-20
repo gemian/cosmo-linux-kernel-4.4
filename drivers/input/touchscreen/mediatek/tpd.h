@@ -122,6 +122,7 @@ struct tpd_dts_info {
 	int tpd_key_num;
 	int tpd_key_local[4];
 	bool tpd_use_ext_gpio;
+	int tpd_screen_rotation;
 	int rst_ext_gpio_num;
 	struct tpd_key_dim_local tpd_key_dim_local[4];
 	struct tpd_filter_t touch_filter;

@@ -2591,7 +2591,7 @@ byte InitVideo(byte TclkSel)
 		temp = 0x00;
 		ReadModifyWriteTPI(0x40, BIT_2, 0x00);
 		break;
-		/* General Control Packet ¨C Deep color settings require the General Control Packet to be sent once per video field */
+		/* General Control Packet C Deep color settings require the General Control Packet to be sent once per video field */
 		/* with the correct PP and CD information. This must be enabled by software via TPI Deep Color Packet Enable */
 		/* Register 0x40[2] = 1, enable transmission of the GCP packet. */
 	}
@@ -3522,7 +3522,7 @@ g_sys.hdmiCableConnected,InterruptStatus,g_sys.dsRxPoweredUp,hdmi_9024_hpd_bak);
 
 			DelayMS(100); // Delay for metastability protection and to help filter out connection bouncing
 			ClearInterrupt(RX_SENSE_EVENT);
-			#endif
+		#endif
 		#if 1
 		if (((InterruptStatus & RX_SENSE_STATE) >> 3) != g_sys.dsRxPoweredUp) {
 			if (g_sys.hdmiCableConnected == TRUE) {

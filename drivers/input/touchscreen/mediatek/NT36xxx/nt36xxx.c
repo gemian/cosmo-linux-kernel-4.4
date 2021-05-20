@@ -1058,6 +1058,36 @@ void nvt_ts_wakeup_gesture_report(uint8_t gesture_id)
 #endif	//WAKEUP_GESTURE
 
 #define POINT_DATA_LEN 65
+
+enum {
+	RR_Rotate_0=1,
+	RR_Rotate_90=2,
+	RR_Rotate_180=4,
+	RR_Rotate_270=8
+};
+
+static void novatek_input_report_rotated(int rotation, int xpos, int ypos) {
+	switch (rotation) {
+		case RR_Rotate_0: // 1
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, (1080-xpos));
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (2160-ypos));
+			break;
+		case RR_Rotate_90: // 2
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, (2160-ypos));
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, xpos);
+			break;
+		case RR_Rotate_180: // 4
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, xpos);
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
+			break;
+		case RR_Rotate_270: // 8
+		default:
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
+			break;
+	}
+}
+
 /*******************************************************
 Description:
 	Novatek touchscreen work function.
@@ -1077,7 +1107,6 @@ static int touch_event_handler(void *unused)
 	uint32_t input_w = 0;
 	uint32_t input_p = 0;
 	uint8_t input_id = 0;
-	uint32_t temp_value = 0;
 #if MT_PROTOCOL_B
 	uint8_t press_id[TOUCH_MAX_FINGER_NUM] = {0};
 #endif /* MT_PROTOCOL_B */
@@ -1162,18 +1191,7 @@ static int touch_event_handler(void *unused)
 				input_report_key(ts->input_dev, BTN_TOUCH, 1);
 #endif /* MT_PROTOCOL_B */
 
-
-				/* zhaolong modified landscape for x600 2017.9.25 */
-			#if 1
-				temp_value = input_x;
-				input_x = input_y;
-				input_y = temp_value;
-				input_y = ts->abs_x_max - 1 - input_y;
-			#endif
-				/************** end **************/
-				
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_X, input_x);
-				input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, input_y);
+				novatek_input_report_rotated(tpd_dts_data.tpd_screen_rotation, input_x, input_y);
 				input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, input_w);
 				input_report_abs(ts->input_dev, ABS_MT_PRESSURE, input_p);
 
@@ -1800,7 +1818,47 @@ static void nvt_ts_resume(struct device *dev)
 	return;
 }
 
+static ssize_t novatek_read_screen_rotation(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%d\n", tpd_dts_data.tpd_screen_rotation);
+}
+
+static ssize_t novatek_store_screen_rotation(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	int val;
+	if (!kstrtoint(buf, 0, &val)) {
+		if (tpd_dts_data.tpd_screen_rotation != val) {
+			int x_max = ts->abs_x_max;
+			int y_max = ts->abs_y_max;
+			switch (val) {
+				case RR_Rotate_0:
+				case RR_Rotate_180:
+					x_max = 1080;
+					y_max = 2160;
+					break;
+				case RR_Rotate_90:
+				case RR_Rotate_270:
+					x_max = 2160;
+					y_max = 1080;
+					break;
+			}
+
+			tpd_dts_data.tpd_screen_rotation = val;
+			input_set_abs_params(ts->input_dev, ABS_X, 0, x_max, 0, 0);
+			input_set_abs_params(ts->input_dev, ABS_Y, 0, y_max, 0, 0);
+			input_abs_set_res(ts->input_dev, ABS_X, x_max);
+			input_abs_set_res(ts->input_dev, ABS_Y, y_max);
+			input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, 0, x_max, 0, 0);
+			input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, y_max, 0, 0);
+		}
+	}
+	return count;
+}
+
+static DEVICE_ATTR(screen_rotation, S_IWUSR | S_IRUGO, novatek_read_screen_rotation, novatek_store_screen_rotation);
+
 static struct device_attribute *novatek_attrs[] = {
+		&dev_attr_screen_rotation
 };
 
 static struct tpd_driver_t nvt_device_driver =

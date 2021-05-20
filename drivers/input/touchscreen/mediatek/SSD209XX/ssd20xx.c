@@ -3060,33 +3060,47 @@ static int solomon_check_skiptime(unsigned long msecs)
 	return err;
 }
 
+enum {
+	RR_Rotate_0=1,
+	RR_Rotate_90=2,
+	RR_Rotate_180=4,
+	RR_Rotate_270=8
+};
+
+static void solomon_input_report_rotated(int rotation, int xpos, int ypos) {
+	switch (rotation) {
+		case RR_Rotate_0: // 1
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, (1080-xpos));
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (2160-ypos));
+			break;
+		case RR_Rotate_90: // 2
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, (2160-ypos));
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, xpos);
+			break;
+		case RR_Rotate_180: // 4
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, xpos);
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
+			break;
+		case RR_Rotate_270: // 8
+		default:
+			input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
+			input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
+			break;
+	}
+}
 
 static int solomon_touch_down_up(int id, int xpos, int ypos,
 	int width, int isdown)
 {
 	SOLOMON_DEBUG("[%d] X=%d, Y=%d, W=%d", id, xpos, ypos, width);
-	//printk("[%d] X=%d, Y=%d, W=%d", id, xpos, ypos, width);
 	if (isdown) {
 #if defined(SUPPORT_MT_PROTOCOL_B)
 		input_mt_slot(tpd->dev, id);
 		input_mt_report_slot_state(tpd->dev,MT_TOOL_FINGER, true);
-		//input_report_abs(tpd->dev, ABS_MT_POSITION_X, xpos);
-		//input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
-		input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
-		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
-		//input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
-		//	width);
+		solomon_input_report_rotated(tpd_dts_data.tpd_screen_rotation, xpos, ypos);
 		input_report_abs(tpd->dev, ABS_MT_PRESSURE, width);
-		//input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR,
-		//	width);
 #else
-		//input_report_abs(tpd->dev, ABS_MT_TOUCH_MAJOR, 1);
-		//input_report_abs(tpd->dev, ABS_MT_POSITION_X, xpos);
-        //input_report_abs(tpd->dev, ABS_MT_POSITION_Y, ypos);
-		input_report_abs(tpd->dev, ABS_MT_POSITION_X, ypos);
-		input_report_abs(tpd->dev, ABS_MT_POSITION_Y, (1080-xpos));
-		//input_report_abs(tpd->dev, ABS_MT_WIDTH_MAJOR,
-		//	width);
+		solomon_input_report_rotated(tpd_dts_data.tpd_screen_rotation, xpos, ypos);
 		input_report_abs(tpd->dev, ABS_MT_PRESSURE, width);
 		input_report_key(tpd->dev, BTN_TOUCH, 1);
 		input_report_key(tpd->dev, BTN_TOOL_FINGER, 1);
@@ -4800,11 +4814,57 @@ static int tpd_local_init(void)
 	return 0;
 }
 
+static ssize_t ssd20xx_read_screen_rotation(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	return scnprintf(buf, PAGE_SIZE, "%d\n", tpd_dts_data.tpd_screen_rotation);
+}
+
+static ssize_t ssd20xx_store_screen_rotation(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	int val;
+	if (!kstrtoint(buf, 0, &val)) {
+		if (tpd_dts_data.tpd_screen_rotation != val) {
+			switch (val) {
+				case RR_Rotate_0:
+				case RR_Rotate_180:
+					misc_dev->ftconfig->max_x = 1080;
+					misc_dev->ftconfig->max_y = 2160;
+					break;
+				case RR_Rotate_90:
+				case RR_Rotate_270:
+				default:
+					misc_dev->ftconfig->max_x = 2160;
+					misc_dev->ftconfig->max_y = 1080;
+					break;
+			}
+
+			tpd_dts_data.tpd_screen_rotation = val;
+			input_set_abs_params(dev, ABS_X, 0, misc_dev->ftconfig->max_x, 0, 0);
+			input_set_abs_params(dev, ABS_Y, 0, misc_dev->ftconfig->max_y, 0, 0);
+			input_abs_set_res(dev, ABS_X, misc_dev->ftconfig->max_x);
+			input_abs_set_res(dev, ABS_Y, misc_dev->ftconfig->max_y);
+			input_set_abs_params(dev, ABS_MT_POSITION_X, 0, misc_dev->ftconfig->max_x, 0, 0);
+			input_set_abs_params(dev, ABS_MT_POSITION_Y, 0, misc_dev->ftconfig->max_y, 0, 0);
+		}
+	}
+	return count;
+}
+
+static DEVICE_ATTR(screen_rotation, S_IWUSR | S_IRUGO, ssd20xx_read_screen_rotation, ssd20xx_store_screen_rotation);
+
+static struct device_attribute *ssd20xx_attrs[] = {
+	&dev_attr_screen_rotation
+};
+
 static struct tpd_driver_t tpd_device_driver = {
 	.tpd_device_name = "SSD20xx",
 	.tpd_local_init = tpd_local_init,
 	.suspend = solomon_suspend,
 	.resume = solomon_resume,
+	.attrs = {
+		.attr = ssd20xx_attrs,
+		.num  = ARRAY_SIZE(ssd20xx_attrs),
+	},
 };
 
 static int touch_solomon_init(void)
