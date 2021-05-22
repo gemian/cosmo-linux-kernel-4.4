@@ -1797,7 +1797,7 @@ static int android_device_create(struct gadget_info *gi)
 #elif defined(CONFIG_FPGA_EARLY_PORTING)
 	pr_info("SKIP usb_state_monitor_work\n");
 #else
-	usb_state_monitor_work();
+//	usb_state_monitor_work();
 #endif
 	return 0;
 }
