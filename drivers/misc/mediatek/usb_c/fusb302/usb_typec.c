@@ -49,9 +49,10 @@
 #include <linux/of_irq.h>
 #include <linux/of_gpio.h>
 #include <linux/miscdevice.h>
+#include <linux/switch.h>
 
 #include <linux/proc_fs.h>
-#include<linux/slab.h>
+#include <linux/slab.h>
 #include <linux/uaccess.h>
 
 #include "fusb302.h"
@@ -82,6 +83,7 @@ extern void Ext_Speaker_Amp_Change(bool enable);
 extern int AudDrv_GPIO_EXTAMP_Select(int bEnable, int mode);
 extern int AudDrv_GPIO_EXTAMP2_Select(int bEnable, int mode);
 
+static struct switch_dev usb_hdmi_detection;
 
 //static u32 debug_level = (255 - K_DEBUG);
 static struct usbtypc *g_exttypec;
@@ -149,34 +151,35 @@ void hdmi_plug(void)
 	
 	node_hdmi_plug = of_find_compatible_node(NULL, NULL, "mediatek,hdmi_plug_dts");
 	if (!node_hdmi_plug){
-		printk("wgx>>>>>>  %s[%d] get node_hdmi_plug fail!\n",__func__,__LINE__);
+		fusb_printk(K_ERR, "%s[%d] get node_hdmi_plug fail!\n",__func__,__LINE__);
 	} 
 
 ///////////  GPIO54
 	hdmi_det_gpio = of_get_named_gpio(node_hdmi_plug, "hdmi_det-gpio", 0);
 	if (hdmi_det_gpio < 0) {
-		printk("wgx>>>>>>  %s[%d] get hdmi_det_gpio fail!\n",__func__,__LINE__);
+		fusb_printk(K_ERR, "%s[%d] get hdmi_det_gpio fail!\n",__func__,__LINE__);
 	}
 
 	ret = gpio_request(hdmi_det_gpio, "hdmi_plug-gpio");
 	if (ret)
-		printk("wgx>>>>>>  %s[%d] gpio_request hdmi_det_gpio fail, ret = %d \n",__func__,__LINE__,ret);
+		fusb_printk(K_ERR, "%s[%d] gpio_request hdmi_det_gpio fail, ret = %d \n",__func__,__LINE__,ret);
 
 	gpio_direction_input(hdmi_det_gpio); 
-	hdmi_plug_test = __gpio_get_value(hdmi_det_gpio);	
-	printk("wgx>>>>>>  %s[%d]fusb300 hdmi_plug_test = %d \n", __func__,__LINE__,hdmi_plug_test);
-	
+	hdmi_plug_test = __gpio_get_value(hdmi_det_gpio);
+	fusb_printk(K_DEBUG, "%s[%d]fusb300 hdmi_plug_test = %d \n", __func__,__LINE__,hdmi_plug_test);
 }
+
 static void fusb300_gpio_init(void)
 {
-	printk("%s\n", __func__);
-	aeon_gpio_set("fusb301a_sw_en_high");//GPIO177 high HDMI输出信号切换使能控制信号
-	aeon_gpio_set("fusb301a_sw_sel_low");//GPIO176 low  HDMI输出信号1和2切换控制信号
+	fusb_printk(K_DEBUG, "%s\n", __func__);
+	aeon_gpio_set("fusb301a_sw_en_high");//GPIO177 high HDMI Output signal switch enable control signal
+	aeon_gpio_set("fusb301a_sw_sel_low");//GPIO176 low  HDMI Output signal 1 and 2 switch control signal
 	//aeon_gpio_set("sw7226_en_low");//GPIO72 low
 	//aeon_gpio_set("sil9022_hdmi_pwren0");//GPIO160
 	//printk("qzshdmi fusb300_gpio_init 1 keyboardlight_flag=%d\n",keyboardlight_flag);
-	if(keyboardlight_flag == 0)
-	aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+	if(keyboardlight_flag == 0) {
+		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+	}
 }
 
 extern void right_otg_in_report_key(void);
@@ -261,34 +264,32 @@ static ssize_t USB_CONTROL_read(struct file *filp, char __user *buffer, size_t s
     return len;   
 }
 
-static ssize_t  USB_CONTROL_write(struct file *file, const char *buffer, size_t count,loff_t *data)
- {
-         char Buf[4];
-         int stat,ret=0;
-         printk("USB_CONTROL_write\n");
-         if (copy_from_user(Buf, buffer, 4)){
-                  return -EFAULT;
-         }
-         ret = sscanf(Buf,"%d",&stat);
-         printk("USB_CONTROL_write stat=%d\n",stat);
-		 cmd_contrl = stat;
-         if(stat == 0){
-		 	force_to_otg(FALSE);
-         }
-         else if(stat == 1){
-			force_to_otg(TRUE);
-         }else if(stat == 2){
-	//		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
-         } else if(stat == 3){
-	//		aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-         } else if(stat == 4){
-			mt6370_enable_UUG_ON(0);
-         } else if(stat == 5){
-			mt6370_enable_UUG_ON(1);
-         }
-		 
-         return count;
- }
+static ssize_t USB_CONTROL_write(struct file *file, const char *buffer, size_t count, loff_t *data) {
+	char Buf[4];
+	int stat, ret = 0;
+	fusb_printk(K_DEBUG, "USB_CONTROL_write\n");
+	if (copy_from_user(Buf, buffer, 4)) {
+		return -EFAULT;
+	}
+	ret = sscanf(Buf, "%d", &stat);
+	fusb_printk(K_DEBUG, "USB_CONTROL_write stat=%d\n", stat);
+	cmd_contrl = stat;
+	if (stat == 0) {
+		force_to_otg(FALSE);
+	} else if (stat == 1) {
+		force_to_otg(TRUE);
+	} else if (stat == 2) {
+		//aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
+	} else if (stat == 3) {
+		//aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
+	} else if (stat == 4) {
+		mt6370_enable_UUG_ON(0);
+	} else if (stat == 5) {
+		mt6370_enable_UUG_ON(1);
+	}
+	return count;
+}
+
 static const struct file_operations usb_control_proc_fops = {
 		.read  = USB_CONTROL_read,
 		.write = USB_CONTROL_write
@@ -307,19 +308,19 @@ void fusb300_eint_work(struct work_struct *data)
 	//unsigned int HDMI_id_state = 0;
 
 	unsigned char CCXstate = 0;
-
+	int loopcount;
 	mutex_lock(&typec_lock);
 	
-	printk("====%s:zhaolong debug x600 USB1=====2019040222117\n", __func__);
+	fusb_printk(K_DEBUG, "====%s:zhaolong debug x600 USB1=====2019040222117\n", __func__);
 	
-	usb1_id_state = gpio_get_value(gpiopin);//HDMI插入方向检测信号
+	usb1_id_state = gpio_get_value(gpiopin);//HDMI Insertion direction detection signal
 	
-		printk("====%s:zhaolong debug x600 USB1=gpiopin=%d=usb1_id_state=%d===\n", __func__,gpiopin,usb1_id_state);
+	fusb_printk(K_DEBUG, "====%s:zhaolong debug x600 USB1=gpiopin=%d=usb1_id_state=%d===\n", __func__,gpiopin,usb1_id_state);
 
 	//usb1_id_state = gpio_get_value(hdmi_det_gpio);
-	printk("wgx>>>>>>  %s[%d]:zhaolong gpio166 = %d \n", __func__,__LINE__,usb1_id_state);
+	fusb_printk(K_DEBUG, "wgx>>>>>>  %s[%d]:zhaolong gpio166 = %d \n", __func__,__LINE__,usb1_id_state);
 	if (!usb1_id_state){
-		printk("===%s USB1 is plug in===\n",__func__);
+		fusb_printk(K_DEBUG, "===%s USB1 is plug in===\n",__func__);
 		FUSB300Read(regStatus, 1, &CCXstate);	/* Read CC1 CC2 state*/
 		CCXstate &= 0x30;
 		//printk("===%s hdmi plug in===0x11 CCXstate=0x%x\n",__func__,CCXstate);
@@ -327,46 +328,35 @@ void fusb300_eint_work(struct work_struct *data)
 			
 			//aeon_gpio_set("sil9022_hdmi_pwren1");//GPIO160
 			aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
-			mdelay(400);
+			mdelay(100);
 			//HDMI_id_state = gpio_get_value(hdmi_det_gpio);
 			//printk("====%s:zhaolong debug x600 USB1=HDMI_id_state=%d===\n", __func__,HDMI_id_state);
 			
 			if (gpio_get_value(hdmi_det_gpio)){
-				printk("===%s hdmi plug in===\n",__func__);
-				if(CCXstate == 0x10){
-					//printk("%s==zhaolong====CC1=======\n",__func__);
-					aeon_gpio_set("fusb301a_sw_en_low");//GPIO70 low
-					aeon_gpio_set("fusb301a_sw_sel_low");//GPIO71 low
-					//
-					//aeon_gpio_set("sw7226_en_low");//GPIO72 low
-					hdmi_plug_in_flag = 1;
-					AudDrv_GPIO_EXTAMP_Select(false, 3);
-					AudDrv_GPIO_EXTAMP2_Select(false,3);
-				}else if(CCXstate == 0x20){
-					//printk("%s==zhaolong=====CC2=======\n",__func__);
+				fusb_printk(K_DEBUG, "===%s hdmi plug in===\n",__func__);
+				if(CCXstate == 0x10 || CCXstate == 0x20){
 					aeon_gpio_set("fusb301a_sw_en_low");//GPIO70 low
 					aeon_gpio_set("fusb301a_sw_sel_high");//GPIO71 high
-					//
-					//aeon_gpio_set("sw7226_en_low");//GPIO72 low
+
 					hdmi_plug_in_flag = 1;
 					AudDrv_GPIO_EXTAMP_Select(false, 3);
 					AudDrv_GPIO_EXTAMP2_Select(false,3);
-				}else{
-					printk("%s==zhaolong=====CCX detect error=======\n",__func__);
+				} else {
+					fusb_printk(K_DEBUG, "%s==zhaolong=====CCX detect error=======\n",__func__);
 					fusb300_gpio_init();
 					hdmi_plug_in_flag = 0;
 					AudDrv_GPIO_EXTAMP_Select(true, 3);
 					AudDrv_GPIO_EXTAMP2_Select(true,3);
 				}
 			}else{
-				printk("%s=zhaolong==usb1 OTG mode===\n",__func__);	
+				fusb_printk(K_DEBUG, "%s=zhaolong==usb1 OTG mode===\n",__func__);
 				right_otg_in_report_key();
 				aeon_otg_enable = 3;
 				//force_to_otg(TRUE);
 				is_rusb_onotg = 1;
 			}
 		}else{
-			//printk("%s==zhaolong=====CCX detect error=======\n",__func__);
+			//fusb_printk(K_DEBUG, "%s==zhaolong=====CCX detect error=======\n",__func__);
 			fusb300_gpio_init();
 			hdmi_plug_in_flag = 0;
 			AudDrv_GPIO_EXTAMP_Select(true, 3);
@@ -374,7 +364,7 @@ void fusb300_eint_work(struct work_struct *data)
 		}
 
 	}else{
-		printk("%s==zhaolong=====USB1 plug out=======\n",__func__);
+		fusb_printk(K_DEBUG, "%s==zhaolong=====USB1 plug out=======\n",__func__);
 		if(aeon_otg_enable != 2){
 			aeon_otg_enable = 0;
 		}
@@ -386,7 +376,9 @@ void fusb300_eint_work(struct work_struct *data)
 		AudDrv_GPIO_EXTAMP_Select(true, 3);
 		AudDrv_GPIO_EXTAMP2_Select(true,3);
 	}
-	printk("wgx >>>>>>>> usb1_id_state = %d,CCXstate = 0x%x , usbid_irqnum = %d, gpiopin = %d, debounce = %d",usb1_id_state,CCXstate,usbid_irqnum,gpiopin,debounce);
+	switch_set_state((struct switch_dev *)&usb_hdmi_detection, hdmi_plug_in_flag);
+
+	fusb_printk(K_DEBUG, "wgx >>>>>>>> usb1_id_state = %d,CCXstate = 0x%x , usbid_irqnum = %d, gpiopin = %d, debounce = %d",usb1_id_state,CCXstate,usbid_irqnum,gpiopin,debounce);
 	if (usb1_id_state  &&   is_rusb_onotg == 1)
 	{
 		is_rusb_onotg = 0;
@@ -415,16 +407,16 @@ void test_right_usb(void){
 		aeon_gpio_set("aeon_irq_stm32_high");
 		aeon_gpio_set("sil9022_hdmi_hplg0");//GPIO178
 		mdelay(1);
-		printk("===%s hdmi plug in===0x12 WAKE_STM32 YES\n",__func__);
+		fusb_printk(K_DEBUG, "===%s hdmi plug in===0x12 WAKE_STM32 YES\n",__func__);
 	}
 	else{
 		aeon_gpio_set("sil9022_hdmi_hplg1");//GPIO178
 		mdelay(10);
 		aeon_gpio_set("aeon_irq_stm32_low");
-		mdelay(1); 
-		printk("===%s hdmi plug in===0x12 WAKE_STM32 NO\n",__func__);
+		mdelay(1);
+		fusb_printk(K_DEBUG, "===%s hdmi plug in===0x12 WAKE_STM32 NO\n",__func__);
 	}
-	printk("===%s hdmi plug in===0x12 CCXstate=0x%x\n",__func__,CCXstate);
+	fusb_printk(K_DEBUG, "===%s hdmi plug in===0x12 CCXstate=0x%x\n",__func__,CCXstate);
 }
 EXPORT_SYMBOL(test_right_usb);
 
@@ -475,7 +467,7 @@ int fusb300_eint_init(struct usbtypc *typec)
 		fusb_printk(K_ERR, "fusb300_eint_init request_irq fail, ret %d, irqnum %d!!!\n", retval,
 			    usbid_irqnum);
 	}
-	printk("fusb300_eint_init OK!!!\n");
+	fusb_printk(K_DEBUG, "fusb300_eint_init OK!!!\n");
 	return retval;
 }
 
@@ -499,6 +491,7 @@ u8 fusb300_i2c_r_reg(struct i2c_client *client, u8 addr)
 
 static int fusb300_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
+	int err = 0;
 	struct usbtypc *typec;
 //	unsigned char port_type;
 
@@ -530,8 +523,8 @@ static int fusb300_i2c_probe(struct i2c_client *client, const struct i2c_device_
 #ifdef AEON_USB_CONTROL_SUPPORT  
 	usb_control_entry = proc_create(USB_CONTROL_PROC_NAME, 0777, NULL, &usb_control_proc_fops);  
 if (NULL == usb_control_entry)  
-{          
-	printk("proc_create %s failed\n", USB_CONTROL_PROC_NAME);  
+{
+	fusb_printk(K_ERR, "proc_create %s failed\n", USB_CONTROL_PROC_NAME);
 }
 #endif 
 
@@ -542,6 +535,18 @@ if (NULL == usb_control_entry)
 	/*precheck status */
 	/* StateMachineFUSB300(typec); */
 	hdmi_plug();
+
+	usb_hdmi_detection.name = "usb_hdmi";
+	usb_hdmi_detection.index = 0;
+	usb_hdmi_detection.state = hdmi_plug_in_flag;
+
+	err = switch_dev_register(&usb_hdmi_detection);
+	if (err) {
+		fusb_printk(K_ERR, "%s switch_dev_register returned: %d\n", __func__, err);
+	}
+
+	switch_set_state((struct switch_dev *)&usb_hdmi_detection, hdmi_plug_in_flag);
+
 	return 0;
 }
 
