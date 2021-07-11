@@ -18,8 +18,50 @@
 #ifndef __ASM__VIRT_H
 #define __ASM__VIRT_H
 
+/*
+ * The arm64 hcall implementation uses x0 to specify the hcall type. A value
+ * less than 0xfff indicates a special hcall, such as get/set vector.
+ * Any other value is used as a pointer to the function to call.
+ */
+
+/* HVC_GET_VECTORS - Return the value of the vbar_el2 register. */
+#define HVC_GET_VECTORS 0
+
+/*
+ * HVC_SET_VECTORS - Set the value of the vbar_el2 register.
+ *
+ * @x1: Physical address of the new vector table.
+ */
+#define HVC_SET_VECTORS 1
+
+/*
+ * HVC_SOFT_RESTART - CPU soft reset, used by the cpu_soft_restart routine.
+ */
+#define HVC_SOFT_RESTART 2
+
+/*
+ * HVC_CALL_FUNC - Execute a function at EL2.
+ *
+ * @x0: Physical address of the function to be executed.
+ * @x1: Passed as the first argument to the function.
+ * @x2: Passed as the second argument to the function.
+ * @x3: Passed as the third argument to the function.
+ *
+ * The called function must preserve the contents of register x18.
+ */
+
+#define HVC_CALL_FUNC 3
+
 #define BOOT_CPU_MODE_EL1	(0xe11)
 #define BOOT_CPU_MODE_EL2	(0xe12)
+
+/*
+ * HVC_RESET_CPU - Reset cpu in EL2 to initial state.
+ *
+ * @x0: entry address in trampoline code in va
+ * @x1: identical mapping page table in pa
+ */
+#define HVC_RESET_CPU 4
 
 #ifndef __ASSEMBLY__
 

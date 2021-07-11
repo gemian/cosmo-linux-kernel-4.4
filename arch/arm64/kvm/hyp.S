@@ -945,6 +945,11 @@ ENTRY(__kvm_call_hyp)
 	ret
 ENDPROC(__kvm_call_hyp)
 
+ENTRY(kvm_call_reset)
+	hvc	#HVC_RESET_CPU
+	ret
+ENDPROC(kvm_call_reset)
+
 .macro invalid_vector	label, target
 	.align	2
 \label:
@@ -986,9 +991,28 @@ el1_sync:					// Guest trapped into EL2
 	/* Check for __hyp_get_vectors */
 	cbnz	x0, 1f
 	mrs	x0, vbar_el2
-	b	2f
+	b	do_eret
+ 
+	/* jump into trampoline code */
+1:	cmp	x18, #HVC_RESET_CPU
+	b.ne	2f
+	/*
+	 * Entry point is:
+	 *	TRAMPOLINE_VA
+	 *	+ (__kvm_hyp_reset - (__hyp_idmap_text_start & PAGE_MASK))
+	 */
+	adrp	x2, __kvm_hyp_reset
+	add	x2, x2, #:lo12:__kvm_hyp_reset
+	adrp	x3, __hyp_idmap_text_start
+	add	x3, x3, #:lo12:__hyp_idmap_text_start
+	and	x3, x3, PAGE_MASK
+	sub	x2, x2, x3
+	ldr	x3, =TRAMPOLINE_VA
+	add	x2, x2, x3
+	br	x2				// no return
 
-1:	push	lr, xzr
+2:	/* Default to HVC_CALL_HYP. */
+	push	lr, xzr
 
 	/*
 	 * Compute the function address in EL2, and shuffle the parameters.
@@ -1001,7 +1025,9 @@ el1_sync:					// Guest trapped into EL2
 	blr	lr
 
 	pop	lr, xzr
-2:	eret
+	
+do_eret:
+	eret
 
 el1_trap:
 	/*

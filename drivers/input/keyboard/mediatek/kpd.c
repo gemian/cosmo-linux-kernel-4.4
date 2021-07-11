@@ -31,7 +31,7 @@
 #include <linux/of_gpio.h>
 #include <linux/workqueue.h>
 #include <linux/proc_fs.h>
-#include<linux/slab.h>
+#include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/notifier.h>
 #include <soc/mediatek/hall.h>
