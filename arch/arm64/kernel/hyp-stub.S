@@ -54,21 +54,32 @@ ENDPROC(__hyp_stub_vectors)
 	.align 11
 
 el1_sync:
-	mrs	x30, esr_el2
-	lsr	x30, x30, #ESR_ELx_EC_SHIFT
+	mrs	x18, esr_el2
+	lsr	x17, x18, #ESR_ELx_EC_SHIFT
+	and	x18, x18, #ESR_ELx_ISS_MASK
 
-	cmp	x30, #ESR_ELx_EC_HVC64
+	cmp	x17, #ESR_ELx_EC_HVC64
 	b.ne	2f				// Not an HVC trap
 
-	cmp	x0, #HVC_GET_VECTORS
+	cmp	x18, #HVC_GET_VECTORS
 	b.ne	1f
 	mrs	x0, vbar_el2
 	b	2f
 
-1:	cmp	x0, #HVC_SET_VECTORS
-	b.ne	2f
-	msr	vbar_el2, x1
+1:	cmp	x18, #HVC_SET_VECTORS
+	b.ne	1f
+	msr	vbar_el2, x0
+	b	2f
 
+1:	cmp	x18, #HVC_CALL_FUNC
+	b.ne	2f
+	mov	x18, lr
+	mov	lr, x0
+	mov	x0, x1
+	mov	x1, x2
+	mov	x2, x3
+	blr	lr
+	mov	lr, x18
 
 2:	eret
 ENDPROC(el1_sync)
@@ -109,19 +120,12 @@ ENDPROC(\label)
  * initialisation entry point.
  */
 
-ENTRY(__hyp_get_vectors)
-	str	lr, [sp, #-16]!
-	mov	x0, #HVC_GET_VECTORS
-	hvc	#0
-	ldr	lr, [sp], #16
-	ret
-ENDPROC(__hyp_get_vectors)
-
 ENTRY(__hyp_set_vectors)
-	str	lr, [sp, #-16]!
-	mov	x1, x0
-	mov	x0, #HVC_SET_VECTORS
-	hvc	#0
-	ldr	lr, [sp], #16
+	hvc	#HVC_SET_VECTORS
 	ret
 ENDPROC(__hyp_set_vectors)
+
+ENTRY(__hyp_get_vectors)
+	hvc	#HVC_GET_VECTORS
+	ret
+ENDPROC(__hyp_get_vectors)

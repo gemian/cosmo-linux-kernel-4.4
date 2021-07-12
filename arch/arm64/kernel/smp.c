@@ -37,6 +37,7 @@
 #include <linux/completion.h>
 #include <linux/of.h>
 #include <linux/irq_work.h>
+#include <linux/kexec.h>
 #ifdef CONFIG_TRUSTY
 #ifdef CONFIG_TRUSTY_INTERRUPT_MAP
 #include <linux/trusty/trusty.h>
@@ -51,6 +52,7 @@
 #include <asm/cpu.h>
 #include <asm/cputype.h>
 #include <asm/cpu_ops.h>
+#include <asm/kexec.h>
 #include <asm/mmu_context.h>
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -61,6 +63,8 @@
 #include <asm/ptrace.h>
 #include <asm/virt.h>
 #include <mt-plat/mtk_ram_console.h>
+
+#include "cpu-reset.h"
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/ipi.h>

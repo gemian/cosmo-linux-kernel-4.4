@@ -21,10 +21,7 @@ static inline void __noreturn cpu_soft_restart(unsigned long el2_switch,
 	unsigned long arg2)
 {
 	typeof(__cpu_soft_restart) *restart;
-
-	restart = (void *)__pa_symbol(__cpu_soft_restart);
-
-	cpu_install_idmap();
+	restart = (void *)virt_to_phys(__cpu_soft_restart);
 	restart(el2_switch, entry, arg0, arg1, arg2);
 	unreachable();
 }

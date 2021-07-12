@@ -20,7 +20,6 @@
 #include <asm/assembler.h>
 #include <asm/kvm_arm.h>
 #include <asm/kvm_mmu.h>
-#include <asm/pgtable-hwdef.h>
 #include <asm/sysreg.h>
 
 	.text
