@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -12,13 +12,14 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 # See http://www.gnu.org/licenses/gpl-2.0.html for more details.
 
-import ConfigParser
+import operator
+import configparser
 import string
 import xml.dom.minidom
 
 from utility import util
 from utility.util import sorted_key
-from ModuleObj import ModuleObj
+from .ModuleObj import ModuleObj
 from data.Md1EintData import Md1EintData
 from utility.util import LogLevel
 
@@ -30,7 +31,7 @@ class Md1EintObj(ModuleObj):
 
     def get_cfgInfo(self):
         # ConfigParser accept ":" and "=", so SRC_PIN will be treated specially
-        cp = ConfigParser.ConfigParser(allow_no_value=True)
+        cp = configparser.ConfigParser(allow_no_value=True)
         cp.read(ModuleObj.get_figPath())
 
         if cp.has_option('Chip Type', 'MD1_EINT_SRC_PIN'):
@@ -52,7 +53,7 @@ class Md1EintObj(ModuleObj):
         try:
             for node in nodes:
                 if node.nodeType == xml.dom.Node.ELEMENT_NODE:
-                    if cmp(node.nodeName, 'count') == 0:
+                    if operator.eq(node.nodeName, 'count'):
                         self.__count = node.childNodes[0].nodeValue
                         continue
 
@@ -106,7 +107,7 @@ class Md1EintObj(ModuleObj):
         gen_str += '''\n'''
 
         if self.__bSrcPinEnable:
-            for (key, value) in self.__srcPin.items():
+            for (key, value) in list(self.__srcPin.items()):
                 gen_str += '''#define %s\t\t%s\n''' %(key, value)
             gen_str += '''\n'''
 
@@ -119,9 +120,9 @@ class Md1EintObj(ModuleObj):
         gen_str += '''\n'''
 
         count = 0
-        for key in sorted_key(ModuleObj.get_data(self).keys()):
+        for key in sorted_key(list(ModuleObj.get_data(self).keys())):
             value = ModuleObj.get_data(self)[key]
-            if cmp(value.get_varName(), 'NC') == 0:
+            if operator.eq(value.get_varName(), 'NC'):
                 continue
             num = key[4:]
             count += 1
@@ -144,9 +145,9 @@ class Md1EintObj(ModuleObj):
     def fill_dtsiFile(self):
         gen_str = ''
         gen_str += '''&eintc {\n'''
-        for key in sorted_key(ModuleObj.get_data(self).keys()):
+        for key in sorted_key(list(ModuleObj.get_data(self).keys())):
             value = ModuleObj.get_data(self)[key]
-            if cmp(value.get_varName(), 'NC') == 0:
+            if operator.eq(value.get_varName(), 'NC'):
                 continue
             num = key[4:]
             gen_str += '''\t%s@%s {\n''' %(value.get_varName(), num)
@@ -156,17 +157,17 @@ class Md1EintObj(ModuleObj):
             polarity = value.get_polarity()
             sensitive = value.get_sensitiveLevel()
 
-            if cmp(polarity, 'High') == 0 and cmp(sensitive, 'Edge') == 0:
+            if operator.eq(polarity, 'High') and operator.eq(sensitive, 'Edge'):
                 type = 1
-            elif cmp(polarity, 'Low') == 0 and cmp(sensitive, 'Edge') == 0:
+            elif operator.eq(polarity, 'Low') and operator.eq(sensitive, 'Edge'):
                 type = 2
-            elif cmp(polarity, 'High') == 0 and cmp(sensitive, 'Level') == 0:
+            elif operator.eq(polarity, 'High') and operator.eq(sensitive, 'Level'):
                 type = 4
-            elif cmp(polarity, 'Low') == 0 and cmp(sensitive, 'Level') == 0:
+            elif operator.eq(polarity, 'Low') and operator.eq(sensitive, 'Level'):
                 type = 8
 
             gen_str += '''\t\tinterrupts = <%s %d>;\n''' %(num, type)
-            gen_str += '''\t\tdebounce = <%s %d>;\n''' %(num, (string.atoi(value.get_debounceTime()))*1000)
+            gen_str += '''\t\tdebounce = <%s %d>;\n''' %(num, (int(value.get_debounceTime()))*1000)
             gen_str += '''\t\tdedicated = <%s %d>;\n''' %(num, int(value.get_dedicatedEn()))
             if self.__bSrcPinEnable:
                 gen_str += '''\t\tsrc_pin = <%s %s>;\n''' %(num, self.__srcPin[value.get_srcPin()])
@@ -194,9 +195,9 @@ class Md1EintObj_MT6739(Md1EintObj):
 
     def fill_dtsiFile(self):
         gen_str = ''
-        for key in sorted_key(ModuleObj.get_data(self).keys()):
+        for key in sorted_key(list(ModuleObj.get_data(self).keys())):
             value = ModuleObj.get_data(self)[key]
-            if cmp(value.get_varName(), 'NC') == 0:
+            if operator.eq(value.get_varName(), 'NC'):
                 continue
             num = key[4:]
             gen_str += '''&%s {\n''' % (value.get_varName().lower())
@@ -206,17 +207,17 @@ class Md1EintObj_MT6739(Md1EintObj):
             polarity = value.get_polarity()
             sensitive = value.get_sensitiveLevel()
 
-            if cmp(polarity, 'High') == 0 and cmp(sensitive, 'Edge') == 0:
+            if operator.eq(polarity, 'High') and operator.eq(sensitive, 'Edge'):
                 type = 1
-            elif cmp(polarity, 'Low') == 0 and cmp(sensitive, 'Edge') == 0:
+            elif operator.eq(polarity, 'Low') and operator.eq(sensitive, 'Edge'):
                 type = 2
-            elif cmp(polarity, 'High') == 0 and cmp(sensitive, 'Level') == 0:
+            elif operator.eq(polarity, 'High') and operator.eq(sensitive, 'Level'):
                 type = 4
-            elif cmp(polarity, 'Low') == 0 and cmp(sensitive, 'Level') == 0:
+            elif operator.eq(polarity, 'Low') and operator.eq(sensitive, 'Level'):
                 type = 8
 
             gen_str += '''\tinterrupts = <%s %d>;\n''' % (num, type)
-            gen_str += '''\tdebounce = <%s %d>;\n''' % (num, (string.atoi(value.get_debounceTime())) * 1000)
+            gen_str += '''\tdebounce = <%s %d>;\n''' % (num, (int(value.get_debounceTime())) * 1000)
             gen_str += '''\tdedicated = <%s %d>;\n''' % (num, int(value.get_dedicatedEn()))
             if self.get_srcPinEnable():
                 gen_str += '''\tsrc_pin = <%s %s>;\n''' % (num, self.get_srcPin()[value.get_srcPin()])

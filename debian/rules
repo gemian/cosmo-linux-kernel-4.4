@@ -11,29 +11,29 @@ build-indep:
 
 build-stamp:
 	./debian/remove-werror.sh
-	(cd ..; mkdir -p KERNEL_OUT)
+	(cd ..; mkdir -p KERNEL_OUT_COSMO_4.4)
 	@echo configuring
-	make O=../KERNEL_OUT ARCH=arm64 k71v1_64_bsp_defconfig
+	make O=../KERNEL_OUT_COSMO_4.4 ARCH=arm64 k71v1_64_bsp_defconfig
 ifneq ($(DEB_HOST_ARCH), arm64)
 	@echo building kernel
-	make O=../KERNEL_OUT ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- -j8
+	make O=../KERNEL_OUT_COSMO_4.4 ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- -j2
 else
 	@echo building kernel
-	make O=../KERNEL_OUT ARCH=arm64 -j8
+	make O=../KERNEL_OUT_COSMO_4.4 ARCH=arm64 -j6
 endif
 	@echo done
 
 clean: checkdir
-	(cd ..; rm -rf KERNEL_OUT)
+	(cd ..; rm -rf KERNEL_OUT_COSMO_4.4)
 
 binary-arch:
 	-rm -rf debian/tmp
 	install -p -d -o root -g root -m 755 debian/tmp
 	install -p -d -o root -g root -m 755 debian/tmp/DEBIAN
 	install -p -d -o root -g root -m 755 debian/tmp/usr/share/kernel
-	install -p    -o root -g root -m 644 ../KERNEL_OUT/arch/arm64/boot/Image.gz-dtb debian/tmp/usr/share/kernel/Image.gz-dtb
+	install -p    -o root -g root -m 644 ../KERNEL_OUT_COSMO_4.4/arch/arm64/boot/Image.gz-dtb debian/tmp/usr/share/kernel/Image.gz-dtb
 	install -p    -o root -g root -m 755 debian/postinst debian/tmp/DEBIAN/
-	make O=../KERNEL_OUT INSTALL_MOD_PATH=$(CURDIR)/debian/tmp ARCH=arm64 modules_install
+	make O=../KERNEL_OUT_COSMO_4.4 INSTALL_MOD_PATH=$(CURDIR)/debian/tmp ARCH=arm64 modules_install
 	unlink debian/tmp/lib/modules/4.4.146*/source
 	unlink debian/tmp/lib/modules/4.4.146*/build
 	ln -s /usr/src/linux-headers-4.4 debian/tmp/lib/modules/build
@@ -47,7 +47,7 @@ binary-indep:
 	install -p -d -o root -g root -m 755 debian/tmp
 	install -p -d -o root -g root -m 755 debian/tmp/DEBIAN
 	install -p -d -o root -g root -m 755 debian/tmp/usr/src/linux-headers-4.4
-	make O=../KERNEL_OUT INSTALL_MODULES_HDR_PATH=$(CURDIR)/debian/tmp/usr/src/linux-headers-4.4 ARCH=arm64 modules_headers_install
+	make O=../KERNEL_OUT_COSMO_4.4 INSTALL_MODULES_HDR_PATH=$(CURDIR)/debian/tmp/usr/src/linux-headers-4.4 ARCH=arm64 modules_headers_install
 	dpkg-gencontrol -pcosmo-linux-kernel-headers
 	dpkg --build debian/tmp ..
 

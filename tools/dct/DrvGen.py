@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -17,6 +17,7 @@ import getopt
 import traceback
 import subprocess
 import xml.dom.minidom
+import operator
 
 sys.dont_write_bytecode = True
 
@@ -42,7 +43,7 @@ from utility.util import LogLevel
 from utility.util import log
 
 def usage():
-    print '''
+    print('''
 usage: DrvGen [dws_path] [file_path] [log_path] [paras]...
 
 options and arguments:
@@ -51,7 +52,7 @@ dws_path    :    dws file path
 file_path   :    where you want to put generated files
 log_path    :    where to store the log files
 paras        :    parameter for generate wanted file
-'''
+''')
 
 def is_oldDws(path, gen_spec):
     if not os.path.exists(path):
@@ -60,7 +61,7 @@ def is_oldDws(path, gen_spec):
 
     try:
         root = xml.dom.minidom.parse(dws_path)
-    except Exception, e:
+    except Exception as e:
         log(LogLevel.warn, '%s is not xml format, try to use old DCT!' %(dws_path))
         if len(gen_spec) == 0:
             log(LogLevel.warn, 'Please use old DCT UI to gen all files!')
@@ -139,34 +140,34 @@ if __name__ == '__main__':
     chipId = ChipObj.get_chipId(dws_path)
     log(LogLevel.info, 'chip id: %s' %(chipId))
     chipObj = None
-    if cmp(chipId, 'MT6797') == 0:
+    if operator.eq(chipId, 'MT6797'):
         chipObj = Everest(dws_path, gen_path)
-    elif cmp(chipId, 'MT6757') == 0:
+    elif operator.eq(chipId, 'MT6757'):
         chipObj = Olympus(dws_path, gen_path)
-    elif cmp(chipId, 'MT6757-P25') == 0:
+    elif operator.eq(chipId, 'MT6757-P25'):
         chipObj = MT6757_P25(dws_path, gen_path)
-    elif cmp(chipId, 'KIBOPLUS') == 0:
+    elif operator.eq(chipId, 'KIBOPLUS'):
         chipObj = MT6757_P25(dws_path, gen_path)
-    elif cmp(chipId, 'MT6570') == 0:
+    elif operator.eq(chipId, 'MT6570'):
         chipObj = Rushmore(dws_path, gen_path)
-    elif cmp(chipId, 'MT6799') == 0:
+    elif operator.eq(chipId, 'MT6799'):
         chipObj = Whitney(dws_path, gen_path)
-    elif cmp(chipId, 'MT6763') == 0:
+    elif operator.eq(chipId, 'MT6763'):
         chipObj = MT6763(dws_path, gen_path)
-    elif cmp(chipId, 'MT6759') == 0:
+    elif operator.eq(chipId, 'MT6759'):
         chipObj = MT6759(dws_path, gen_path)
-    elif cmp(chipId, 'MT6750S') == 0:
+    elif operator.eq(chipId, 'MT6750S'):
         chipObj = MT6750S(dws_path, gen_path)
-    elif cmp(chipId, 'MT6758') == 0:
+    elif operator.eq(chipId, 'MT6758'):
         chipObj = MT6758(dws_path, gen_path)
-    elif cmp(chipId, 'MT6739') == 0:
+    elif operator.eq(chipId, 'MT6739'):
         chipObj = MT6739(dws_path, gen_path)
-    elif cmp(chipId, 'MT8695') == 0:
+    elif operator.eq(chipId, 'MT8695'):
         chipObj = MT8695(dws_path, gen_path)
-    elif cmp(chipId, 'MT6771') == 0 or \
-         cmp(chipId, 'MT6775') == 0:
+    elif operator.eq(chipId, 'MT6771') or \
+            operator.eq(chipId, 'MT6775'):
         chipObj = MT6771(dws_path, gen_path)
-    #elif cmp(chipId, 'MT6775') == 0:
+    #elif operator.eq(chipId, 'MT6775'):
         #chipObj = MT6775(dws_path, gen_path)
     else:
         chipObj = ChipObj(dws_path, gen_path)

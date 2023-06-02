@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -15,31 +15,32 @@
 import os, sys
 import collections
 import xml.dom.minidom
+import operator
 
-from GpioObj import GpioObj
-from GpioObj import GpioObj_whitney
-from GpioObj import GpioObj_MT6759
-from GpioObj import GpioObj_MT6739
-from GpioObj import GpioObj_MT6771
-from GpioObj import GpioObj_MT6763
-from EintObj import EintObj
-from EintObj import EintObj_MT6750S
-from EintObj import EintObj_MT6739
-from AdcObj import AdcObj
-from ClkObj import ClkObj
-from ClkObj import ClkObj_Everest
-from ClkObj import ClkObj_Olympus
-from ClkObj import ClkObj_Rushmore
-from I2cObj import I2cObj
-from I2cObj import I2cObj_MT6759
-from I2cObj import I2cObj_MT6775
-from PmicObj import PmicObj
-from PmicObj import PmicObj_MT6758
-from Md1EintObj import Md1EintObj
-from Md1EintObj import Md1EintObj_MT6739
-from PowerObj import PowerObj
-from KpdObj import KpdObj
-from ModuleObj import ModuleObj
+from .GpioObj import GpioObj
+from .GpioObj import GpioObj_whitney
+from .GpioObj import GpioObj_MT6759
+from .GpioObj import GpioObj_MT6739
+from .GpioObj import GpioObj_MT6771
+from .GpioObj import GpioObj_MT6763
+from .EintObj import EintObj
+from .EintObj import EintObj_MT6750S
+from .EintObj import EintObj_MT6739
+from .AdcObj import AdcObj
+from .ClkObj import ClkObj
+from .ClkObj import ClkObj_Everest
+from .ClkObj import ClkObj_Olympus
+from .ClkObj import ClkObj_Rushmore
+from .I2cObj import I2cObj
+from .I2cObj import I2cObj_MT6759
+from .I2cObj import I2cObj_MT6775
+from .PmicObj import PmicObj
+from .PmicObj import PmicObj_MT6758
+from .Md1EintObj import Md1EintObj
+from .Md1EintObj import Md1EintObj_MT6739
+from .PowerObj import PowerObj
+from .KpdObj import KpdObj
+from .ModuleObj import ModuleObj
 
 from utility.util import log
 from utility.util import LogLevel
@@ -77,7 +78,7 @@ class ChipObj:
         self.__objs["kpd"] = KpdObj()
 
     def replace_obj(self, tag, obj):
-        if not tag in self.__objs.keys():
+        if not tag in list(self.__objs.keys()):
             return False
 
         self.__objs[tag] = obj
@@ -89,7 +90,7 @@ class ChipObj:
         self.__objs['eint'].set_gpioObj(self.__objs['gpio'])
 
     def append_obj(self, tag, obj):
-        if tag in self.__objs.keys():
+        if tag in list(self.__objs.keys()):
             return False
 
         self.__objs[tag] = obj
@@ -143,7 +144,7 @@ class ChipObj:
 
     def generate(self, paras):
         if len(paras) == 0:
-            for obj in self.__objs.values():
+            for obj in list(self.__objs.values()):
                 obj.gen_files()
 
             self.gen_custDtsi()
@@ -154,28 +155,28 @@ class ChipObj:
 
     def create_obj(self, tag):
         obj = None
-        if tag in self.__objs.keys():
+        if tag in list(self.__objs.keys()):
             obj = self.__objs[tag]
 
         return obj
 
 
     def gen_spec(self, paras):
-        # if cmp(paras[0], 'cust_dtsi') == 0:
+        # if operator.eq(paras[0], 'cust_dtsi'):
             # self.gen_custDtsi()
             # return True
 
         for para in paras:
-            if cmp(para, 'cust_dtsi') == 0:
+            if operator.eq(para, 'cust_dtsi'):
                 self.gen_custDtsi()
                 continue
 
             idx = 0
             name = ''
             if para.strip() != '':
-                for value in para_map.values():
+                for value in list(para_map.values()):
                     if para in value:
-                        name = para_map.keys()[idx]
+                        name = list(para_map.keys())[idx]
                         break
                     idx += 1
 
@@ -197,8 +198,8 @@ class ChipObj:
 
         #sorted_list = sorted(self.__objs.keys())
         #for tag in sorted_list:
-        for tag in self.__objs.keys():
-            if cmp(tag, 'gpio') == 0:
+        for tag in list(self.__objs.keys()):
+            if operator.eq(tag, 'gpio'):
                 gpioObj = self.create_obj(tag)
                 gen_str += ModuleObj.writeHeader(gpioObj.get_dtsiFileName())
                 gen_str += gpioObj.fill_mapping_dtsiFile()

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -152,7 +152,7 @@ class KpdData:
 
     @staticmethod
     def get_keyVal(key):
-        if key in KpdData._keyValueMap.keys():
+        if key in list(KpdData._keyValueMap.keys()):
             return KpdData._keyValueMap[key]
 
         return 0

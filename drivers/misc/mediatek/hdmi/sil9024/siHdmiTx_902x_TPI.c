@@ -252,9 +252,9 @@ static s32 i2c_smbus_write_byte_nostop(struct i2c_client *client, unsigned char 
 	client->addr = old_flag;
 
 	return IIC_OK;*/
-	
+
 	i2c_smbus_write_byte_data(siiEDID, RegOffset, value);
-	
+
 	return IIC_OK;
 }
 
@@ -1095,9 +1095,9 @@ byte Parse861ShortDescriptors(byte *Data)
 				TPI_EDID_PRINT(("DataIndexbk=0x%x,DataBlockLength=0x%x\n",DataIndexbk,DataBlockLength));
 
                 //DataIndex += DataBlockLength - HDMI_SIGNATURE_LEN - CEC_PHYS_ADDR_LEN; // Point to start of next block
-               
+
 				DataIndex = DataIndexbk + DataBlockLength+1;
-				
+
                 TPI_EDID_PRINT(("DataIndex=0x%x!!!!!!!!!\n",DataIndex));
 			TPI_EDID_PRINT(("EDID -> Short Descriptor Vendor Block\n"));
 			TPI_EDID_PRINT(("\n"));
@@ -1176,7 +1176,7 @@ byte Parse861Extensions(byte NumOfExtensions)
 	byte Offset = 0;
 
 	g_edid.HDMI_Sink = FALSE;
-    g_edid.HDMI_compatible_VSDB = FALSE;	         
+    g_edid.HDMI_compatible_VSDB = FALSE;
     do
     {
 		Block++;

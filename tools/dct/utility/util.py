@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -27,16 +27,16 @@ class LogLevel:
 
 def log(level, msg):
     if level == LogLevel.info:
-        print LEVEL_INFO + msg
+        print(LEVEL_INFO + msg)
     elif level == LogLevel.warn:
-        print LEVEL_WARN + msg
+        print(LEVEL_WARN + msg)
     elif level == LogLevel.error:
-        print LEVEL_ERROR + msg
+        print(LEVEL_ERROR + msg)
 
 def compare(value):
     lst = re.findall(r'\d+', value)
     if len(lst) != 0:
-        return string.atoi(lst[0])
+        return int(lst[0])
 
     # if can not find numbers
     return value

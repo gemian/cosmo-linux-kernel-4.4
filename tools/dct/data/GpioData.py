@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
 # Copyright (C) 2016 MediaTek Inc.
@@ -136,7 +136,7 @@ class GpioData:
 
     @staticmethod
     def get_modeName(key, idx):
-        if key in GpioData._modeMap.keys():
+        if key in list(GpioData._modeMap.keys()):
             value = GpioData._modeMap[key]
             return value[idx]
 

@@ -3,13 +3,14 @@ Section: kernel
 Priority: optional
 Maintainer: Adam Boardman <adamboardman@gmail.com>
 Build-Depends:
- python,
+ python3,
  git,
  ca-certificates,
  bc,
  curl,
  libssl-dev,
  gcc-aarch64-linux-gnu,
+ device-tree-compiler
 Standards-Version: 3.9.8
 Vcs-Git: https://github.com/gemian/cosmo-linux-kernel-4.4.git
 Homepage: https://www.kernel.org/
