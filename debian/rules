@@ -15,7 +15,7 @@ build-stamp:
 	@echo configuring
 	make O=../KERNEL_OUT_COSMO_4.4 ARCH=arm64 k71v1_64_bsp_defconfig
 ifneq ($(DEB_HOST_ARCH), arm64)
-	@echo building kernel
+	@echo building kernel cross
 	make O=../KERNEL_OUT_COSMO_4.4 ARCH=arm64 CROSS_COMPILE=/usr/bin/aarch64-linux-gnu- -j2
 else
 	@echo building kernel
@@ -31,7 +31,7 @@ binary-arch:
 	install -p -d -o root -g root -m 755 debian/tmp
 	install -p -d -o root -g root -m 755 debian/tmp/DEBIAN
 	install -p -d -o root -g root -m 755 debian/tmp/usr/share/kernel
-	install -p    -o root -g root -m 644 ../KERNEL_OUT_COSMO_4.4/arch/arm64/boot/Image.gz-dtb debian/tmp/usr/share/kernel/Image.gz-dtb
+	install -p    -o root -g root -m 644 ../KERNEL_OUT_COSMO_4.4/arch/arm64/boot/Image.gz-dtb debian/tmp/usr/share/kernel/Cosmo-Image.gz-dtb
 	install -p    -o root -g root -m 755 debian/postinst debian/tmp/DEBIAN/
 	make O=../KERNEL_OUT_COSMO_4.4 INSTALL_MOD_PATH=$(CURDIR)/debian/tmp ARCH=arm64 modules_install
 	unlink debian/tmp/lib/modules/4.4.146*/source

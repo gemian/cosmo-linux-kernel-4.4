@@ -22,7 +22,7 @@ Depends:
  mkbootimg,
  initramfs-tools-halium,
 Recommends:
-Description: Gemian Kernel with Modules for Cosmo PDA
+Description: Gemian Kernel with Modules for Cosmo Communicator
  .
 
 Package: cosmo-linux-kernel-headers
@@ -33,5 +33,5 @@ Depends:
 Conflicts:
 Replaces:
 Recommends:
-Description: Headers for Gemian Kernel with Modules for Cosmo PDA
+Description: Headers for Gemian Kernel with Modules for Cosmo Communicator
  .
